@@ -34,18 +34,5 @@ jobs:
         - ~/.m2
         key: v1-dependencies--{{ checksum "build.sbt" }}
 
-  test:
-    docker:
-    - image: circleci/openjdk:8-jdk
-
-    steps:
-    - checkout
     - run: cat /dev/null | sbt coverage test coverageReport
     - run: bash <(curl -s https://codecov.io/bash)
-
-workflows:
-  version: 2
-  build_and_test:
-  jobs:
-    - build
-    - test
