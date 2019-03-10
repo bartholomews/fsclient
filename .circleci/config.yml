@@ -29,8 +29,8 @@ jobs:
         # fallback to using the latest cache if no exact match is found
         - v1-dependencies-
     - run:
-      name: Compile
-      command: cat /dev/null | sbt clean compile
+        name: Compile
+        command: cat /dev/null | sbt clean compile
 
     - save_cache:
         paths:
@@ -38,13 +38,13 @@ jobs:
         key: v1-dependencies--{{ checksum "build.sbt" }}
 
     - run:
-      name: Test / Coverage
-      command: cat /dev/null | sbt coverage test coverageReport
+        name: Test / Coverage
+        command: cat /dev/null | sbt coverage test coverageReport
 
     - run:
-      name: Codecov report
-      command: bash <(curl -s https://codecov.io/bash)
+        name: Codecov report
+        command: bash <(curl -s https://codecov.io/bash)
 
     - run:
-      name: Publish
-      command: cat /dev/null | sbt publish
+        name: Publish
+        command: cat /dev/null | sbt publish
