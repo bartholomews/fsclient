@@ -13,6 +13,8 @@ libraryDependencies ++= dependencies ++ testDependencies
 scalacOptions ++= Compiler.options
 
 coverageEnabled := true
+coverageMinimum := 80
+coverageFailOnMinimum := true
 
 // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
 logBuffered in Test := false
