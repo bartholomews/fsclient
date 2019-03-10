@@ -8,6 +8,8 @@ version := "0.0.1-SNAPSHOT"
 
 scalaVersion := "2.12.8"
 
+licenses += ("Unlicense", url("https://unlicense.org"))
+
 libraryDependencies ++= dependencies ++ testDependencies
 
 scalacOptions ++= Compiler.options
