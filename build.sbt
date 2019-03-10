@@ -1,6 +1,6 @@
 import Dependencies.{dependencies, testDependencies}
 
-organization := "com.github.bartholomews"
+organization := "org.github.bartholomews"
 
 name := "fsclient"
 
@@ -21,3 +21,5 @@ coverageFailOnMinimum := true
 // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
 logBuffered in Test := false
 parallelExecution in ThisBuild := false
+
+skip in publish := isSnapshot.value
