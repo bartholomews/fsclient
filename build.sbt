@@ -1,4 +1,4 @@
-import Dependencies._
+import Dependencies.{dependencies, testDependencies}
 
 organization := "com.github.bartholomews"
 
