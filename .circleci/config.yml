@@ -36,3 +36,4 @@ jobs:
 
     - run: cat /dev/null | sbt coverage test coverageReport
     - run: bash <(curl -s https://codecov.io/bash)
+    - run: cat /dev/null | sbt publish
