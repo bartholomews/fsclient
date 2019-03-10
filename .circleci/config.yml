@@ -6,7 +6,6 @@ version: 2
 jobs:
   build:
     docker:
-    # specify the version you desire here
     - image: circleci/openjdk:8-jdk
 
     # Specify service dependencies here if necessary
@@ -22,21 +21,31 @@ jobs:
       TERM: dumb
 
     steps:
-
     - checkout
-
     # Download and cache dependencies
     - restore_cache:
         keys:
         - v1-dependencies-{{ checksum "build.sbt" }}
         # fallback to using the latest cache if no exact match is found
         - v1-dependencies-
-
-    - run: cat /dev/null | sbt test:compile
-
+    - run: cat /dev/null | sbt clean compile
     - save_cache:
         paths:
         - ~/.m2
         key: v1-dependencies--{{ checksum "build.sbt" }}
 
-    - run: cat /dev/null | sbt test:test
+  test:
+    docker:
+    - image: circleci/openjdk:8-jdk
+
+    steps:
+    - checkout
+    - run: cat /dev/null | sbt coverage test coverageReport
+    - run: bash <(curl -s https://codecov.io/bash)
+
+workflows:
+  version: 2
+  build_and_test:
+  jobs:
+    - build
+    - test
