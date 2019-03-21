@@ -6,9 +6,11 @@ import fsclient.mocks.server.WiremockServer
 import io.circe.Json
 import io.circe.syntax._
 import org.http4s.Status
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.tagobjects.Slow
+import org.scalatest.{AsyncWordSpec, Matchers}
+import reporter.TagsTracker
 
-class IOClientTest extends WordSpec with Matchers with WiremockServer {
+class IOClientTest extends AsyncWordSpec with Matchers with TagsTracker with WiremockServer {
 
   "A valid simple client" when {
 
@@ -18,11 +20,10 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer {
 
       def res: HttpResponse[Json] = client.fetchJson(jsonResponseEndpoint).unsafeRunSync()
 
-      "retrieve the json with Status Ok and entity" in {
+      "retrieve the json with Status Ok and entity" taggedAs Slow in {
         res.status shouldBe Status.Ok
         res.entity shouldBe Right(Map("message" -> "this is a json response").asJson)
       }
     }
-
   }
 }

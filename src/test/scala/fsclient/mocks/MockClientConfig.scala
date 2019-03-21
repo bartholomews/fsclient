@@ -17,11 +17,11 @@ trait MockClientConfig {
 
   final val validOAuthTokenValue = "VALID_OAUTH_TOKEN_VALUE"
   final val validOAuthTokenSecret = "VALID_OAUTH_TOKEN_SECRET"
-  final val oAuthVerifier = "OAUTH_VERIFIER"
+  final val validOAuthVerifier = "OAUTH_VERIFIER"
 
   final val validOAuthAccessToken: OAuthAccessToken = new OAuthAccessToken {
     override val token: Token = Token(validOAuthTokenValue, validOAuthTokenSecret)
-    override val verifier: Option[String] = Some(oAuthVerifier)
+    override val verifier: Option[String] = Some(validOAuthVerifier)
   }
 
   def validSimpleClient: IOClient = clientWith(validConsumerKey, validConsumerSecret, None)

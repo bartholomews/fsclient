@@ -1,6 +1,6 @@
 import Dependencies.{dependencies, testDependencies}
 
-organization := "org.github.bartholomews"
+organization := "io.github.bartholomews"
 
 name := "fsclient"
 
@@ -20,6 +20,19 @@ coverageFailOnMinimum := true
 
 // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
 logBuffered in Test := false
-parallelExecution in ThisBuild := false
+//parallelExecution in ThisBuild := false
 
 skip in publish := isSnapshot.value
+
+testOptions in Test ++= Seq(
+  Tests.Argument(
+    TestFrameworks.ScalaTest,
+    "-oU", // enable standard output reporter
+    "-u", // enable xml reporter
+    "target/test-reports", // xml reporter output dir
+    "-h", // enable html reporter
+    "target/test-html-reports", // html reporter output dire
+    "-C", // enable custom reporter
+    "reporter.CustomReporter" // customer reporter namespace
+  )
+)
