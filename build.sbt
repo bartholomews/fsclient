@@ -15,7 +15,7 @@ libraryDependencies ++= dependencies ++ testDependencies
 scalacOptions ++= Compiler.options
 
 coverageEnabled := true
-coverageMinimum := 0
+coverageMinimum := 57
 coverageFailOnMinimum := true
 
 // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
@@ -31,8 +31,6 @@ testOptions in Test ++= Seq(
     "-u", // enable xml reporter
     "target/test-reports", // xml reporter output dir
     "-h", // enable html reporter
-    "target/test-html-reports", // html reporter output dire
-    "-C", // enable custom reporter
-    "reporter.CustomReporter" // customer reporter namespace
+    "target/test-html-reports", // html reporter output dir
   )
 )

@@ -41,16 +41,16 @@ private[http] trait HttpEffectClient[F[_]] extends RequestF {
   //                     (implicit entityEncoder: EntityEncoder[F, Json]): Request[F] =
   //    request(uri).withMethod(Method.POST).withEntity[Json]("dsd".asJson)
 
-  private[http] def fetchPlainTextWithBody[A, B](uri: Uri,
-                                                 method: Method = Method.POST,
-                                                 body: B,
-                                                 accessToken: Option[OAuthAccessToken] = None)
-                                                (implicit
-                                                 effect: Effect[F],
-                                                 consumer: Consumer,
-                                                 resource: Resource[F, Client[F]],
-                                                 bodyEntityEncoder: EntityEncoder[F, B],
-                                                 plainTextToEntityPipe: HttpPipe[F, String, A]): F[HttpResponse[A]] =
+  private[http] def fetchPlainText[A, B](uri: Uri,
+                                         method: Method,
+                                         body: B,
+                                         accessToken: Option[OAuthAccessToken])
+                                        (implicit
+                                         effect: Effect[F],
+                                         consumer: Consumer,
+                                         resource: Resource[F, Client[F]],
+                                         bodyEntityEncoder: EntityEncoder[F, B],
+                                         plainTextToEntityPipe: HttpPipe[F, String, A]): F[HttpResponse[A]] =
 
     resource.use(client => run(
       plainTextRequest[F, A](client)(request(uri)
@@ -59,7 +59,7 @@ private[http] trait HttpEffectClient[F[_]] extends RequestF {
 
   private[http] def fetchPlainText[A](uri: Uri,
                                       method: Method = Method.GET,
-                                      accessToken: Option[OAuthAccessToken] = None)
+                                      accessToken: Option[OAuthAccessToken])
                                      (implicit
                                       effect: Effect[F],
                                       consumer: Consumer,
@@ -71,26 +71,26 @@ private[http] trait HttpEffectClient[F[_]] extends RequestF {
         .withMethod(method), accessToken)
     ))
 
-  private[http] def fetchJsonWithBody[A, B](uri: Uri,
-                                            method: Method = Method.POST,
-                                            body: Option[B] = None,
-                                            accessToken: Option[OAuthAccessToken] = None)
-                                           (implicit
-                                            effect: Effect[F],
-                                            consumer: Consumer,
-                                            resource: Resource[F, Client[F]],
-                                            bodyEntityEncoder: EntityEncoder[F, B],
-                                            decode: Decoder[A]): F[HttpResponse[A]] =
+  private[http] def fetchJson[A, B](uri: Uri,
+                                    method: Method,
+                                    body: B,
+                                    accessToken: Option[OAuthAccessToken])
+                                   (implicit
+                                    effect: Effect[F],
+                                    consumer: Consumer,
+                                    resource: Resource[F, Client[F]],
+                                    bodyEntityEncoder: EntityEncoder[F, B],
+                                    decode: Decoder[A]): F[HttpResponse[A]] =
 
     resource.use(client => run(
       jsonRequest(client)(request(uri)
         .withMethod(method)
-        .withEntity(body.get), accessToken)
+        .withEntity(body), accessToken)
     ))
 
   private[http] def fetchJson[A](uri: Uri,
                                  method: Method = Method.GET,
-                                 accessToken: Option[OAuthAccessToken] = None)
+                                 accessToken: Option[OAuthAccessToken])
                                 (implicit
                                  effect: Effect[F],
                                  consumer: Consumer,

@@ -20,20 +20,24 @@ case object ResourceJsonTransformer extends ResponseDefinitionTransformer with M
       if (url.startsWith("/")) url.drop(1) else url
     }
 
-    def jsonResponse(res: ResponseDefinitionBuilder): ResponseDefinition = {
-      (if (requestUrl == notFoundResponseEndpoint) res.withStatus(404) else res.withStatus(200))
-        .but()
-        .withHeader("Content-Type", "application/json")
-        .withBodyFile(s"$requestUrl.json")
-        .build()
+    def jsonResponse(res: ResponseDefinitionBuilder): ResponseDefinitionBuilder = {
+      requestUrl match {
+
+        case str if str == notFoundEmptyJsonBodyResponse =>
+          res.withStatus(404)
+
+        case str if str == notFoundJsonResponse =>
+          res.withStatus(404).withBodyFile(s"$requestUrl.json")
+
+        case _ => res.withStatus(200).withBodyFile(s"$requestUrl.json")
+      }
     }
 
-    val res = ResponseDefinitionBuilder.like(response)
-    if (response.getStatus != 200) res.build()
-    else if(requestUrl == emptyResponseEndpoint) res
+    val builder = ResponseDefinitionBuilder.like(response)
+      .but()
       .withHeader("Content-Type", "application/json")
-      .build()
-    else jsonResponse(res)
+
+    jsonResponse(builder).build()
   }
 
   override def getName: String = "resource-json-transformer"

@@ -28,12 +28,11 @@
     <logger name="org.eclipse.jetty.util.thread.QueuedThreadPool" level="ERROR"/>
     <logger name="org.eclipse.jetty.server.handler.ContextHandler" level="ERROR"/>
     <logger name="org.eclipse.jetty.server.NetworkTrafficServerConnector" level="ERROR"/>
-
-    <logger name="fsclient-logger" level="INFO"/>
-
     <!-- wiremock logs -->
     <logger name="/__admin" level="OFF"/>
     <logger name="/" level="OFF"/>
+
+    <logger name="fsclient-logger" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>

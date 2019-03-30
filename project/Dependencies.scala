@@ -6,7 +6,7 @@ object Versions {
   val circe = "0.11.1"
   val circe_fs2 = "0.11.0"
   val circe_magnolia = "0.4.0"
-  val http4s = "0.20.0-M5"
+  val http4s = "0.20.0-M7"
   val lightbendConfig = "1.3.3"
   val logback = "1.2.3"
   val pureConfig = "0.10.2"
@@ -47,6 +47,6 @@ object Dependencies {
     // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
     "org.scalatest" %% "scalatest" % Versions.scalaTest,
     "com.github.tomakehurst" % "wiremock" % Versions.wiremock,
-    "org.pegdown" % "pegdown" % "1.6.0"
+    "org.pegdown" % "pegdown" % "1.6.0" // required for scalatest html report
   ).map(_ % Test)
 }

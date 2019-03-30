@@ -5,7 +5,7 @@ import fsclient.config.OAuthConsumer
 import fsclient.entities.{HttpEndpoint, HttpResponse, OAuthAccessToken, ResponseError}
 import fsclient.http.effect.HttpEffectClient
 import io.circe.Decoder
-import org.http4s.Headers
+import org.http4s.{EntityEncoder, Headers}
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.oauth1.Consumer
@@ -33,4 +33,12 @@ class IOClient(override val consumer: OAuthConsumer,
 
   def fetchPlainText[A](endpoint: HttpEndpoint[A])(implicit decoder: HttpPipe[IO, String, A]): IOResponse[A] =
     fetchPlainText(endpoint.uri, endpoint.method, accessToken)
+
+  def fetchJson[A, B](endpoint: HttpEndpoint[A], body: B)
+                     (implicit decode: Decoder[A], entityEncoder: EntityEncoder[IO, B]): IOResponse[A] =
+    fetchJson(endpoint.uri, endpoint.method, body, accessToken)
+
+  def fetchPlainText[A, B](endpoint: HttpEndpoint[A], body: B)
+                          (implicit decode: HttpPipe[IO, String, A], entityEncoder: EntityEncoder[IO, B]): IOResponse[A] =
+    fetchPlainText(endpoint.uri, endpoint.method, body, accessToken)
 }
