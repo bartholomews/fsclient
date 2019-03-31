@@ -1,9 +1,9 @@
 package fsclient.http.effect
 
 import cats.effect.Effect
-import fsclient.entities.ResponseError
+import fsclient.entities.{EmptyResponseException, ResponseError}
 import fs2.{Pipe, Stream}
-import io.circe.Decoder
+import io.circe.{Decoder, Json}
 import io.circe.fs2.{byteStreamParser, decoder}
 import org.http4s.headers.`Content-Type`
 import org.http4s.{Response, Status}
@@ -97,6 +97,11 @@ private[http] trait HttpPipes extends HttpTypes with Logger {
             response
               .body
               .through(byteStreamParser)
+              .last
+              .flatMap(_.fold[Stream[F, Json]](
+                Stream.raiseError[F](EmptyResponseException))(
+                Stream.emit
+              ))
               .attempt
               // FIXME: could try to parse a { "message": "[value]" } instead of _.spaces2
               .through(foldToResponseError(response.status, _.spaces2))

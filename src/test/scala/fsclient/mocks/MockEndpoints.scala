@@ -1,8 +1,8 @@
 package fsclient.mocks
 
-import fsclient.entities.HttpEndpoint
+import fsclient.entities.{HttpEndpoint, HttpMethod}
 import io.circe.Json
-import org.http4s.{Method, Uri}
+import org.http4s.Uri
 
 trait MockEndpoints {
 
@@ -15,19 +15,17 @@ trait MockEndpoints {
   private[mocks] final val okEmptyResponse = "empty-response"
 
   val notFoundJsonResponseEndpoint: HttpEndpoint[Json] = getEndpoint[Json](notFoundJsonResponse)
+  val notFoundEmptyJsonResponseEndpoint: HttpEndpoint[Json] = getEndpoint[Json](notFoundEmptyJsonBodyResponse)
   val notFoundPlainTextResponseEndpoint: HttpEndpoint[String] = getEndpoint[String](notFoundPlainTextResponse) // TODO
-  val notFoundEmptyResponseEndpoint: HttpEndpoint[Nothing] = getEndpoint[Nothing](notFoundEmptyResponse) // TODO
-  val emptyResponseEndpoint: HttpEndpoint[Nothing] = getEndpoint[Nothing](okEmptyResponse) // TODO
+  def notFoundEmptyResponseEndpoint[A]: HttpEndpoint[A] = getEndpoint[A](notFoundEmptyResponse) // TODO
+  def emptyResponseEndpoint[A]: HttpEndpoint[A] = getEndpoint[A](okEmptyResponse) // TODO
   /*
     valid endpoints NEED to match the string under `__files` dir
    */
-  def validResponseEndpoint[T]: HttpEndpoint[T] = getEndpoint[T]("test-json-response")
+  def validResponseEndpoint[A]: HttpEndpoint[A] = getEndpoint[A]("test-json-response")
 
-
-  def getEndpoint[A](endpoint: String): HttpEndpoint[A] = new HttpEndpoint[A] {
+  def getEndpoint[A](endpoint: String): HttpEndpoint[A] = new HttpEndpoint[A] with HttpMethod.GET {
     override def uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
-
-    override def method: Method = Method.GET
   }
 
 }

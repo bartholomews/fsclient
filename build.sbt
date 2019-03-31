@@ -4,7 +4,7 @@ organization := "io.github.bartholomews"
 
 name := "fsclient"
 
-version := "0.0.1-SNAPSHOT"
+version := "0.0.2-SNAPSHOT"
 
 scalaVersion := "2.12.8"
 
@@ -15,7 +15,7 @@ libraryDependencies ++= dependencies ++ testDependencies
 scalacOptions ++= Compiler.options
 
 coverageEnabled := true
-coverageMinimum := 57
+coverageMinimum := 70
 coverageFailOnMinimum := true
 
 // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
@@ -33,4 +33,9 @@ testOptions in Test ++= Seq(
     "-h", // enable html reporter
     "target/test-html-reports", // html reporter output dir
   )
+)
+
+addCommandAlias(
+  "test-coverage",
+  "sbt clean coverage test coverageReport"
 )

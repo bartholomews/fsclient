@@ -27,8 +27,11 @@ object ResponseError extends Logger {
     }
   }
 
-  def empty = ResponseError.apply(
-    new Exception("Response was empty. Please check request logs"),
-    Status.BadRequest
-  )
+  def empty(status: Status = Status.BadRequest) = ResponseError.apply(EmptyResponseException, status)
+
+  def empty: ResponseError = ResponseError.empty(Status.BadRequest)
+}
+
+case object EmptyResponseException extends Exception {
+  override val getMessage: String = "Response was empty. Please check request logs"
 }

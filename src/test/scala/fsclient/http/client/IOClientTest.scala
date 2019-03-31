@@ -18,20 +18,26 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer {
     "calling a GET endpoint with Json response" when {
 
       "response is 200" should {
-        def ioRes: client.IOResponse[Json] = client.fetchJson(validResponseEndpoint[Json])
 
         "retrieve the json with Status Ok and entity" in {
-          val res = ioRes.unsafeRunSync()
+          val res = client.fetchJson(validResponseEndpoint[Json]).unsafeRunSync()
           res.status shouldBe Status.Ok
           res.entity shouldBe Right(Map("message" -> "this is a json response").asJson)
+        }
+
+        "retrieve the decoded json with Status Ok and entity" in {
+          import io.circe.generic.auto._
+          case class MyEntity(message: String)
+          val res = client.fetchJson(validResponseEndpoint[MyEntity]).unsafeRunSync()
+          res.status shouldBe Status.Ok
+          res.entity shouldBe Right(MyEntity("this is a json response"))
         }
       }
 
       "response is 404" should {
-        def ioRes: client.IOResponse[Json] = client.fetchJson(notFoundJsonResponseEndpoint)
 
-        "retrieve the json with Status NotFound" in {
-          val res = ioRes.unsafeRunSync()
+        "retrieve the json response with Status NotFound and entity prettified with spaces2" in {
+          val res = client.fetchJson(notFoundJsonResponseEndpoint).unsafeRunSync()
           res.status shouldBe Status.NotFound
           res.entity shouldBe a[Left[_, _]]
           res.entity.leftMap(e => e.getMessage) shouldBe Left(
@@ -40,14 +46,14 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer {
         }
       }
 
-      //      "response is empty" should {
-      //        def res: HttpResponse[Json] = client.fetchJson(emptyResponseEndpoint[Json]).unsafeRunSync()
-      //
-      //        "res error" in {
-      //          res.status shouldBe Status.Ok
-      //          res.entity shouldBe Right(Map("message" -> "this is a json response").asJson)
-      //        }
-      //      }
+      "response is empty" should {
+
+        "return error with response status and default message" in {
+          val res = client.fetchJson(notFoundEmptyJsonResponseEndpoint).unsafeRunSync()
+          res.status shouldBe Status.NotFound
+          res.entity.leftMap(e => e.getMessage) shouldBe Left("Response was empty. Please check request logs")
+        }
+      }
     }
 
     "calling a POST endpoint with no entity body and json response" in {
