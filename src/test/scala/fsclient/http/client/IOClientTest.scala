@@ -44,6 +44,18 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer {
             err.getMessage shouldBe "There was a problem decoding or parsing this response, please check the error logs"
           })
         }
+
+        "respond with error if the response is empty" in {
+          import io.circe.generic.auto._
+          case class InvalidEntity(something: Boolean)
+          val res = client.fetchJson(validResponseEndpoint[InvalidEntity]).unsafeRunSync()
+          res.status shouldBe Status.InternalServerError
+          res.entity shouldBe a[Left[_, _]]
+          res.entity.leftMap(err => {
+            err.status shouldBe Status.InternalServerError
+            err.getMessage shouldBe "There was a problem decoding or parsing this response, please check the error logs"
+          })
+        }
       }
 
       "response is 404" should {
@@ -68,6 +80,10 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer {
       }
     }
 
+    "calling a GET endpoint with plainText response" in {
+      pending
+    }
+
     "calling a POST endpoint with no entity body and json response" in {
       pending
     }
@@ -76,13 +92,26 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer {
       pending
     }
 
-    "calling a GET endpoint with plainText response" in {
-      pending
-    }
-
     "calling a POST endpoint with plainText response" in {
       pending
     }
+    //  private def POST[A](uri: Uri)
+    //                     (implicit entityEncoder: EntityEncoder[F, Json]): Request[F] =
+    //    request(uri).withMethod(Method.POST).withEntity[Json]("dsd".asJson)
+    //  import org.http4s.circe.CirceEntityEncoder._
+    //  import org.http4s.circe._
+    //
+    //  import org.http4s.circe.CirceEntityEncoder
+    //  import org.http4s.circe.CirceEntityDecoder._
+    //  import org.http4s.circe.CirceEntityCodec._
+    //  import org.http4s.circe.CirceInstances._
+    //
+    //  import io.circe.generic.auto._
 
+    //  implicit val body = jsonEncoderOf[F, Json]
+
+    //  implicit def circeJsonDecoder[A](implicit decoder: Decoder[A],
+    //                                   applicative: Applicative[F]): EntityEncoder[F, A] =
+    //    org.http4s.circe.jsonEncoderOf[F, A]
   }
 }
