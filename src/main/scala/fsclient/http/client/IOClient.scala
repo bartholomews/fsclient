@@ -2,7 +2,7 @@ package fsclient.http.client
 
 import cats.effect.{ContextShift, IO, Resource}
 import fsclient.config.OAuthConsumer
-import fsclient.entities.{HttpEndpoint, HttpResponse, OAuthAccessToken, ResponseError}
+import fsclient.entities._
 import fsclient.http.effect.HttpEffectClient
 import io.circe.Decoder
 import org.http4s.{EntityEncoder, Headers}
@@ -23,8 +23,8 @@ class IOClient(override val consumer: OAuthConsumer,
   override private[http] def run[A]: fs2.Stream[IO, HttpResponse[A]] => IO[HttpResponse[A]] = _
     .compile
     .last
-    .flatMap(_.toRight(ResponseError.empty).fold(
-      empty => IO.pure(HttpResponse(Headers(), Left(empty))),
+    .flatMap(_.toRight(ResponseError.apply(GenericResponseError)).fold(
+      error => IO.pure(HttpResponse(Headers.empty, Left(error))),
       value => IO.pure(value)
     ))
 

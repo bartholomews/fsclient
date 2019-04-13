@@ -19,7 +19,7 @@ trait Logger extends HttpTypes {
     .map(_.logger.name)
     .getOrElse("fsclient-logger")
 
-  private val logger = getLogger(loggerName).logger
+  private[fsclient] val logger = getLogger(loggerName).logger
 
   logger.info(s"$logger started.")
 

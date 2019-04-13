@@ -1,7 +1,6 @@
 package fsclient.http.client
 
 import cats.implicits._
-import fsclient.mocks._
 import fsclient.mocks.server.WiremockServer
 import io.circe.Json
 import io.circe.syntax._
@@ -45,7 +44,7 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer {
           })
         }
 
-        "respond with error if the response is empty" in {
+        "respond with error if the response body is empty" in {
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
           val res = client.fetchJson(validResponseEndpoint[InvalidEntity]).unsafeRunSync()
@@ -71,6 +70,16 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer {
       }
 
       "response is empty" should {
+
+        "respond with error for http response timeout" in {
+          val res = client.fetchJson(timeoutResponseEndpoint[String]).unsafeRunSync()
+          res.status shouldBe Status.InternalServerError
+          res.entity shouldBe a[Left[_, _]]
+          res.entity.leftMap(err => {
+            err.status shouldBe Status.InternalServerError
+            err.getMessage shouldBe "There was a problem with the response. Please check error logs"
+          })
+        }
 
         "return error with response status and default message" in {
           val res = client.fetchJson(notFoundEmptyJsonResponseEndpoint).unsafeRunSync()

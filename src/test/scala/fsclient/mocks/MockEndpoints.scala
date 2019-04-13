@@ -13,6 +13,7 @@ trait MockEndpoints {
   private[mocks] final val notFoundEmptyResponse = "not-found-empty-response"
   private[mocks] final val notFoundEmptyJsonBodyResponse = "empty-json-body-response"
   private[mocks] final val okEmptyResponse = "empty-response"
+  private[mocks] final val timeoutResponse = "timeout-response"
 
   val notFoundJsonResponseEndpoint: HttpEndpoint[Json] = getEndpoint[Json](notFoundJsonResponse)
   val notFoundEmptyJsonResponseEndpoint: HttpEndpoint[Json] = getEndpoint[Json](notFoundEmptyJsonBodyResponse)
@@ -23,6 +24,8 @@ trait MockEndpoints {
     valid endpoints NEED to match the string under `__files` dir
    */
   def validResponseEndpoint[A]: HttpEndpoint[A] = getEndpoint[A]("test-json-response")
+
+  def timeoutResponseEndpoint[A]: HttpEndpoint[A] = getEndpoint[A](timeoutResponse)
 
   def getEndpoint[A](endpoint: String): HttpEndpoint[A] = new HttpEndpoint[A] with HttpMethod.GET {
     override def uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")

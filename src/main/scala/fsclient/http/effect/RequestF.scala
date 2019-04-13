@@ -38,12 +38,26 @@ private[http] trait RequestF extends HttpPipes with HttpTypes with OAuthSignatur
                                                   (implicit consumer: Consumer): Stream[F, HttpResponse[A]] = {
 
     val signed: Stream[F, Request[F]] = Stream.eval(sign(consumer, accessToken)(request))
-//    val pure: Stream[Pure, Request[F]] = Stream(request)
+    //    val pure: Stream[Pure, Request[F]] = Stream(request)
 
     for {
+
       request <- signed.through(requestHeadersLogPipe)
-      response <- client.stream(request).through(responseHeadersLogPipe)
+
+      responseStream <- client.stream(request)
+        .through(responseHeadersLogPipe)
+        .attempt
+        .map {
+          case Right(value) => Stream(value)
+          case Left(throwable) =>
+            logger.error(throwable.getMessage)
+            Stream.empty
+        }
+
+      response <- responseStream
+
       httpRes <- (response.status match {
+
         case Status.Ok =>
           Stream.emit(response)
             .through(decodeRight)
