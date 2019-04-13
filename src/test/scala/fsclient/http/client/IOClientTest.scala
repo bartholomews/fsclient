@@ -27,10 +27,22 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer {
 
         "retrieve the decoded json with Status Ok and entity" in {
           import io.circe.generic.auto._
-          case class MyEntity(message: String)
-          val res = client.fetchJson(validResponseEndpoint[MyEntity]).unsafeRunSync()
+          case class ValidEntity(message: String)
+          val res = client.fetchJson(validResponseEndpoint[ValidEntity]).unsafeRunSync()
           res.status shouldBe Status.Ok
-          res.entity shouldBe Right(MyEntity("this is a json response"))
+          res.entity shouldBe Right(ValidEntity("this is a json response"))
+        }
+
+        "respond with error if the response json is unexpected" in {
+          import io.circe.generic.auto._
+          case class InvalidEntity(something: Boolean)
+          val res = client.fetchJson(validResponseEndpoint[InvalidEntity]).unsafeRunSync()
+          res.status shouldBe Status.InternalServerError
+          res.entity shouldBe a[Left[_, _]]
+          res.entity.leftMap(err => {
+            err.status shouldBe Status.InternalServerError
+            err.getMessage shouldBe "There was a problem decoding or parsing this response, please check the error logs"
+          })
         }
       }
 
