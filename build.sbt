@@ -12,7 +12,8 @@ licenses += ("Unlicense", url("https://unlicense.org"))
 
 libraryDependencies ++= dependencies ++ testDependencies
 
-scalacOptions ++= Compiler.options
+scalacOptions ++= Compiler.tpolecatOptions 
+scalacOptions ++= Seq(Compiler.unchecked, Compiler.deprecation)
 
 coverageEnabled := true
 coverageMinimum := 70

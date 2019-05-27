@@ -1,6 +1,6 @@
 object Compiler {
   // https://tpolecat.github.io/2017/04/25/scalac-flags.html
-  lazy val options: Seq[String] = Seq(
+  lazy val tpolecatOptions: Seq[String] = Seq(
     "-encoding", "utf-8",                // Specify character encoding used by source files.
     "-explaintypes",                     // Explain type errors in more detail.
     "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
@@ -46,4 +46,7 @@ object Compiler {
     "-Ywarn-unused:privates",            // Warn if a private member is unused.
     "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
   )
+  
+  lazy val unchecked = "-unchecked"
+  lazy val deprecation = "-deprecation"
 }

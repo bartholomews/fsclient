@@ -14,7 +14,7 @@ private[http] trait HttpEffectClient[F[_]] extends RequestF {
 
   private[http] def run[A]: fs2.Stream[F, HttpResponse[A]] => F[HttpResponse[A]]
 
-  val USER_AGENT = Headers {
+  private val USER_AGENT = Headers.of {
     Header("User-Agent", consumer.userAgent)
   }
 
