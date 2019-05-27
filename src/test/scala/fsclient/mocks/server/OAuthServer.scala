@@ -1,7 +1,6 @@
 package fsclient.mocks.server
 
-import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
-import com.github.tomakehurst.wiremock.http.{Request, ResponseDefinition}
+import com.github.tomakehurst.wiremock.http.Request
 
 import scala.util.matching.Regex
 
@@ -20,16 +19,6 @@ trait OAuthServer {
 
   val accessTokenResponseRegex: Regex = oAuthResponseRegex.r
   val requestTokenResponseRegex: Regex = (oAuthResponseRegex + ",oauth_verifier=\"(.*)\"").r
-
-  def likeResponse(implicit response: ResponseDefinition): ResponseDefinitionBuilder =
-    ResponseDefinitionBuilder.like(response).but()
-
-  def error(code: Int, message: String)(implicit response: ResponseDefinition): ResponseDefinition =
-    likeResponse
-      .withHeader("Content-Type", "text/plain")
-      .withStatus(code)
-      .withBody(message)
-      .build()
 
   object ErrorMessage {
     def invalidRequestToken(token: String) = s"Invalid request token: $token"

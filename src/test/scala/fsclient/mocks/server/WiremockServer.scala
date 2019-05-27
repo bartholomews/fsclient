@@ -10,7 +10,10 @@ trait WiremockServer extends BeforeAndAfterAll with MockClientConfig with MockEn
 
   this: Suite =>
 
-  val server: WireMockServer = new WireMockServer(new WireMockConfiguration().extensions(ResourceJsonTransformer))
+  val server: WireMockServer = new WireMockServer(new WireMockConfiguration().extensions(
+    ResourceJsonTransformer,
+    ResourcePlainTextTransformer,
+  ))
 
   override def beforeAll: Unit = {
     server.start()
@@ -21,8 +24,8 @@ trait WiremockServer extends BeforeAndAfterAll with MockClientConfig with MockEn
 
   private def stubApi(): Unit = {
 
-
-    stubFor(get(anyUrl()).willReturn(aResponse().withTransformers(ResourceJsonTransformer.getName)))
+    stubFor(get(urlMatching("^.*json.*$")).willReturn(aResponse().withTransformers(ResourceJsonTransformer.getName)))
+    stubFor(get(urlMatching("^.*plaintext.*$")).willReturn(aResponse().withTransformers(ResourcePlainTextTransformer.getName)))
 
     val timeout = 30000
     stubFor(get(s"/$timeoutResponse").willReturn(aResponse().withFixedDelay(timeout)))

@@ -8,22 +8,22 @@ trait MockEndpoints {
 
   private val wiremockBaseUri = "http://127.0.0.1:8080"
 
-  private[mocks] final val notFoundJsonResponse = "not-found-json-response"
-  private[mocks] final val notFoundPlainTextResponse = "not-found-plaintext-response"
-  private[mocks] final val notFoundEmptyResponse = "not-found-empty-response"
-  private[mocks] final val notFoundEmptyJsonBodyResponse = "empty-json-body-response"
-  private[mocks] final val okEmptyResponse = "empty-response"
-  private[mocks] final val timeoutResponse = "timeout-response"
+  final val notFoundJsonResponse = "not-found-json-response"
+  final val notFoundPlainTextResponse = "not-found-plaintext-response"
+  final val notFoundEmptyResponse = "not-found-empty-response" // TODO
+  final val notFoundEmptyJsonBodyResponse = "empty-json-body-response"
+  final val notFoundEmptyPlainTextBodyResponse = "empty-plaintext-body-response"
+  final val okEmptyResponse = "empty-response" // TODO
+  final val okEmptyPlainTextResponse = "empty-plaintext-response"
+  final val timeoutResponse = "timeout-response"
 
-  val notFoundJsonResponseEndpoint: HttpEndpoint[Json] = getEndpoint[Json](notFoundJsonResponse)
-  val notFoundEmptyJsonResponseEndpoint: HttpEndpoint[Json] = getEndpoint[Json](notFoundEmptyJsonBodyResponse)
-  val notFoundPlainTextResponseEndpoint: HttpEndpoint[String] = getEndpoint[String](notFoundPlainTextResponse) // TODO
-  def notFoundEmptyResponseEndpoint[A]: HttpEndpoint[A] = getEndpoint[A](notFoundEmptyResponse) // TODO
-  def emptyResponseEndpoint[A]: HttpEndpoint[A] = getEndpoint[A](okEmptyResponse) // TODO
+  val notFoundJsonResponseEndpoint: HttpEndpoint[Json] = getEndpoint(notFoundJsonResponse)
+  val notFoundEmptyJsonResponseEndpoint: HttpEndpoint[Json] = getEndpoint(notFoundEmptyJsonBodyResponse)
   /*
     valid endpoints NEED to match the string under `__files` dir
    */
   def validResponseEndpoint[A]: HttpEndpoint[A] = getEndpoint[A]("test-json-response")
+  def validPlainTextResponseEndpoint[A]: HttpEndpoint[A] = getEndpoint("test-plaintext-response")
 
   def timeoutResponseEndpoint[A]: HttpEndpoint[A] = getEndpoint[A](timeoutResponse)
 

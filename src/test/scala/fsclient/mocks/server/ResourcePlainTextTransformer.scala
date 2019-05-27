@@ -5,10 +5,10 @@ import com.github.tomakehurst.wiremock.common.FileSource
 import com.github.tomakehurst.wiremock.extension.{Parameters, ResponseDefinitionTransformer}
 import com.github.tomakehurst.wiremock.http.{Request, ResponseDefinition}
 import fsclient.mocks.MockEndpoints
-import WiremockUtils._
 import org.apache.http.entity.ContentType
+import WiremockUtils._
 
-case object ResourceJsonTransformer extends ResponseDefinitionTransformer with MockEndpoints {
+case object ResourcePlainTextTransformer extends ResponseDefinitionTransformer with MockEndpoints {
 
   override val applyGlobally = false
 
@@ -17,24 +17,27 @@ case object ResourceJsonTransformer extends ResponseDefinitionTransformer with M
                          files: FileSource,
                          parameters: Parameters): ResponseDefinition = {
 
-    def jsonResponse(res: ResponseDefinitionBuilder): ResponseDefinitionBuilder = {
+    def plainTextResponse(res: ResponseDefinitionBuilder): ResponseDefinitionBuilder = {
 
       val requestUrl = request.getUrlStripSlashes
 
       requestUrl match {
 
-        case str if str == notFoundEmptyJsonBodyResponse =>
+        case str if str == notFoundEmptyPlainTextBodyResponse =>
           res.withStatus(404)
 
-        case str if str == notFoundJsonResponse =>
-          res.withStatus(404).withBodyFile(s"$requestUrl.json")
+        case str if str == notFoundPlainTextResponse =>
+          res.withStatus(404).withBodyFile(requestUrl)
 
-        case _ => res.withStatus(200).withBodyFile(s"$requestUrl.json")
+        case str if str == okEmptyPlainTextResponse =>
+          res.withStatus(200)
+
+        case _ => res.withStatus(200).withBodyFile(requestUrl)
       }
     }
 
-    jsonResponse(response.setContentType(ContentType.APPLICATION_JSON)).build()
+    plainTextResponse(response.setContentType(ContentType.TEXT_PLAIN)).build()
   }
 
-  override def getName: String = "resource-json-transformer"
+  override def getName: String = "resource-plaintext-transformer"
 }

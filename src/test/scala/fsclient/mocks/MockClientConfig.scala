@@ -37,5 +37,4 @@ trait MockClientConfig {
     OAuthConsumer(appName, appVersion, appUrl, key, secret),
     accessToken
   )
-
 }
