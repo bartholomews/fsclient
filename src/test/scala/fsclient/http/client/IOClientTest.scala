@@ -19,8 +19,18 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer with HttpT
     def validPlainTextResponseGetEndpoint[E]: HttpEndpoint[E, GET] =
       validPlainTextResponseEndpoint[E, GET](GET())
 
+    def validPlainTextResponsePostEndpoint[E]: HttpEndpoint[E, POST] =
+      validPlainTextResponseEndpoint[E, POST](POST())
+
     def timeoutResponseGetEndpoint[E]: HttpEndpoint[E, GET] =
       timeoutResponseEndpoint[E, GET](GET())
+
+    def timeoutResponsePostEndpoint[E]: HttpEndpoint[E, POST] =
+      timeoutResponseEndpoint[E, POST](POST())
+
+    import io.circe.generic.auto._
+    case class MyRequestBody(a: String, b: List[Int])
+    def requestBody: MyRequestBody = MyRequestBody("A", List(1, 2, 3))
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -182,13 +192,6 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer with HttpT
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     "calling a POST endpoint with entity body and json response" when {
-      import io.circe.generic.auto._
-      case class MyRequestBody(a: String, b: List[Int])
-
-      def requestBody: MyRequestBody = MyRequestBody("A", List(1, 2, 3))
-
-      def timeoutResponsePostEndpoint[E]: HttpEndpoint[E, POST] =
-        timeoutResponseEndpoint[E, POST](POST())
 
       "response is 200" should {
 
@@ -267,11 +270,82 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer with HttpT
       }
     }
 
-    "calling a POST endpoint with no entity body and json response" in {
-      pending
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    "calling a POST endpoint with plainText response" when {
+
+      "response is 200" should {
+
+        "retrieve the response with Status Ok and string entity" in {
+          val res = client.postAndDecodePlainTextAs(validPlainTextResponsePostEndpoint[String], requestBody).unsafeRunSync()
+          res.status shouldBe Status.Ok
+          res.entity shouldBe Right("This is a valid plaintext response")
+        }
+
+        "respond applying the provided `plainTextDecoder`" in {
+          case class MyEntity(str: Option[String])
+
+          implicit val plainTextDecoder: HttpPipe[IO, String, MyEntity] = _
+            .map(e => MyEntity(e.toOption).asRight[ResponseError])
+
+          val res1 = client.postAndDecodePlainTextAs(validPlainTextResponsePostEndpoint[MyEntity], requestBody).unsafeRunSync()
+          res1.status shouldBe Status.Ok
+          res1.entity shouldBe Right(MyEntity(Some("This is a valid plaintext response")))
+        }
+
+        "respond with empty string if the response body is empty" in {
+          val res = client.postAndDecodePlainTextAs(postEndpoint[String](okEmptyPlainTextResponse), requestBody).unsafeRunSync()
+          res.status shouldBe Status.Ok
+          res.entity shouldBe Right("")
+        }
+      }
+
+      "response is 404" should {
+
+        "retrieve the string response with Status NotFound" in {
+          val res = client.postAndDecodeJsonAs(postEndpoint[String](notFoundPlainTextResponse), requestBody).unsafeRunSync()
+          res.status shouldBe Status.NotFound
+          res.entity shouldBe a[Left[_, _]]
+          res.entity.leftMap(e => e.getMessage) shouldBe Left(
+            "The requested resource was not found."
+          )
+        }
+
+        "respond applying the provided `plainTextDecoder`" in {
+          case class MyEntity(str: Option[String])
+
+          implicit val plainTextDecoder: HttpPipe[IO, String, MyEntity] = _
+            .map(e => MyEntity(e.toOption).asRight[ResponseError])
+
+          val res = client.postAndDecodePlainTextAs(postEndpoint[MyEntity](notFoundPlainTextResponse), requestBody).unsafeRunSync()
+          res.status shouldBe Status.Ok
+          res.entity shouldBe Right(MyEntity(None))
+        }
+      }
+
+      "response is empty" should {
+
+        "respond with error for http response timeout" in {
+          val res = client.postAndDecodeJsonAs(timeoutResponsePostEndpoint[String], requestBody).unsafeRunSync()
+          res.status shouldBe Status.InternalServerError
+          res.entity shouldBe a[Left[_, _]]
+          res.entity.leftMap(err => {
+            err.status shouldBe Status.InternalServerError
+            err.getMessage shouldBe "There was a problem with the response. Please check error logs"
+          })
+        }
+
+        "return error with response status and empty message" in {
+          val res = client.postAndDecodeJsonAs(postEndpoint[String](notFoundEmptyPlainTextBodyResponse), requestBody).unsafeRunSync()
+          res.status shouldBe Status.NotFound
+          res.entity.leftMap(e => e.getMessage) shouldBe Left("")
+        }
+      }
     }
 
-    "calling a POST endpoint with plainText response" in {
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    "calling a POST endpoint with no entity body and json response" in {
       pending
     }
   }

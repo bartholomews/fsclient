@@ -1,6 +1,6 @@
 package fsclient.mocks
 
-import fsclient.entities.{HttpEndpoint, HttpMethod, GET}
+import fsclient.entities.{GET, HttpEndpoint, HttpMethod, POST}
 import io.circe.Json
 import org.http4s.Uri
 
@@ -41,4 +41,5 @@ trait MockEndpoints {
   }
 
   def getEndpoint[A](endpoint: String): HttpEndpoint[A, GET] = makeEndpoint(endpoint, GET())
+  def postEndpoint[A](endpoint: String): HttpEndpoint[A, POST] = makeEndpoint(endpoint, POST())
 }
