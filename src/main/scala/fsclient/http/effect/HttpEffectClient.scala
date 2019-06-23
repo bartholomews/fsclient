@@ -3,10 +3,11 @@ package fsclient.http.effect
 import cats.effect.{Effect, Resource}
 import fsclient.config.OAuthConsumer
 import fsclient.entities.{HttpResponse, OAuthAccessToken}
-import io.circe.Decoder
+import io.circe.{Decoder, Encoder}
+import org.http4s.circe.jsonEncoderOf
 import org.http4s.client.Client
 import org.http4s.client.oauth1.Consumer
-import org.http4s.{EntityEncoder, Header, Headers, Method, Request, Uri}
+import org.http4s.{Header, Headers, Method, Request, Uri}
 
 private[http] trait HttpEffectClient[F[_]] extends RequestF {
 
@@ -30,10 +31,10 @@ private[http] trait HttpEffectClient[F[_]] extends RequestF {
                                         effect: Effect[F],
                                         consumer: Consumer,
                                         resource: Resource[F, Client[F]],
-                                        bodyEntityEncoder: EntityEncoder[F, B],
-                                        plainTextToEntityPipe: HttpPipe[F, String, A]): F[HttpResponse[A]] = {
+                                        requestBodyEncoder: Encoder[B],
+                                        responseDecoder: HttpPipe[F, String, A]): F[HttpResponse[A]] = {
 
-    val request = createRequest(uri).withMethod(method).withEntity(body)
+    val request = createRequest(uri).withMethod(method).withEntity(body)(jsonEncoderOf[F, B])
     resource.use(client => run(plainTextRequest[F, A](client)(request, accessToken)))
   }
 
@@ -44,7 +45,7 @@ private[http] trait HttpEffectClient[F[_]] extends RequestF {
                                      effect: Effect[F],
                                      consumer: Consumer,
                                      resource: Resource[F, Client[F]],
-                                     decoder: HttpPipe[F, String, A]): F[HttpResponse[A]] = {
+                                     responseDecoder: HttpPipe[F, String, A]): F[HttpResponse[A]] = {
 
     val request = createRequest(uri).withMethod(method)
     resource.use(client => run(plainTextRequest[F, A](client)(request, accessToken)))
@@ -58,10 +59,10 @@ private[http] trait HttpEffectClient[F[_]] extends RequestF {
                                    effect: Effect[F],
                                    consumer: Consumer,
                                    resource: Resource[F, Client[F]],
-                                   bodyEntityEncoder: EntityEncoder[F, B],
-                                   decode: Decoder[A]): F[HttpResponse[A]] = {
+                                   requestBodyEncoder: Encoder[B],
+                                   responseDecoder: Decoder[A]): F[HttpResponse[A]] = {
 
-    val request = createRequest(uri).withMethod(method).withEntity(body)
+    val request = createRequest(uri).withMethod(method).withEntity(body)(jsonEncoderOf[F, B])
     resource.use(client => run(jsonRequest(client)(request, accessToken)))
   }
 
@@ -72,7 +73,7 @@ private[http] trait HttpEffectClient[F[_]] extends RequestF {
                                 effect: Effect[F],
                                 consumer: Consumer,
                                 resource: Resource[F, Client[F]],
-                                decode: Decoder[A]): F[HttpResponse[A]] = {
+                                responseDecoder: Decoder[A]): F[HttpResponse[A]] = {
 
     val request = createRequest(uri).withMethod(method)
     resource.use(client => run(jsonRequest(client)(request, accessToken)))

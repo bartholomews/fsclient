@@ -7,10 +7,9 @@ import fsclient.mocks.server.WiremockServer
 import fsclient.utils.HttpTypes
 import io.circe.Json
 import io.circe.syntax._
-import org.http4s.{EntityEncoder, Status}
+import org.http4s.Status
 import org.scalatest.{Matchers, WordSpec}
 
-// TODO IOWordSpec
 class IOClientTest extends WordSpec with Matchers with WiremockServer with HttpTypes {
 
   "A valid simple client" when {
@@ -183,28 +182,8 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer with HttpT
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     "calling a POST endpoint with entity body and json response" when {
-
-      //  private def POST[A](uri: Uri)
-      //                     (implicit entityEncoder: EntityEncoder[F, Json]): Request[F] =
-      //    request(uri).withMethod(Method.POST).withEntity[Json]("dsd".asJson)
-      //  import org.http4s.circe.CirceEntityEncoder._
-      //
-//        import org.http4s.circe.CirceEntityEncoder
-//        import org.http4s.circe.CirceEntityDecoder._
-//        import org.http4s.circe.CirceEntityCodec._
-//        import org.http4s.circe.CirceInstances._
-      //
-      //  import io.circe.generic.auto._
-
-      //  implicit def circeJsonDecoder[A](implicit decoder: Decoder[A],
-      //                                   applicative: Applicative[F]): EntityEncoder[F, A] =
-      //    org.http4s.circe.jsonEncoderOf[F, A]
-
       import io.circe.generic.auto._
       case class MyRequestBody(a: String, b: List[Int])
-
-      import org.http4s.circe._
-      implicit val body: EntityEncoder[IO, MyRequestBody] = jsonEncoderOf[IO, MyRequestBody]
 
       def requestBody: MyRequestBody = MyRequestBody("A", List(1, 2, 3))
 
