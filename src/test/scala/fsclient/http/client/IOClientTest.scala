@@ -114,6 +114,22 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer with HttpT
           res.entity.leftMap(e => e.getMessage) shouldBe Left("Response was empty. Please check request logs")
         }
       }
+
+      "response has no `Content-Type`" should {
+        "return 415 with the right error" in {
+          val res = client.getAndDecodeJsonAs(getEndpoint[Json](badRequestNoContentTypeJsonResponse)).unsafeRunSync()
+          res.status shouldBe Status.UnsupportedMediaType
+          res.entity.leftMap(e => e.getMessage) shouldBe Left("`Content-Type` not provided")
+        }
+      }
+
+      "response has an unexpected `Content-Type`" should {
+        "return 415 with the right error" in {
+          val res = client.getAndDecodeJsonAs(getEndpoint[Json](badRequestWrongContentTypeJsonResponse)).unsafeRunSync()
+          res.status shouldBe Status.UnsupportedMediaType
+          res.entity.leftMap(e => e.getMessage) shouldBe Left("multipart/form-data: unexpected `Content-Type`")
+        }
+      }
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -185,6 +201,22 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer with HttpT
           val res = client.getAndDecodeJsonAs(getEndpoint[String](notFoundEmptyPlainTextBodyResponse)).unsafeRunSync()
           res.status shouldBe Status.NotFound
           res.entity.leftMap(e => e.getMessage) shouldBe Left("")
+        }
+      }
+
+      "response has no `Content-Type`" should {
+        "return 415 with the right error" in {
+          val res = client.getAndDecodePlainTextAs(getEndpoint[String](badRequestNoContentTypeJsonResponse)).unsafeRunSync()
+          res.status shouldBe Status.UnsupportedMediaType
+          res.entity.leftMap(e => e.getMessage) shouldBe Left("`Content-Type` not provided")
+        }
+      }
+
+      "response has an unexpected `Content-Type`" should {
+        "return 415 with the right error" in {
+          val res = client.getAndDecodePlainTextAs(getEndpoint[String](badRequestWrongContentTypeJsonResponse)).unsafeRunSync()
+          res.status shouldBe Status.UnsupportedMediaType
+          res.entity.leftMap(e => e.getMessage) shouldBe Left("multipart/form-data: unexpected `Content-Type`")
         }
       }
     }
@@ -268,6 +300,22 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer with HttpT
           res.entity.leftMap(e => e.getMessage) shouldBe Left("Response was empty. Please check request logs")
         }
       }
+
+      "response has no `Content-Type`" should {
+        "return 415 with the right error" in {
+          val res = client.postAndDecodeJsonAs(postEndpoint[Json](badRequestNoContentTypeJsonResponse), requestBody).unsafeRunSync()
+          res.status shouldBe Status.UnsupportedMediaType
+          res.entity.leftMap(e => e.getMessage) shouldBe Left("`Content-Type` not provided")
+        }
+      }
+
+      "response has an unexpected `Content-Type`" should {
+        "return 415 with the right error" in {
+          val res = client.postAndDecodeJsonAs(postEndpoint[Json](badRequestWrongContentTypeJsonResponse), requestBody).unsafeRunSync()
+          res.status shouldBe Status.UnsupportedMediaType
+          res.entity.leftMap(e => e.getMessage) shouldBe Left("multipart/form-data: unexpected `Content-Type`")
+        }
+      }
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -339,6 +387,22 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer with HttpT
           val res = client.postAndDecodeJsonAs(postEndpoint[String](notFoundEmptyPlainTextBodyResponse), requestBody).unsafeRunSync()
           res.status shouldBe Status.NotFound
           res.entity.leftMap(e => e.getMessage) shouldBe Left("")
+        }
+      }
+
+      "response has no `Content-Type`" should {
+        "return 415 with the right error" in {
+          val res = client.postAndDecodePlainTextAs(postEndpoint[String](badRequestNoContentTypeJsonResponse), requestBody).unsafeRunSync()
+          res.status shouldBe Status.UnsupportedMediaType
+          res.entity.leftMap(e => e.getMessage) shouldBe Left("`Content-Type` not provided")
+        }
+      }
+
+      "response has an unexpected `Content-Type`" should {
+        "return 415 with the right error" in {
+          val res = client.postAndDecodePlainTextAs(postEndpoint[String](badRequestWrongContentTypeJsonResponse), requestBody).unsafeRunSync()
+          res.status shouldBe Status.UnsupportedMediaType
+          res.entity.leftMap(e => e.getMessage) shouldBe Left("multipart/form-data: unexpected `Content-Type`")
         }
       }
     }

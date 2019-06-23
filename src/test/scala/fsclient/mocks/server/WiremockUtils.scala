@@ -17,16 +17,12 @@ object WiremockUtils {
 
   implicit class ResponseDefinitionImplicits(response: ResponseDefinition) {
     implicit def error(code: Int, message: String): ResponseDefinition =
-      response
-        .setContentType(ContentType.TEXT_PLAIN)
+      ResponseDefinitionBuilder.like(response)
+        .but()
+        .withHeader(`Content-Type`, ContentType.TEXT_PLAIN.getMimeType)
         .withStatus(code)
         .withBody(message)
         .build()
-
-    implicit def setContentType(contentType: ContentType): ResponseDefinitionBuilder =
-      ResponseDefinitionBuilder.like(response)
-        .but()
-        .withHeader(`Content-Type`, contentType.getMimeType)
   }
 
 }

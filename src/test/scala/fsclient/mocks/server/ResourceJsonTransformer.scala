@@ -24,16 +24,31 @@ case object ResourceJsonTransformer extends ResponseDefinitionTransformer with M
       requestUrl match {
 
         case str if str == notFoundEmptyJsonBodyResponse =>
-          res.withStatus(404)
+          res
+            .withHeader(`Content-Type`, ContentType.APPLICATION_JSON.getMimeType)
+            .withStatus(404)
 
         case str if str == notFoundJsonResponse =>
-          res.withStatus(404).withBodyFile(s"$requestUrl.json")
+          res
+            .withHeader(`Content-Type`, ContentType.APPLICATION_JSON.getMimeType)
+            .withStatus(404)
+            .withBodyFile(s"$requestUrl.json")
 
-        case _ => res.withStatus(200).withBodyFile(s"$requestUrl.json")
+        case str if str == badRequestNoContentTypeJsonResponse =>
+          res.withStatus(400)
+
+        case str if str == badRequestWrongContentTypeJsonResponse =>
+          res
+            .withHeader(`Content-Type`, ContentType.MULTIPART_FORM_DATA.getMimeType)
+            .withStatus(400)
+
+        case _ => res
+          .withHeader(`Content-Type`, ContentType.APPLICATION_JSON.getMimeType)
+          .withStatus(200).withBodyFile(s"$requestUrl.json")
       }
     }
 
-    jsonResponse(response.setContentType(ContentType.APPLICATION_JSON)).build()
+    jsonResponse(ResponseDefinitionBuilder.like(response)).build()
   }
 
   override def getName: String = "resource-json-transformer"

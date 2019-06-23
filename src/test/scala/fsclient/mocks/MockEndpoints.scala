@@ -15,6 +15,10 @@ trait MockEndpoints {
   final val notFoundEmptyPlainTextBodyResponse = "empty-plaintext-body-response"
   final val okEmptyResponse = "empty-response" // TODO
   final val okEmptyPlainTextResponse = "empty-plaintext-response"
+  final val badRequestNoContentTypeJsonResponse = "no-content-type-json-response"
+  final val badRequestWrongContentTypeJsonResponse = "wrong-content-type-json-response"
+  final val badRequestNoContentTypePlainTextResponse = "no-content-type-plaintext-response"
+  final val badRequestWrongContentTypePlainTextResponse = "wrong-content-type-plaintext-response"
   final val timeoutResponse = "timeout-response"
 
   def notFoundJsonResponseEndpoint[M <: HttpMethod](httpMethod: M): HttpEndpoint[Json, M] =

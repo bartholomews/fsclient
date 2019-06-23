@@ -24,19 +24,35 @@ case object ResourcePlainTextTransformer extends ResponseDefinitionTransformer w
       requestUrl match {
 
         case str if str == notFoundEmptyPlainTextBodyResponse =>
-          res.withStatus(404)
+          res
+            .withHeader(`Content-Type`, ContentType.TEXT_PLAIN.getMimeType)
+            .withStatus(404)
 
         case str if str == notFoundPlainTextResponse =>
-          res.withStatus(404).withBodyFile(requestUrl)
+          res
+            .withHeader(`Content-Type`, ContentType.TEXT_PLAIN.getMimeType)
+            .withStatus(404).withBodyFile(requestUrl)
+
+        case str if str == badRequestNoContentTypePlainTextResponse =>
+          res.withStatus(400)
+
+        case str if str == badRequestWrongContentTypePlainTextResponse =>
+          res
+            .withHeader(`Content-Type`, ContentType.MULTIPART_FORM_DATA.getMimeType)
+            .withStatus(400)
 
         case str if str == okEmptyPlainTextResponse =>
-          res.withStatus(200)
+          res
+            .withHeader(`Content-Type`, ContentType.TEXT_PLAIN.getMimeType)
+            .withStatus(200)
 
-        case _ => res.withStatus(200).withBodyFile(requestUrl)
+        case _ => res
+          .withHeader(`Content-Type`, ContentType.TEXT_PLAIN.getMimeType)
+          .withStatus(200).withBodyFile(requestUrl)
       }
     }
 
-    plainTextResponse(response.setContentType(ContentType.TEXT_PLAIN)).build()
+    plainTextResponse(ResponseDefinitionBuilder.like(response)).build()
   }
 
   override def getName: String = "resource-plaintext-transformer"

@@ -5,6 +5,7 @@ import com.github.tomakehurst.wiremock.extension.{Parameters, ResponseDefinition
 import com.github.tomakehurst.wiremock.http.{Request, ResponseDefinition}
 import fsclient.mocks.MockClientConfig
 import WiremockUtils._
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import org.apache.http.entity.ContentType
 
 case object AuthenticatedRequestTransformer extends ResponseDefinitionTransformer
@@ -17,7 +18,8 @@ case object AuthenticatedRequestTransformer extends ResponseDefinitionTransforme
                          files: FileSource,
                          parameters: Parameters): ResponseDefinition = {
 
-    val textPlainResponse = response.setContentType(ContentType.TEXT_PLAIN)
+    val textPlainResponse = ResponseDefinitionBuilder.like(response).but()
+      .withHeader(`Content-Type`, ContentType.TEXT_PLAIN.getMimeType)
 
     oAuthRequestHeaders(request) match {
 
