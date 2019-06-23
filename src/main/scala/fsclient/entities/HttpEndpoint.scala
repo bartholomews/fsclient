@@ -1,9 +1,9 @@
 package fsclient.entities
 
-import org.http4s.{Method, Uri}
+import org.http4s.Uri
 
-trait HttpEndpoint[T] {
+trait HttpEndpoint[E, M <: HttpMethod] {
   def uri: Uri
 
-  def method: Method
+  def method: M
 }

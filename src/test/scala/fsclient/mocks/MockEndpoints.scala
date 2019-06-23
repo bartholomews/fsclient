@@ -1,6 +1,6 @@
 package fsclient.mocks
 
-import fsclient.entities.{HttpEndpoint, HttpMethod}
+import fsclient.entities.{HttpEndpoint, HttpMethod, GET}
 import io.circe.Json
 import org.http4s.Uri
 
@@ -17,18 +17,28 @@ trait MockEndpoints {
   final val okEmptyPlainTextResponse = "empty-plaintext-response"
   final val timeoutResponse = "timeout-response"
 
-  val notFoundJsonResponseEndpoint: HttpEndpoint[Json] = getEndpoint(notFoundJsonResponse)
-  val notFoundEmptyJsonResponseEndpoint: HttpEndpoint[Json] = getEndpoint(notFoundEmptyJsonBodyResponse)
+  def notFoundJsonResponseEndpoint[M <: HttpMethod](httpMethod: M): HttpEndpoint[Json, M] =
+    makeEndpoint(notFoundJsonResponse, httpMethod)
+
+  def notFoundEmptyJsonResponseEndpoint[M <: HttpMethod](httpMethod: M): HttpEndpoint[Json, M] =
+    makeEndpoint(notFoundEmptyJsonBodyResponse, httpMethod)
+
   /*
     valid endpoints NEED to match the string under `__files` dir
    */
-  def validResponseEndpoint[A]: HttpEndpoint[A] = getEndpoint[A]("test-json-response")
-  def validPlainTextResponseEndpoint[A]: HttpEndpoint[A] = getEndpoint("test-plaintext-response")
+  def validResponseEndpoint[A, M <: HttpMethod](httpMethod: M): HttpEndpoint[A, M] =
+    makeEndpoint("test-json-response", httpMethod)
 
-  def timeoutResponseEndpoint[A]: HttpEndpoint[A] = getEndpoint[A](timeoutResponse)
+  def validPlainTextResponseEndpoint[A, M <: HttpMethod](httpMethod: M): HttpEndpoint[A, M] =
+    makeEndpoint("test-plaintext-response", httpMethod)
 
-  def getEndpoint[A](endpoint: String): HttpEndpoint[A] = new HttpEndpoint[A] with HttpMethod.GET {
+  def timeoutResponseEndpoint[A, M <: HttpMethod](httpMethod: M): HttpEndpoint[A, M] =
+    makeEndpoint(timeoutResponse, httpMethod)
+
+  def makeEndpoint[A, M <: HttpMethod](endpoint: String, httpMethod: M): HttpEndpoint[A, M] = new HttpEndpoint[A, M] {
     override def uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
+    override val method: M = httpMethod
   }
 
+  def getEndpoint[A](endpoint: String): HttpEndpoint[A, GET] = makeEndpoint(endpoint, GET())
 }

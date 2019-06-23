@@ -22,57 +22,57 @@ private[http] trait HttpEffectClient[F[_]] extends RequestF {
     .withUri(uri)
     .withHeaders(USER_AGENT)
 
-  private[http] def fetchPlainText[A, B](uri: Uri,
-                                         method: Method,
-                                         body: B,
-                                         accessToken: Option[OAuthAccessToken])
-                                        (implicit
-                                         effect: Effect[F],
-                                         consumer: Consumer,
-                                         resource: Resource[F, Client[F]],
-                                         bodyEntityEncoder: EntityEncoder[F, B],
-                                         plainTextToEntityPipe: HttpPipe[F, String, A]): F[HttpResponse[A]] = {
+  private[http] def callPlainText[A, B](uri: Uri,
+                                        method: Method,
+                                        body: B,
+                                        accessToken: Option[OAuthAccessToken])
+                                       (implicit
+                                        effect: Effect[F],
+                                        consumer: Consumer,
+                                        resource: Resource[F, Client[F]],
+                                        bodyEntityEncoder: EntityEncoder[F, B],
+                                        plainTextToEntityPipe: HttpPipe[F, String, A]): F[HttpResponse[A]] = {
 
     val request = createRequest(uri).withMethod(method).withEntity(body)
     resource.use(client => run(plainTextRequest[F, A](client)(request, accessToken)))
   }
 
-  private[http] def fetchPlainText[A](uri: Uri,
-                                      method: Method = Method.GET,
-                                      accessToken: Option[OAuthAccessToken])
-                                     (implicit
-                                      effect: Effect[F],
-                                      consumer: Consumer,
-                                      resource: Resource[F, Client[F]],
-                                      decoder: HttpPipe[F, String, A]): F[HttpResponse[A]] = {
+  private[http] def callPlainText[A](uri: Uri,
+                                     method: Method = Method.GET,
+                                     accessToken: Option[OAuthAccessToken])
+                                    (implicit
+                                     effect: Effect[F],
+                                     consumer: Consumer,
+                                     resource: Resource[F, Client[F]],
+                                     decoder: HttpPipe[F, String, A]): F[HttpResponse[A]] = {
 
     val request = createRequest(uri).withMethod(method)
     resource.use(client => run(plainTextRequest[F, A](client)(request, accessToken)))
   }
 
-  private[http] def fetchJson[A, B](uri: Uri,
-                                    method: Method,
-                                    body: B,
-                                    accessToken: Option[OAuthAccessToken])
-                                   (implicit
-                                    effect: Effect[F],
-                                    consumer: Consumer,
-                                    resource: Resource[F, Client[F]],
-                                    bodyEntityEncoder: EntityEncoder[F, B],
-                                    decode: Decoder[A]): F[HttpResponse[A]] = {
+  private[http] def callJson[A, B](uri: Uri,
+                                   method: Method,
+                                   body: B,
+                                   accessToken: Option[OAuthAccessToken])
+                                  (implicit
+                                   effect: Effect[F],
+                                   consumer: Consumer,
+                                   resource: Resource[F, Client[F]],
+                                   bodyEntityEncoder: EntityEncoder[F, B],
+                                   decode: Decoder[A]): F[HttpResponse[A]] = {
 
     val request = createRequest(uri).withMethod(method).withEntity(body)
     resource.use(client => run(jsonRequest(client)(request, accessToken)))
   }
 
-  private[http] def fetchJson[A](uri: Uri,
-                                 method: Method = Method.GET,
-                                 accessToken: Option[OAuthAccessToken])
-                                (implicit
-                                 effect: Effect[F],
-                                 consumer: Consumer,
-                                 resource: Resource[F, Client[F]],
-                                 decode: Decoder[A]): F[HttpResponse[A]] = {
+  private[http] def callJson[A](uri: Uri,
+                                method: Method = Method.GET,
+                                accessToken: Option[OAuthAccessToken])
+                               (implicit
+                                effect: Effect[F],
+                                consumer: Consumer,
+                                resource: Resource[F, Client[F]],
+                                decode: Decoder[A]): F[HttpResponse[A]] = {
 
     val request = createRequest(uri).withMethod(method)
     resource.use(client => run(jsonRequest(client)(request, accessToken)))
