@@ -24,8 +24,8 @@ trait WiremockServer extends BeforeAndAfterAll with MockClientConfig with MockEn
 
   private def stubApi(): Unit = {
 
-    stubFor(get(urlMatching("^.*json.*$")).willReturn(aResponse().withTransformers(ResourceJsonTransformer.getName)))
-    stubFor(get(urlMatching("^.*plaintext.*$")).willReturn(aResponse().withTransformers(ResourcePlainTextTransformer.getName)))
+    stubFor(any(urlMatching("^.*json.*$")).willReturn(aResponse().withTransformers(ResourceJsonTransformer.getName)))
+    stubFor(any(urlMatching("^.*plaintext.*$")).willReturn(aResponse().withTransformers(ResourcePlainTextTransformer.getName)))
 
     val timeout = 30000
     stubFor(get(s"/$timeoutResponse").willReturn(aResponse().withFixedDelay(timeout)))
