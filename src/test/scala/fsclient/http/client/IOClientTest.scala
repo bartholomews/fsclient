@@ -187,6 +187,9 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer with HttpT
 
       def requestBody: MyRequestBody = MyRequestBody("A", List(1, 2, 3))
 
+      def timeoutResponsePostEndpoint[E]: HttpEndpoint[E, POST] =
+        timeoutResponseEndpoint[E, POST](POST())
+
       "response is 200" should {
 
         def validResponsePostEndpoint[E]: HttpEndpoint[E, POST] =
@@ -228,40 +231,40 @@ class IOClientTest extends WordSpec with Matchers with WiremockServer with HttpT
         }
       }
 
-//      "response is 404" should {
+      "response is 404" should {
 
-//        def notFoundJsonResponseGetEndpoint: HttpEndpoint[Json, GET] = notFoundJsonResponseEndpoint(GET())
-//
-//        "retrieve the json response with Status NotFound and entity prettified with spaces2" in {
-//          val res = client.getAndDecodeJsonAs(notFoundJsonResponseGetEndpoint).unsafeRunSync()
-//          res.status shouldBe Status.NotFound
-//          res.entity shouldBe a[Left[_, _]]
-//          res.entity.leftMap(e => e.getMessage) shouldBe Left(
-//            Map("message" -> "The requested resource was not found.").asJson.spaces2
-//          )
-//        }
-//      }
-//
-//      "response is empty" should {
+        def notFoundJsonResponsePostEndpoint: HttpEndpoint[Json, POST] = notFoundJsonResponseEndpoint(POST())
 
-//        def notFoundEmptyJsonResponseGetEndpoint: HttpEndpoint[Json, GET] = notFoundEmptyJsonResponseEndpoint(GET())
-//
-//        "respond with error for http response timeout" in {
-//          val res = client.getAndDecodeJsonAs(timeoutResponseGetEndpoint[String]).unsafeRunSync()
-//          res.status shouldBe Status.InternalServerError
-//          res.entity shouldBe a[Left[_, _]]
-//          res.entity.leftMap(err => {
-//            err.status shouldBe Status.InternalServerError
-//            err.getMessage shouldBe "There was a problem with the response. Please check error logs"
-//          })
-//        }
-//
-//        "return error with response status and default message" in {
-//          val res = client.getAndDecodeJsonAs(notFoundEmptyJsonResponseGetEndpoint).unsafeRunSync()
-//          res.status shouldBe Status.NotFound
-//          res.entity.leftMap(e => e.getMessage) shouldBe Left("Response was empty. Please check request logs")
-//        }
-      //      }
+        "retrieve the json response with Status NotFound and entity prettified with spaces2" in {
+          val res = client.postAndDecodeJsonAs(notFoundJsonResponsePostEndpoint, requestBody).unsafeRunSync()
+          res.status shouldBe Status.NotFound
+          res.entity shouldBe a[Left[_, _]]
+          res.entity.leftMap(e => e.getMessage) shouldBe Left(
+            Map("message" -> "The requested resource was not found.").asJson.spaces2
+          )
+        }
+      }
+
+      "response is empty" should {
+
+        def notFoundEmptyJsonResponsePostEndpoint: HttpEndpoint[Json, POST] = notFoundEmptyJsonResponseEndpoint(POST())
+
+        "respond with error for http response timeout" in {
+          val res = client.postAndDecodeJsonAs(timeoutResponsePostEndpoint[String], requestBody).unsafeRunSync()
+          res.status shouldBe Status.InternalServerError
+          res.entity shouldBe a[Left[_, _]]
+          res.entity.leftMap(err => {
+            err.status shouldBe Status.InternalServerError
+            err.getMessage shouldBe "There was a problem with the response. Please check error logs"
+          })
+        }
+
+        "return error with response status and default message" in {
+          val res = client.postAndDecodeJsonAs(notFoundEmptyJsonResponsePostEndpoint, requestBody).unsafeRunSync()
+          res.status shouldBe Status.NotFound
+          res.entity.leftMap(e => e.getMessage) shouldBe Left("Response was empty. Please check request logs")
+        }
+      }
     }
 
     "calling a POST endpoint with no entity body and json response" in {

@@ -28,7 +28,7 @@ trait WiremockServer extends BeforeAndAfterAll with MockClientConfig with MockEn
     stubFor(any(urlMatching("^.*plaintext.*$")).willReturn(aResponse().withTransformers(ResourcePlainTextTransformer.getName)))
 
     val timeout = 30000
-    stubFor(get(s"/$timeoutResponse").willReturn(aResponse().withFixedDelay(timeout)))
+    stubFor(any(urlMatching(s"/$timeoutResponse")).willReturn(aResponse().withFixedDelay(timeout)))
 
     stubFor(post("/oauth/access_token")
       .willReturn(aResponse()
