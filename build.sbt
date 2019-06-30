@@ -1,10 +1,12 @@
 import Dependencies.{dependencies, testDependencies}
 
-organization := "io.github.bartholomews"
+organization := "io.bartholomews"
 
 name := "fsclient"
 
-version := "0.0.2-SNAPSHOT"
+version := "0.1.0"
+
+skip in publish := isSnapshot.value
 
 scalaVersion := "2.12.8"
 
@@ -12,18 +14,11 @@ licenses += ("Unlicense", url("https://unlicense.org"))
 
 libraryDependencies ++= dependencies ++ testDependencies
 
-scalacOptions ++= Compiler.tpolecatOptions 
+scalacOptions ++= Compiler.tpolecatOptions
 scalacOptions ++= Seq(Compiler.unchecked, Compiler.deprecation)
-
-coverageEnabled := true
-coverageMinimum := 70
-coverageFailOnMinimum := true
 
 // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
 logBuffered in Test := false
-//parallelExecution in ThisBuild := false
-
-skip in publish := isSnapshot.value
 
 testOptions in Test ++= Seq(
   Tests.Argument(
@@ -31,10 +26,12 @@ testOptions in Test ++= Seq(
     "-oU", // enable standard output reporter
     "-u", // enable xml reporter
     "target/test-reports", // xml reporter output dir
-    "-h", // enable html reporter
-    "target/test-html-reports", // html reporter output dir
   )
 )
+
+coverageEnabled := true
+coverageMinimum := 100
+coverageFailOnMinimum := true
 
 addCommandAlias(
   "test-coverage",
