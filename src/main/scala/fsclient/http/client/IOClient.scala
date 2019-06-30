@@ -30,22 +30,22 @@ class IOClient(override val consumer: OAuthConsumer,
       value => IO.pure(value)
     ))
 
-  def getAndDecodeJsonAs[T](endpoint: HttpEndpoint[T, GET])(implicit responseDecoder: Decoder[T]): IOResponse[T] =
-    callJson(endpoint.uri, endpoint.method.value, accessToken)
+  def decodeJsonAs[T](endpoint: HttpEndpoint[T])(implicit responseDecoder: Decoder[T]): IOResponse[T] =
+    callJson(endpoint.uri, endpoint.method, accessToken)
 
-  def getAndDecodePlainTextAs[T](endpoint: HttpEndpoint[T, GET])
-                                (implicit responseDecoder: IOHttpPipe[String, T]): IOResponse[T] =
-    callPlainText(endpoint.uri, endpoint.method.value, accessToken)
+  def decodePlainTextAs[T](endpoint: HttpEndpoint[T])
+                          (implicit responseDecoder: IOHttpPipe[String, T]): IOResponse[T] =
+    callPlainText(endpoint.uri, endpoint.method, accessToken)
 
-  def postAndDecodeJsonAs[T, B](endpoint: HttpEndpoint[T, POST], body: B)
-                               (implicit
-                                requestBodyEncoder: Encoder[B],
-                                responseDecoder: Decoder[T]): IOResponse[T] =
-    callJson(endpoint.uri, endpoint.method.value, body, accessToken)
+  def decodeJsonAs[T, B](endpoint: HttpEndpoint[T], body: B)
+                        (implicit
+                         requestBodyEncoder: Encoder[B],
+                         responseDecoder: Decoder[T]): IOResponse[T] =
+    callJson(endpoint.uri, endpoint.method, body, accessToken)
 
-  def postAndDecodePlainTextAs[A, B](endpoint: HttpEndpoint[A, POST], body: B)
-                                    (implicit
-                                     requestBodyEncoder: Encoder[B],
-                                     responseDecoder: HttpPipe[IO, String, A]): IOResponse[A] =
-    callPlainText(endpoint.uri, endpoint.method.value, body, accessToken)
+  def decodePlainTextAs[A, B](endpoint: HttpEndpoint[A], body: B)
+                             (implicit
+                              requestBodyEncoder: Encoder[B],
+                              responseDecoder: HttpPipe[IO, String, A]): IOResponse[A] =
+    callPlainText(endpoint.uri, endpoint.method, body, accessToken)
 }

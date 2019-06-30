@@ -1,16 +1,27 @@
 import sbt._
 
 object Versions {
-  val cats = "2.0.0-M2"
-  val cats_effect = "2.0.0-M2"
-  val circe = "0.12.0-M1"
-  val circe_fs2 = "0.11.0"
+  // https://github.com/typelevel/cats/releases
+  val cats = "2.0.0-M4"
+  // https://github.com/typelevel/cats-effect/releases
+  val cats_effect = "2.0.0-M4"
+  // https://github.com/circe/circe/releases
+  val circe = "0.12.0-M3"
+  // https://github.com/circe/circe-fs2/releases
+  val circe_fs2 = "0.12.0-M1"
+  // https://github.com/circe/circe-magnolia/releases
   val circe_magnolia = "0.4.0"
-  val http4s = "0.20.1"
+  // https://github.com/http4s/http4s/releases
+  val http4s = "0.21.0-M1"
+  // https://github.com/lightbend/config/releases
   val lightbendConfig = "1.3.4"
+  // https://github.com/qos-ch/logback/releases
   val logback = "1.3.0-alpha4"
-  val pureConfig = "0.11.0"
-  val scalaTest = "3.0.7"
+  // https://github.com/pureconfig/pureconfig/releases
+  val pureConfig = "0.11.1"
+  // https://github.com/scalatest/scalatest/releases
+  val scalaTest = "3.0.8"
+  // https://github.com/tomakehurst/wiremock/releases
   val wiremock = "2.23.2"
 }
 
@@ -41,12 +52,9 @@ object Dependencies {
     logback ++ pureConfig ++ typelevel
 
   lazy val testDependencies: Seq[ModuleID] = Seq(
-    // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
-    // libraryDependencies += "org.slf4j" % "slf4j-log4j12" % "1.7.25" % Test
     "org.scalactic" %% "scalactic" % Versions.scalaTest,
     // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
     "org.scalatest" %% "scalatest" % Versions.scalaTest,
     "com.github.tomakehurst" % "wiremock" % Versions.wiremock,
-    "org.pegdown" % "pegdown" % "1.6.0" // required for scalatest html report
   ).map(_ % Test)
 }

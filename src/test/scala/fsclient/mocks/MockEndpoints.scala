@@ -1,7 +1,6 @@
 package fsclient.mocks
 
-import fsclient.entities.{GET, HttpEndpoint, HttpMethod, POST}
-import io.circe.Json
+import fsclient.entities.{HttpEndpoint, HttpMethod}
 import org.http4s.Uri
 
 trait MockEndpoints {
@@ -15,35 +14,19 @@ trait MockEndpoints {
   final val notFoundEmptyPlainTextBodyResponse = "empty-plaintext-body-response"
   final val okEmptyResponse = "empty-response" // TODO
   final val okEmptyPlainTextResponse = "empty-plaintext-response"
+  final val okJsonResponse = "test-json-response"
+  final val okPlainTextResponse = "test-plaintext-response"
   final val badRequestNoContentTypeJsonResponse = "no-content-type-json-response"
   final val badRequestWrongContentTypeJsonResponse = "wrong-content-type-json-response"
   final val badRequestNoContentTypePlainTextResponse = "no-content-type-plaintext-response"
   final val badRequestWrongContentTypePlainTextResponse = "wrong-content-type-plaintext-response"
   final val timeoutResponse = "timeout-response"
 
-  def notFoundJsonResponseEndpoint[M <: HttpMethod](httpMethod: M): HttpEndpoint[Json, M] =
-    makeEndpoint(notFoundJsonResponse, httpMethod)
-
-  def notFoundEmptyJsonResponseEndpoint[M <: HttpMethod](httpMethod: M): HttpEndpoint[Json, M] =
-    makeEndpoint(notFoundEmptyJsonBodyResponse, httpMethod)
-
-  /*
-    valid endpoints NEED to match the string under `__files` dir
-   */
-  def validResponseEndpoint[A, M <: HttpMethod](httpMethod: M): HttpEndpoint[A, M] =
-    makeEndpoint("test-json-response", httpMethod)
-
-  def validPlainTextResponseEndpoint[A, M <: HttpMethod](httpMethod: M): HttpEndpoint[A, M] =
-    makeEndpoint("test-plaintext-response", httpMethod)
-
-  def timeoutResponseEndpoint[A, M <: HttpMethod](httpMethod: M): HttpEndpoint[A, M] =
-    makeEndpoint(timeoutResponse, httpMethod)
-
-  def makeEndpoint[A, M <: HttpMethod](endpoint: String, httpMethod: M): HttpEndpoint[A, M] = new HttpEndpoint[A, M] {
+  def postEndpoint[A](endpoint: String): HttpEndpoint[A] = new HttpEndpoint[A] with HttpMethod.POST {
     override def uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
-    override val method: M = httpMethod
   }
 
-  def getEndpoint[A](endpoint: String): HttpEndpoint[A, GET] = makeEndpoint(endpoint, GET())
-  def postEndpoint[A](endpoint: String): HttpEndpoint[A, POST] = makeEndpoint(endpoint, POST())
+  def getEndpoint[A](endpoint: String): HttpEndpoint[A] = new HttpEndpoint[A] with HttpMethod.GET {
+    override def uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
+  }
 }
