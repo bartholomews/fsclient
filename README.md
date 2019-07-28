@@ -6,7 +6,10 @@
 # fsclient
 Http wrapper on top of http4s
 
+## Local development
+
 ### Run CircleCI locally
+https://circleci.com/docs/2.0/local-cli/
 ```bash
 circleci local execute
 ```

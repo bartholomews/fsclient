@@ -8,6 +8,7 @@ import WiremockUtils._
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import org.apache.http.entity.ContentType
 
+// TODO: use this to test oAuth client
 case object AuthenticatedRequestTransformer extends ResponseDefinitionTransformer
   with OAuthServer with MockClientConfig {
 
@@ -21,9 +22,11 @@ case object AuthenticatedRequestTransformer extends ResponseDefinitionTransforme
     val textPlainResponse = ResponseDefinitionBuilder.like(response).but()
       .withHeader(`Content-Type`, ContentType.TEXT_PLAIN.getMimeType)
 
+    val oAuthResponseRegex = oAuthResponseRegexStr.r
+
     oAuthRequestHeaders(request) match {
 
-      case accessTokenResponseRegex(_, key, _, _, _, _, _) =>
+      case oAuthResponseRegex(_, key, _, _, _, _, _) =>
         if (key == validConsumerKey) textPlainResponse.withStatus(200).build()
         else if (key == invalidConsumerKey) response.error(401, ErrorMessage.invalidSignature)
         // FIXME this won't work chained with another transformer which will change the body (e.g. json response):

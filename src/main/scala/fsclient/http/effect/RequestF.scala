@@ -2,7 +2,7 @@ package fsclient.http.effect
 
 import cats.effect.Effect
 import fs2.{Pipe, Stream}
-import fsclient.entities.{HttpResponse, OAuthAccessToken}
+import fsclient.entities.{HttpResponse, OAuthToken}
 import fsclient.utils.{HttpTypes, Logger}
 import io.circe.Decoder
 import org.http4s.client.Client
@@ -13,31 +13,31 @@ private[http] trait RequestF extends HttpPipes with HttpTypes with OAuthSignatur
 
   def jsonRequest[F[_] : Effect, A](client: Client[F])
                                    (request: Request[F],
-                                    accessToken: Option[OAuthAccessToken] = None)
+                                    oAuthToken: Option[OAuthToken] = None)
                                    (implicit
                                     consumer: Consumer,
                                     decoder: Decoder[A]): Stream[F, HttpResponse[A]] = {
 
-    processHttpRequest(client)(request, accessToken, decodeJsonResponse, doNothing)
+    processHttpRequest(client)(request, oAuthToken, decodeJsonResponse, doNothing)
   }
 
   def plainTextRequest[F[_] : Effect, A](client: Client[F])
                                         (request: Request[F],
-                                         accessToken: Option[OAuthAccessToken] = None)
+                                         oAuthToken: Option[OAuthToken] = None)
                                         (implicit consumer: Consumer,
                                          decoder: HttpPipe[F, String, A]): Stream[F, HttpResponse[A]] = {
 
-    processHttpRequest(client)(request, accessToken, decodeTextPlainResponse, decoder)
+    processHttpRequest(client)(request, oAuthToken, decodeTextPlainResponse, decoder)
   }
 
   private def processHttpRequest[F[_] : Effect, A](client: Client[F])
                                                   (request: Request[F],
-                                                   accessToken: Option[OAuthAccessToken],
+                                                   oAuthToken: Option[OAuthToken],
                                                    decodeRight: Pipe[F, Response[F], ErrorOr[A]],
                                                    decodeLeft: Pipe[F, ErrorOr[Nothing], ErrorOr[A]])
                                                   (implicit consumer: Consumer): Stream[F, HttpResponse[A]] = {
 
-    val signed: Stream[F, Request[F]] = Stream.eval(sign(consumer, accessToken)(request))
+    val signed: Stream[F, Request[F]] = Stream.eval(sign(consumer, oAuthToken)(request))
     //    val pure: Stream[Pure, Request[F]] = Stream(request)
 
     for {

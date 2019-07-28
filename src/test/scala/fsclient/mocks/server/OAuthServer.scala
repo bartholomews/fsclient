@@ -8,7 +8,7 @@ trait OAuthServer {
 
   def oAuthRequestHeaders(request: Request): String = request.getHeader("Authorization")
 
-  private val oAuthResponseRegex =
+  val oAuthResponseRegexStr: String =
     "OAuth oauth_signature=\"(.*)\"," +
       "oauth_consumer_key=\"(.*)\"," +
       "oauth_signature_method=\"(.*)\"," +
@@ -17,8 +17,8 @@ trait OAuthServer {
       "oauth_version=\"(.*)\"," +
       "oauth_callback=\"(.*)\""
 
-  val accessTokenResponseRegex: Regex = oAuthResponseRegex.r
-  val requestTokenResponseRegex: Regex = (oAuthResponseRegex + ",oauth_verifier=\"(.*)\"").r
+  val accessTokenResponseRegex: Regex = "Access token response: token=\"(.*)\", secret=\"(.*)\"".r
+  val requestTokenResponseRegex: Regex = (oAuthResponseRegexStr + ",oauth_verifier=\"(.*)\"").r
 
   object ErrorMessage {
     def invalidRequestToken(token: String) = s"Invalid request token: $token"

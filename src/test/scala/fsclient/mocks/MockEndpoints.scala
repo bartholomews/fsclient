@@ -1,6 +1,6 @@
 package fsclient.mocks
 
-import fsclient.entities.{HttpEndpoint, HttpMethod}
+import fsclient.entities._
 import org.http4s.Uri
 
 trait MockEndpoints {
@@ -21,6 +21,13 @@ trait MockEndpoints {
   final val badRequestNoContentTypePlainTextResponse = "no-content-type-plaintext-response"
   final val badRequestWrongContentTypePlainTextResponse = "wrong-content-type-plaintext-response"
   final val timeoutResponse = "timeout-response"
+  final val ok = "timeout-response"
+  final val okAccessTokenResponse = "valid-access-token-plaintext-response"
+
+  val validAccessTokenEndpoint: OAuthEndpoint[AccessToken] = new OAuthEndpoint[AccessToken] with HttpMethod.POST {
+    override def requestToken: RequestToken = RequestToken(validToken, None)
+    override def uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$okAccessTokenResponse")
+  }
 
   def postEndpoint[A](endpoint: String): HttpEndpoint[A] = new HttpEndpoint[A] with HttpMethod.POST {
     override def uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
