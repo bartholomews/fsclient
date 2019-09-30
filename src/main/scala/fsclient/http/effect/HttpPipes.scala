@@ -1,20 +1,18 @@
 package fsclient.http.effect
 
 import cats.effect.Effect
-import fsclient.entities.{EmptyResponseException, ResponseError}
+import cats.implicits._
 import fs2.{Pipe, Stream}
-import io.circe.{Decoder, Json}
+import fsclient.entities.{EmptyResponseException, ResponseError}
+import fsclient.utils.{HttpTypes, Logger}
 import io.circe.fs2.{byteStreamParser, decoder}
+import io.circe.{Decoder, Json}
 import org.http4s.headers.`Content-Type`
 import org.http4s.{Response, Status}
-import fsclient.utils.{HttpTypes, Logger}
-import cats.implicits._
-
-import scala.language.higherKinds
 
 private[http] trait HttpPipes extends HttpTypes with Logger {
 
-  def doNothing[F[_] : Effect, A]: Pipe[F, A, A] = _.map(identity)
+  def doNothing[F[_]: Effect, A]: Pipe[F, A, A] = _.map(identity)
 
   /**
     * Attempt to decode an Http Response with the provided decoder
@@ -24,8 +22,8 @@ private[http] trait HttpPipes extends HttpTypes with Logger {
     * @tparam A the type of expected response entity
     * @return a Pipe transformed in an `Either[ResponseError, A]`
     */
-  def decodeJsonResponse[F[_] : Effect, A]
-  (implicit decode: Decoder[A]): Pipe[F, Response[F], ErrorOr[A]] =
+  def decodeJsonResponse[F[_]: Effect, A](
+      implicit decode: Decoder[A]): Pipe[F, Response[F], ErrorOr[A]] =
     _.flatMap(
       _.body
         .through(byteStreamParser)
@@ -42,10 +40,12 @@ private[http] trait HttpPipes extends HttpTypes with Logger {
     * @tparam A the type of expected response entity
     * @return a Pipe transformed in an `Either[ResponseError, A]`
     */
-  def decodeTextPlainResponse[F[_] : Effect, A]
-  (implicit decoder: HttpPipe[F, String, A]): Pipe[F, Response[F], ErrorOr[A]] =
+  def decodeTextPlainResponse[F[_]: Effect, A](
+      implicit decoder: HttpPipe[F, String, A])
+    : Pipe[F, Response[F], ErrorOr[A]] =
     _.flatMap(res => {
-      Stream.eval(res.as[String])
+      Stream
+        .eval(res.as[String])
         .attempt
         .through(leftMapToResponseError[F, String](Status.UnprocessableEntity))
         .through(decoder)
@@ -59,8 +59,8 @@ private[http] trait HttpPipes extends HttpTypes with Logger {
     * @tparam A the type of expected response entity
     * @return an `Either[ResponseError, A]`
     */
-  def leftMapToResponseError[F[_] : Effect, A]
-  (status: Status): Pipe[F, Either[Throwable, A], ErrorOr[A]] =
+  def leftMapToResponseError[F[_]: Effect, A](
+      status: Status): Pipe[F, Either[Throwable, A], ErrorOr[A]] =
     _.through(errorLogPipe)
       .map(
         _.leftMap(ResponseError(_, status))
@@ -75,13 +75,17 @@ private[http] trait HttpPipes extends HttpTypes with Logger {
     * @tparam A the type of expected response entity, which will be folded to the left
     * @return a Pipe transformed in an `Either.left[ResponseError, Nothing]`
     */
-  def foldToResponseError[F[_] : Effect, A]
-  (status: Status, f: A => String = (res: A) => res.toString): Pipe[F, Either[Throwable, A], ErrorOr[Nothing]] =
+  def foldToResponseError[F[_]: Effect, A](status: Status,
+                                           f: A => String = (res: A) =>
+                                             res.toString)
+    : Pipe[F, Either[Throwable, A], ErrorOr[Nothing]] =
     _.through(errorLogPipe)
-      .map(e => e.fold(
-        err => ResponseError(err, status).asLeft,
-        res => ResponseError(new Exception(f(res)), status).asLeft
-      ))
+      .map(
+        e =>
+          e.fold(
+            err => ResponseError(err, status).asLeft,
+            res => ResponseError(new Exception(f(res)), status).asLeft
+        ))
 
   /**
     * Decode an Http Response into an `Either.left[ResponseError, Nothing]`.
@@ -89,33 +93,39 @@ private[http] trait HttpPipes extends HttpTypes with Logger {
     * @tparam F the `Effect`
     * @return a Pipe transformed in an `Either.left[ResponseError, Nothing]`
     */
-  def errorHandler[F[_] : Effect]: Pipe[F, Response[F], ErrorOr[Nothing]] =
+  def errorHandler[F[_]: Effect]: Pipe[F, Response[F], ErrorOr[Nothing]] =
     _.flatMap(
       response => {
         response.headers.get(`Content-Type`).map(_.value) match {
           case Some("application/json") =>
-            response
-              .body
+            response.body
               .through(byteStreamParser)
               .last
-              .flatMap(_.fold[Stream[F, Json]](
-                Stream.raiseError[F](EmptyResponseException))(
-                Stream.emit
-              ))
+              .flatMap(
+                _.fold[Stream[F, Json]](
+                  Stream.raiseError[F](EmptyResponseException))(
+                  Stream.emit
+                ))
               .attempt
               // FIXME: could try to parse a { "message": "[value]" } instead of _.spaces2
               .through(foldToResponseError(response.status, _.spaces2))
 
-          case Some("text/plain") => Stream.eval(response.as[String])
-            .attempt
-            .through(foldToResponseError(response.status))
+          case Some("text/plain") =>
+            Stream
+              .eval(response.as[String])
+              .attempt
+              .through(foldToResponseError(response.status))
 
           case Some(unexpectedContentType) =>
-            Stream.emit(new Exception(s"$unexpectedContentType: unexpected `Content-Type`").asLeft)
+            Stream
+              .emit(
+                new Exception(
+                  s"$unexpectedContentType: unexpected `Content-Type`").asLeft)
               .through(foldToResponseError(Status.UnsupportedMediaType))
 
           case None =>
-            Stream.emit(new Exception("`Content-Type` not provided").asLeft)
+            Stream
+              .emit(new Exception("`Content-Type` not provided").asLeft)
               .through(foldToResponseError(Status.UnsupportedMediaType))
         }
       }

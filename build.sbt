@@ -4,11 +4,11 @@ organization := "io.bartholomews"
 
 name := "fsclient"
 
-version := "0.1.0"
+version := "0.2.0-SNAPSHOT"
 
-skip in publish := isSnapshot.value
+//skip in publish := isSnapshot.value
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.13.0"
 
 licenses += ("Unlicense", url("https://unlicense.org"))
 

@@ -1,10 +1,13 @@
 package fsclient.config
 
+import pureconfig.ConfigSource
+
 object OAuthConfig {
 
   import pureconfig.generic.auto._
 
-  lazy val oAuthConsumer: OAuthConsumer = pureconfig.loadConfigOrThrow[Config].oauth.consumer
+  lazy val oAuthConsumer: OAuthConsumer =
+    ConfigSource.default.loadOrThrow[Config].oauth.consumer
 
   private case class Config(oauth: OAuthConfig)
 
