@@ -9,13 +9,10 @@ trait ResponseError extends Throwable {
 
 object ResponseError extends Logger {
 
-  private case class ResponseErrorImpl(status: Status,
-                                       throwable: Throwable,
-                                       override val getMessage: String)
+  private case class ResponseErrorImpl(status: Status, throwable: Throwable, override val getMessage: String)
       extends ResponseError
 
-  def apply(throwable: Throwable,
-            status: Status = Status.InternalServerError): ResponseError = {
+  def apply(throwable: Throwable, status: Status = Status.InternalServerError): ResponseError =
     throwable match {
       case circeError: io.circe.Error =>
         ResponseErrorImpl(
@@ -25,7 +22,6 @@ object ResponseError extends Logger {
         )
       case _ => ResponseErrorImpl(status, throwable, throwable.getMessage)
     }
-  }
 }
 
 case object EmptyResponseException extends Exception {
@@ -35,5 +31,5 @@ case object EmptyResponseException extends Exception {
 
 case object GenericResponseError extends Exception {
   override val getMessage: String =
-    "There was a problem with the response. Please check error logs"
+    "There was a problem with the response. Please check the error logs"
 }
