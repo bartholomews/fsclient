@@ -13,3 +13,7 @@ https://circleci.com/docs/2.0/local-cli/
 ```bash
 circleci local execute
 ```
+
+### TODO
+- [scalafmt](https://scalameta.org/scalafmt/)
+- [scala-steward](https://github.com/fthomas/scala-steward)

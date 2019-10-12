@@ -61,10 +61,7 @@ private[http] trait HttpPipes extends HttpTypes with Logger {
     */
   def leftMapToResponseError[F[_]: Effect, A](
       status: Status): Pipe[F, Either[Throwable, A], ErrorOr[A]] =
-    _.through(errorLogPipe)
-      .map(
-        _.leftMap(ResponseError(_, status))
-      )
+    _.through(errorLogPipe).map(_.leftMap(ResponseError(_, status)))
 
   /**
     * Fold both sides of an `Either[Throwable, A]` into an `Either.left[ResponseError]`
@@ -81,10 +78,9 @@ private[http] trait HttpPipes extends HttpTypes with Logger {
     : Pipe[F, Either[Throwable, A], ErrorOr[Nothing]] =
     _.through(errorLogPipe)
       .map(
-        e =>
-          e.fold(
-            err => ResponseError(err, status).asLeft,
-            res => ResponseError(new Exception(f(res)), status).asLeft
+        _.fold(
+          err => ResponseError(err, status).asLeft,
+          res => ResponseError(new Exception(f(res)), status).asLeft
         ))
 
   /**

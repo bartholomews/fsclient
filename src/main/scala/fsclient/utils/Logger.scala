@@ -11,9 +11,9 @@ trait Logger extends HttpTypes {
 
   import pureconfig.generic.auto._
 
-  private[fsclient] case class LoggerConfig(logger: Logger)
+  private[utils] case class LoggerConfig(logger: Logger)
 
-  private[fsclient] case class Logger(name: String)
+  private[utils] case class Logger(name: String)
 
   private val loggerName: String = ConfigSource.default
     .load[LoggerConfig]
