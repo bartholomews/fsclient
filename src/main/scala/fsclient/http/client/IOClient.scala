@@ -11,26 +11,25 @@ import org.http4s.client.oauth1.Consumer
 
 import scala.concurrent.ExecutionContext
 
-private[http] class IOClient(override val consumer: OAuthConsumer)(
-    implicit ec: ExecutionContext)
+private[http] class IOClient(override val consumer: OAuthConsumer)(implicit ec: ExecutionContext)
     extends HttpEffectClient[IO] {
 
   type IOHttpPipe[A, B] = HttpPipe[IO, A, B]
 
-  private[http] implicit val ioContextShift: ContextShift[IO] =
+  implicit private[http] val ioContextShift: ContextShift[IO] =
     IO.contextShift(ec)
-  private[http] implicit val resource: Resource[IO, Client[IO]] =
+  implicit private[http] val resource: Resource[IO, Client[IO]] =
     BlazeClientBuilder[IO](ec).resource
 
-  override final def run[A]
-    : fs2.Stream[IO, HttpResponse[A]] => IO[HttpResponse[A]] =
+  final override def run[A]: fs2.Stream[IO, HttpResponse[A]] => IO[HttpResponse[A]] =
     _.compile.last
       .flatMap(
         _.toRight(ResponseError.apply(GenericResponseError)).fold(
           error => IO.pure(HttpResponse(Headers.empty, Left(error))),
           value => IO.pure(value)
-        ))
+        )
+      )
 
-  private[http] implicit val httpConsumer: Consumer =
+  implicit private[http] val httpConsumer: Consumer =
     Consumer(consumer.key, consumer.secret)
 }

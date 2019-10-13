@@ -2,7 +2,7 @@ package fsclient.http.client
 
 import cats.effect.IO
 import cats.implicits._
-import fsclient.entities.{AccessToken, HttpRequest, HttpRequestWithBody, ResponseError}
+import fsclient.entities.{AccessToken, FsClientPlainRequest, FsClientRequestWithBody, ResponseError}
 import fsclient.mocks.server.{OAuthServer, WiremockServer}
 import fsclient.utils.HttpTypes
 import io.circe.Json
@@ -16,16 +16,16 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
     val client = validSimpleClient
 
-    def validPlainTextResponseGetEndpoint[R]: HttpRequest.GET[R] =
+    def validPlainTextResponseGetEndpoint[R]: FsClientPlainRequest.GET[R] =
       getEndpoint[R](okPlainTextResponse)
 
-    def validPlainTextResponsePostEndpoint[B, R](body: B): HttpRequestWithBody[B, R] =
+    def validPlainTextResponsePostEndpoint[B, R](body: B): FsClientRequestWithBody[B, R] =
       postEndpoint(okPlainTextResponse, body)
 
-    def timeoutResponseGetEndpoint[R]: HttpRequest.GET[R] =
+    def timeoutResponseGetEndpoint[R]: FsClientPlainRequest.GET[R] =
       getEndpoint(timeoutResponse)
 
-    def timeoutResponsePostEndpoint[B, R](body: B): HttpRequestWithBody[B, R] =
+    def timeoutResponsePostEndpoint[B, R](body: B): FsClientRequestWithBody[B, R] =
       postEndpoint(timeoutResponse, body)
 
     import io.circe.generic.auto._
@@ -38,7 +38,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response is 200" should {
 
-        def validResponseGetEndpoint[R]: HttpRequest.GET[R] =
+        def validResponseGetEndpoint[R]: FsClientPlainRequest.GET[R] =
           getEndpoint[R](okJsonResponse)
 
         "retrieve the json with Status Ok and entity" in {
@@ -81,7 +81,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response is empty" should {
 
-        def notFoundEmptyJsonResponseGetEndpoint: HttpRequest.GET[Json] =
+        def notFoundEmptyJsonResponseGetEndpoint: FsClientPlainRequest.GET[Json] =
           getEndpoint(notFoundEmptyJsonBodyResponse)
 
         "respond with error for http response timeout" in {
@@ -203,7 +203,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response is 200" should {
 
-        def validResponsePostEndpoint[R]: HttpRequestWithBody[MyRequestBody, R] =
+        def validResponsePostEndpoint[R]: FsClientRequestWithBody[MyRequestBody, R] =
           postEndpoint(okJsonResponse, requestBody)
 
         "retrieve the json with Status Ok and entity" in {
@@ -235,7 +235,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       }
 
       "response is 404" should {
-        def notFoundJsonResponsePostEndpoint: HttpRequestWithBody[MyRequestBody, Json] =
+        def notFoundJsonResponsePostEndpoint: FsClientRequestWithBody[MyRequestBody, Json] =
           postEndpoint(notFoundJsonResponse, requestBody)
 
         "retrieve the json response with Status NotFound and entity prettified with spaces2" in {
@@ -246,7 +246,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       }
 
       "response is empty" should {
-        def notFoundEmptyJsonResponsePostEndpoint: HttpRequestWithBody[MyRequestBody, Json] =
+        def notFoundEmptyJsonResponsePostEndpoint: FsClientRequestWithBody[MyRequestBody, Json] =
           postEndpoint(notFoundEmptyJsonBodyResponse, requestBody)
 
         "respond with error for http response timeout" in {
@@ -405,7 +405,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
                     Right(AccessToken(Token(tokenValue, tokenSecret)))
                   case invalid =>
                     Left(ResponseError(new Exception(s"Unexpected response:\n[$invalid]")))
-              }
+                }
             )
           )
 

@@ -3,26 +3,34 @@ package fsclient.entities
 import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s.{Method, Uri}
 
-sealed trait HttpRequest[Response] {
+trait FsClientPlainRequest[Response] {
   def uri: Uri
-
   def method: Method
 }
 
-sealed trait HttpRequestWithBody[Body, Response] extends HttpRequest[Response] {
-  def body: Body
-}
-
-object HttpRequest {
-  case class GET[Response](uri: Uri) extends HttpRequest[Response] {
+object FsClientPlainRequest {
+  trait GET[Response] extends FsClientPlainRequest[Response] {
     override val method: SafeMethodWithBody = Method.GET
   }
-  case class POST[Body, Response](uri: Uri, body: Body) extends HttpRequestWithBody[Body, Response] {
+  trait POST[Response] extends FsClientPlainRequest[Response] {
     override val method: DefaultMethodWithBody = Method.POST
   }
 }
 
-sealed trait AccessTokenRequest extends HttpRequest[AccessToken] {
+sealed trait FsClientRequestWithBody[Body, Response] extends FsClientPlainRequest[Response] {
+  def body: Body
+}
+
+object FsClientRequestWithBody {
+  trait GET[Body, Response] extends FsClientRequestWithBody[Body, Response] {
+    override val method: SafeMethodWithBody = Method.GET
+  }
+  trait POST[Body, Response] extends FsClientRequestWithBody[Body, Response] {
+    override val method: DefaultMethodWithBody = Method.POST
+  }
+}
+
+trait AccessTokenRequest extends FsClientPlainRequest[AccessToken] {
   def token: OAuthToken
 }
 

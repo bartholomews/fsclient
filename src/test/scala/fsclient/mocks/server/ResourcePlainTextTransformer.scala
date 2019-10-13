@@ -31,7 +31,8 @@ case object ResourcePlainTextTransformer extends ResponseDefinitionTransformer w
         case str if str == notFoundPlainTextResponse =>
           res
             .withHeader(`Content-Type`, ContentType.TEXT_PLAIN.getMimeType)
-            .withStatus(404).withBodyFile(requestUrl)
+            .withStatus(404)
+            .withBodyFile(requestUrl)
 
         case str if str == badRequestNoContentTypePlainTextResponse =>
           res.withStatus(400)
@@ -46,9 +47,11 @@ case object ResourcePlainTextTransformer extends ResponseDefinitionTransformer w
             .withHeader(`Content-Type`, ContentType.TEXT_PLAIN.getMimeType)
             .withStatus(200)
 
-        case _ => res
-          .withHeader(`Content-Type`, ContentType.TEXT_PLAIN.getMimeType)
-          .withStatus(200).withBodyFile(requestUrl)
+        case _ =>
+          res
+            .withHeader(`Content-Type`, ContentType.TEXT_PLAIN.getMimeType)
+            .withStatus(200)
+            .withBodyFile(requestUrl)
       }
     }
 

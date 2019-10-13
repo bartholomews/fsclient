@@ -9,8 +9,10 @@ import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import org.apache.http.entity.ContentType
 
 // TODO: use this to test oAuth client
-case object AuthenticatedRequestTransformer extends ResponseDefinitionTransformer
-  with OAuthServer with MockClientConfig {
+case object AuthenticatedRequestTransformer
+    extends ResponseDefinitionTransformer
+    with OAuthServer
+    with MockClientConfig {
 
   override val applyGlobally = false
 
@@ -19,7 +21,9 @@ case object AuthenticatedRequestTransformer extends ResponseDefinitionTransforme
                          files: FileSource,
                          parameters: Parameters): ResponseDefinition = {
 
-    val textPlainResponse = ResponseDefinitionBuilder.like(response).but()
+    val textPlainResponse = ResponseDefinitionBuilder
+      .like(response)
+      .but()
       .withHeader(`Content-Type`, ContentType.TEXT_PLAIN.getMimeType)
 
     val oAuthResponseRegex = oAuthResponseRegexStr.r

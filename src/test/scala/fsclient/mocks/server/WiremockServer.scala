@@ -10,10 +10,12 @@ trait WiremockServer extends BeforeAndAfterAll with MockClientConfig with MockEn
 
   this: Suite =>
 
-  val server: WireMockServer = new WireMockServer(new WireMockConfiguration().extensions(
-    ResourceJsonTransformer,
-    ResourcePlainTextTransformer,
-  ))
+  val server: WireMockServer = new WireMockServer(
+    new WireMockConfiguration().extensions(
+      ResourceJsonTransformer,
+      ResourcePlainTextTransformer
+    )
+  )
 
   override def beforeAll: Unit = {
     server.start()
@@ -25,20 +27,26 @@ trait WiremockServer extends BeforeAndAfterAll with MockClientConfig with MockEn
   private def stubApi(): Unit = {
 
     stubFor(any(urlMatching("^.*json.*$")).willReturn(aResponse().withTransformers(ResourceJsonTransformer.getName)))
-    stubFor(any(urlMatching("^.*plaintext.*$")).willReturn(aResponse().withTransformers(ResourcePlainTextTransformer.getName)))
+    stubFor(
+      any(urlMatching("^.*plaintext.*$")).willReturn(aResponse().withTransformers(ResourcePlainTextTransformer.getName))
+    )
 
     val timeout = 30000
     stubFor(any(urlMatching(s"/$timeoutResponse")).willReturn(aResponse().withFixedDelay(timeout)))
 
-    stubFor(post("/oauth/access_token")
-      .willReturn(aResponse()
-        .withBody(s"oauth_token=$validOAuthTokenValue" +
-          s"&oauth_token_secret=$validOAuthTokenSecret"
+    stubFor(
+      post("/oauth/access_token")
+        .willReturn(
+          aResponse()
+            .withBody(
+              s"oauth_token=$validOAuthTokenValue" +
+                s"&oauth_token_secret=$validOAuthTokenSecret"
+            )
+            .withTransformers(
+              AuthenticatedRequestTransformer.getName,
+              ValidateTokenRequestBodyTransformer.getName
+            )
         )
-        .withTransformers(
-          AuthenticatedRequestTransformer.getName,
-          ValidateTokenRequestBodyTransformer.getName
-        ))
     )
 
     ()

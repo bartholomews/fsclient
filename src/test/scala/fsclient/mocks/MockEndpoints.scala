@@ -1,5 +1,6 @@
 package fsclient.mocks
 
+import fsclient.entities
 import fsclient.entities._
 import org.http4s.Uri
 
@@ -34,13 +35,13 @@ trait MockEndpoints {
       RequestToken(validToken, "")
     )
 
-  def postEndpoint[B, R](endpoint: String, body: B): HttpRequest.POST[B, R] =
-    HttpRequest.POST(
-      Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint"),
-      body
-    )
+  def postEndpoint[B, R](endpoint: String, requestBody: B): entities.FsClientRequestWithBody.POST[B, R] =
+    new FsClientRequestWithBody.POST[B, R] {
+      override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
+      override val body: B = requestBody
+    }
 
-  def getEndpoint[R](endpoint: String): HttpRequest.GET[R] = HttpRequest.GET(
-    Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
-  )
+  def getEndpoint[R](endpoint: String): FsClientPlainRequest.GET[R] = new FsClientPlainRequest.GET[R] {
+    override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
+  }
 }

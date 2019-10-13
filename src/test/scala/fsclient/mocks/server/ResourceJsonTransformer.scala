@@ -42,9 +42,11 @@ case object ResourceJsonTransformer extends ResponseDefinitionTransformer with M
             .withHeader(`Content-Type`, ContentType.MULTIPART_FORM_DATA.getMimeType)
             .withStatus(400)
 
-        case _ => res
-          .withHeader(`Content-Type`, ContentType.APPLICATION_JSON.getMimeType)
-          .withStatus(200).withBodyFile(s"$requestUrl.json")
+        case _ =>
+          res
+            .withHeader(`Content-Type`, ContentType.APPLICATION_JSON.getMimeType)
+            .withStatus(200)
+            .withBodyFile(s"$requestUrl.json")
       }
     }
 

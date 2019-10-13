@@ -6,8 +6,10 @@ import com.github.tomakehurst.wiremock.http.{Request, ResponseDefinition}
 import fsclient.mocks.MockClientConfig
 import WiremockUtils._
 
-object ValidateTokenRequestBodyTransformer extends ResponseDefinitionTransformer
-  with MockClientConfig with OAuthServer {
+object ValidateTokenRequestBodyTransformer
+    extends ResponseDefinitionTransformer
+    with MockClientConfig
+    with OAuthServer {
 
   override val applyGlobally = false
 

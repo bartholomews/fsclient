@@ -11,18 +11,18 @@ import scala.concurrent.ExecutionContext
 class IOSimpleClient(override val consumer: OAuthConsumer)(implicit val ec: ExecutionContext)
     extends IOClient(consumer) {
 
+  def accessTokenRequest(
+    request: AccessTokenRequest
+  )(implicit responseDecoder: IOHttpPipe[String, AccessToken]): IO[HttpResponse[AccessToken]] =
+    super.getPlainText(request, Some(request.token))
+
   def toOAuthClient(
     request: AccessTokenRequest
-  )(implicit responseDecoder: IOHttpPipe[String, AccessToken]): IO[Either[ResponseError, IOAuthClient]] = {
-
-    def accessTokenRequest: IO[HttpResponse[AccessToken]] =
-      super.getPlainText(request.uri, Some(request.token), request.method)
-
+  )(implicit responseDecoder: IOHttpPipe[String, AccessToken]): IO[Either[ResponseError, IOAuthClient]] =
     (for {
-      accessToken <- EitherT(accessTokenRequest.map(_.entity))
-      res <- EitherT.right[ResponseError](IO.pure(new IOAuthClient(consumer, accessToken)))
+      accessToken <- EitherT(accessTokenRequest(request).map(_.entity))
+      res <- EitherT.pure[IO, ResponseError](new IOAuthClient(consumer)(implicitly, accessToken))
     } yield res).value
-  }
 
   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -30,23 +30,23 @@ class IOSimpleClient(override val consumer: OAuthConsumer)(implicit val ec: Exec
 
   final def getJson[R](
     accessToken: Option[AccessToken]
-  )(endpoint: HttpRequest.GET[R])(implicit responseDecoder: Decoder[R]): IOResponse[R] =
+  )(endpoint: FsClientPlainRequest.GET[R])(implicit responseDecoder: Decoder[R]): IOResponse[R] =
     super.getJson(endpoint.uri, accessToken.map(OAuthToken.apply))
 
   final def getPlainText[R](
     accessToken: Option[AccessToken]
-  )(endpoint: HttpRequest.GET[R])(implicit responseDecoder: IOHttpPipe[String, R]): IOResponse[R] =
-    super.getPlainText(endpoint.uri, accessToken.map(OAuthToken.apply))
+  )(request: FsClientPlainRequest.GET[R])(implicit responseDecoder: IOHttpPipe[String, R]): IOResponse[R] =
+    super.getPlainText(request, accessToken.map(OAuthToken.apply))
 
-  final def fetchJson[B, R](accessToken: Option[AccessToken])(request: HttpRequestWithBody[B, R])(
+  final def fetchJson[B, R](accessToken: Option[AccessToken])(request: FsClientRequestWithBody[B, R])(
     implicit
     requestBodyEncoder: Encoder[B],
     responseDecoder: Decoder[R]
   ): IOResponse[R] =
-    super.fetchJson(request.uri, request.method, request.body, accessToken.map(OAuthToken.apply))
+    super.fetchJson(request, accessToken.map(OAuthToken.apply))
 
   final def fetchPlainText[B, R](accessToken: Option[AccessToken])(
-    request: HttpRequestWithBody[B, R]
+    request: FsClientRequestWithBody[B, R]
   )(implicit requestBodyEncoder: Encoder[B], responseDecoder: HttpPipe[IO, String, R]): IOResponse[R] =
-    super.fetchPlainText(request.uri, request.method, request.body, accessToken.map(OAuthToken.apply))
+    super.fetchPlainText(request, accessToken.map(OAuthToken.apply))
 }

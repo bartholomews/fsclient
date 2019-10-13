@@ -15,15 +15,14 @@ private[http] trait HttpPipes extends HttpTypes with Logger {
   def doNothing[F[_]: Effect, A]: Pipe[F, A, A] = _.map(identity)
 
   /**
-    * Attempt to decode an Http Response with the provided decoder
-    *
-    * @param decode a decoder for type `A`
-    * @tparam F the `Effect`
-    * @tparam A the type of expected response entity
-    * @return a Pipe transformed in an `Either[ResponseError, A]`
-    */
-  def decodeJsonResponse[F[_]: Effect, A](
-      implicit decode: Decoder[A]): Pipe[F, Response[F], ErrorOr[A]] =
+   * Attempt to decode an Http Response with the provided decoder
+   *
+   * @param decode a decoder for type `A`
+   * @tparam F the `Effect`
+   * @tparam A the type of expected response entity
+   * @return a Pipe transformed in an `Either[ResponseError, A]`
+   */
+  def decodeJsonResponse[F[_]: Effect, A](implicit decode: Decoder[A]): Pipe[F, Response[F], ErrorOr[A]] =
     _.flatMap(
       _.body
         .through(byteStreamParser)
@@ -33,16 +32,16 @@ private[http] trait HttpPipes extends HttpTypes with Logger {
     )
 
   /**
-    * Attempt to decode a PlainText Http Response with the provided decoder
-    *
-    * @param decoder a Pipe decoder from String to type `A`
-    * @tparam F the `Effect`
-    * @tparam A the type of expected response entity
-    * @return a Pipe transformed in an `Either[ResponseError, A]`
-    */
+   * Attempt to decode a PlainText Http Response with the provided decoder
+   *
+   * @param decoder a Pipe decoder from String to type `A`
+   * @tparam F the `Effect`
+   * @tparam A the type of expected response entity
+   * @return a Pipe transformed in an `Either[ResponseError, A]`
+   */
   def decodeTextPlainResponse[F[_]: Effect, A](
-      implicit decoder: HttpPipe[F, String, A])
-    : Pipe[F, Response[F], ErrorOr[A]] =
+    implicit decoder: HttpPipe[F, String, A]
+  ): Pipe[F, Response[F], ErrorOr[A]] =
     _.flatMap(res => {
       Stream
         .eval(res.as[String])
@@ -52,43 +51,43 @@ private[http] trait HttpPipes extends HttpTypes with Logger {
     })
 
   /**
-    * Map the left side of an `Either[Throwable, A]` into a `ResponseError`
-    *
-    * @param status the Status Code of the `ResponseError`
-    * @tparam F the `Effect`
-    * @tparam A the type of expected response entity
-    * @return an `Either[ResponseError, A]`
-    */
-  def leftMapToResponseError[F[_]: Effect, A](
-      status: Status): Pipe[F, Either[Throwable, A], ErrorOr[A]] =
+   * Map the left side of an `Either[Throwable, A]` into a `ResponseError`
+   *
+   * @param status the Status Code of the `ResponseError`
+   * @tparam F the `Effect`
+   * @tparam A the type of expected response entity
+   * @return an `Either[ResponseError, A]`
+   */
+  def leftMapToResponseError[F[_]: Effect, A](status: Status): Pipe[F, Either[Throwable, A], ErrorOr[A]] =
     _.through(errorLogPipe).map(_.leftMap(ResponseError(_, status)))
 
   /**
-    * Fold both sides of an `Either[Throwable, A]` into an `Either.left[ResponseError]`
-    *
-    * @param status the Status Code of the `ResponseError`
-    * @param f      function to map the `A` into the error message
-    * @tparam F the `Effect`
-    * @tparam A the type of expected response entity, which will be folded to the left
-    * @return a Pipe transformed in an `Either.left[ResponseError, Nothing]`
-    */
-  def foldToResponseError[F[_]: Effect, A](status: Status,
-                                           f: A => String = (res: A) =>
-                                             res.toString)
-    : Pipe[F, Either[Throwable, A], ErrorOr[Nothing]] =
+   * Fold both sides of an `Either[Throwable, A]` into an `Either.left[ResponseError]`
+   *
+   * @param status the Status Code of the `ResponseError`
+   * @param f      function to map the `A` into the error message
+   * @tparam F the `Effect`
+   * @tparam A the type of expected response entity, which will be folded to the left
+   * @return a Pipe transformed in an `Either.left[ResponseError, Nothing]`
+   */
+  def foldToResponseError[F[_]: Effect, A](
+    status: Status,
+    f: A => String = (res: A) => res.toString
+  ): Pipe[F, Either[Throwable, A], ErrorOr[Nothing]] =
     _.through(errorLogPipe)
       .map(
         _.fold(
           err => ResponseError(err, status).asLeft,
           res => ResponseError(new Exception(f(res)), status).asLeft
-        ))
+        )
+      )
 
   /**
-    * Decode an Http Response into an `Either.left[ResponseError, Nothing]`.
-    *
-    * @tparam F the `Effect`
-    * @return a Pipe transformed in an `Either.left[ResponseError, Nothing]`
-    */
+   * Decode an Http Response into an `Either.left[ResponseError, Nothing]`.
+   *
+   * @tparam F the `Effect`
+   * @return a Pipe transformed in an `Either.left[ResponseError, Nothing]`
+   */
   def errorHandler[F[_]: Effect]: Pipe[F, Response[F], ErrorOr[Nothing]] =
     _.flatMap(
       response => {
@@ -98,10 +97,10 @@ private[http] trait HttpPipes extends HttpTypes with Logger {
               .through(byteStreamParser)
               .last
               .flatMap(
-                _.fold[Stream[F, Json]](
-                  Stream.raiseError[F](EmptyResponseException))(
+                _.fold[Stream[F, Json]](Stream.raiseError[F](EmptyResponseException))(
                   Stream.emit
-                ))
+                )
+              )
               .attempt
               // FIXME: could try to parse a { "message": "[value]" } instead of _.spaces2
               .through(foldToResponseError(response.status, _.spaces2))
@@ -114,9 +113,7 @@ private[http] trait HttpPipes extends HttpTypes with Logger {
 
           case Some(unexpectedContentType) =>
             Stream
-              .emit(
-                new Exception(
-                  s"$unexpectedContentType: unexpected `Content-Type`").asLeft)
+              .emit(new Exception(s"$unexpectedContentType: unexpected `Content-Type`").asLeft)
               .through(foldToResponseError(Status.UnsupportedMediaType))
 
           case None =>

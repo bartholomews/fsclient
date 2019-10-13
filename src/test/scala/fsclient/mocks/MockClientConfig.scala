@@ -5,9 +5,11 @@ import fsclient.entities.AccessToken
 import fsclient.http.client.{IOAuthClient, IOSimpleClient}
 import org.http4s.client.oauth1.Token
 
+import scala.concurrent.ExecutionContext
+
 trait MockClientConfig {
 
-  import scala.concurrent.ExecutionContext.Implicits.global
+  implicit val ec: ExecutionContext = ExecutionContext.global
 
   final val validConsumerKey = "VALID_CONSUMER_KEY"
   final val validConsumerSecret = "VALID_CONSUMER_SECRET"
@@ -34,14 +36,17 @@ trait MockClientConfig {
                        secret: String,
                        appName: String = "someApp",
                        appVersion: Option[String] = Some("1.0"),
-                       appUrl: Option[String] = Some("app.git")): IOSimpleClient = new IOSimpleClient(
-    OAuthConsumer(appName, appVersion, appUrl, key, secret))
+                       appUrl: Option[String] = Some("app.git")): IOSimpleClient =
+    new IOSimpleClient(OAuthConsumer(appName, appVersion, appUrl, key, secret))
 
   def oAuthClientWith(key: String,
                       secret: String,
                       accessToken: AccessToken,
                       appName: String = "someApp",
                       appVersion: Option[String] = Some("1.0"),
-                      appUrl: Option[String] = Some("app.git")): IOAuthClient = new IOAuthClient(
-    OAuthConsumer(appName, appVersion, appUrl, key, secret), accessToken)
+                      appUrl: Option[String] = Some("app.git")): IOAuthClient = {
+
+    implicit val token: AccessToken = accessToken
+    new IOAuthClient(OAuthConsumer(appName, appVersion, appUrl, key, secret))
+  }
 }

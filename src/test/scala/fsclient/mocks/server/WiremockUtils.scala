@@ -9,15 +9,16 @@ object WiremockUtils {
   final val `Content-Type` = "Content-Type"
 
   implicit class RequestImplicits(request: Request) {
-    implicit def getUrlStripSlashes: String = request
-      .getUrl
-      .stripPrefix("/")
-      .stripSuffix("/")
+    implicit def getUrlStripSlashes: String =
+      request.getUrl
+        .stripPrefix("/")
+        .stripSuffix("/")
   }
 
   implicit class ResponseDefinitionImplicits(response: ResponseDefinition) {
     implicit def error(code: Int, message: String): ResponseDefinition =
-      ResponseDefinitionBuilder.like(response)
+      ResponseDefinitionBuilder
+        .like(response)
         .but()
         .withHeader(`Content-Type`, ContentType.TEXT_PLAIN.getMimeType)
         .withStatus(code)
