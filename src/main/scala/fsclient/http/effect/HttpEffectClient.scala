@@ -7,7 +7,7 @@ import io.circe.{Decoder, Encoder}
 import org.http4s.circe.jsonEncoderOf
 import org.http4s.client.Client
 import org.http4s.client.oauth1.Consumer
-import org.http4s.{Header, Headers, Method, Request, Uri}
+import org.http4s.{Header, Headers, Request, Uri}
 
 private[http] trait HttpEffectClient[F[_]] extends RequestF {
 
@@ -24,59 +24,61 @@ private[http] trait HttpEffectClient[F[_]] extends RequestF {
       .withUri(uri)
       .withHeaders(USER_AGENT)
 
-  def fetchPlainText[B, R](clientRequest: FsClientRequestWithBody[B, R], oAuthToken: Option[OAuthToken])(
-    implicit
-    effect: Effect[F],
-    consumer: Consumer,
-    resource: Resource[F, Client[F]],
-    requestBodyEncoder: Encoder[B],
-    responseDecoder: HttpPipe[F, String, R]
-  ): F[HttpResponse[R]] = {
+  object effect {
+    def fetchPlainText[B, R](clientRequest: FsClientRequestWithBody[B, R], oAuthToken: Option[OAuthToken])(
+      implicit
+      effect: Effect[F],
+      consumer: Consumer,
+      resource: Resource[F, Client[F]],
+      requestBodyEncoder: Encoder[B],
+      responseDecoder: HttpPipe[F, String, R]
+    ): F[HttpResponse[R]] = {
 
-    val request = createRequest(clientRequest.uri)
-      .withMethod(clientRequest.method)
-      .withEntity(clientRequest.body)(jsonEncoderOf[F, B])
+      val request = createRequest(clientRequest.uri)
+        .withMethod(clientRequest.method)
+        .withEntity(clientRequest.body)(jsonEncoderOf[F, B])
 
-    resource.use(client => run(plainTextRequest[F, R](client)(request, oAuthToken)))
-  }
+      resource.use(client => run(plainTextRequest[F, R](client)(request, oAuthToken)))
+    }
 
-  def getPlainText[R](clientRequest: FsClientPlainRequest[R], oAuthToken: Option[OAuthToken])(
-    implicit
-    effect: Effect[F],
-    consumer: Consumer,
-    resource: Resource[F, Client[F]],
-    responseDecoder: HttpPipe[F, String, R]
-  ): F[HttpResponse[R]] = {
+    def getPlainText[R](clientRequest: FsClientPlainRequest[R], oAuthToken: Option[OAuthToken])(
+      implicit
+      effect: Effect[F],
+      consumer: Consumer,
+      resource: Resource[F, Client[F]],
+      responseDecoder: HttpPipe[F, String, R]
+    ): F[HttpResponse[R]] = {
 
-    val request = createRequest(clientRequest.uri).withMethod(clientRequest.method)
-    resource.use(client => run(plainTextRequest[F, R](client)(request, oAuthToken)))
-  }
+      val request = createRequest(clientRequest.uri).withMethod(clientRequest.method)
+      resource.use(client => run(plainTextRequest[F, R](client)(request, oAuthToken)))
+    }
 
-  def fetchJson[B, R](clientRequest: FsClientRequestWithBody[B, R], oAuthToken: Option[OAuthToken])(
-    implicit
-    effect: Effect[F],
-    consumer: Consumer,
-    resource: Resource[F, Client[F]],
-    requestBodyEncoder: Encoder[B],
-    responseDecoder: Decoder[R]
-  ): F[HttpResponse[R]] = {
+    def fetchJson[B, R](clientRequest: FsClientRequestWithBody[B, R], oAuthToken: Option[OAuthToken])(
+      implicit
+      effect: Effect[F],
+      consumer: Consumer,
+      resource: Resource[F, Client[F]],
+      requestBodyEncoder: Encoder[B],
+      responseDecoder: Decoder[R]
+    ): F[HttpResponse[R]] = {
 
-    val request = createRequest(clientRequest.uri)
-      .withMethod(clientRequest.method)
-      .withEntity(clientRequest.body)(jsonEncoderOf[F, B])
+      val request = createRequest(clientRequest.uri)
+        .withMethod(clientRequest.method)
+        .withEntity(clientRequest.body)(jsonEncoderOf[F, B])
 
-    resource.use(client => run(jsonRequest(client)(request, oAuthToken)))
-  }
+      resource.use(client => run(jsonRequest(client)(request, oAuthToken)))
+    }
 
-  def getJson[R](uri: Uri, oAuthToken: Option[OAuthToken], method: Method = Method.GET)(
-    implicit
-    effect: Effect[F],
-    consumer: Consumer,
-    resource: Resource[F, Client[F]],
-    responseDecoder: Decoder[R]
-  ): F[HttpResponse[R]] = {
+    def getJson[R](clientRequest: FsClientPlainRequest[R], oAuthToken: Option[OAuthToken])(
+      implicit
+      effect: Effect[F],
+      consumer: Consumer,
+      resource: Resource[F, Client[F]],
+      responseDecoder: Decoder[R]
+    ): F[HttpResponse[R]] = {
 
-    val request = createRequest(uri).withMethod(method)
-    resource.use(client => run(jsonRequest(client)(request, oAuthToken)))
+      val request = createRequest(clientRequest.uri).withMethod(clientRequest.method)
+      resource.use(client => run(jsonRequest(client)(request, oAuthToken)))
+    }
   }
 }

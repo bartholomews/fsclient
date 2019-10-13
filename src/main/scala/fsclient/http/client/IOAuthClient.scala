@@ -15,19 +15,19 @@ class IOAuthClient(override val consumer: OAuthConsumer)(implicit val ec: Execut
   private val token = Some(OAuthToken(accessToken))
 
   final def getJson[R](request: FsClientPlainRequest.GET[R])(implicit responseDecoder: Decoder[R]): IOResponse[R] =
-    super.getJson(request.uri, token)
+    effect.getJson(request, token)
 
   final def getPlainText[R](
     request: FsClientPlainRequest.GET[R]
   )(implicit responseDecoder: IOHttpPipe[String, R]): IOResponse[R] =
-    super.getPlainText(request, token)
+    effect.getPlainText(request, token)
 
   final def fetchJson[B, R](request: FsClientRequestWithBody[B, R])(implicit requestBodyEncoder: Encoder[B],
                                                                     responseDecoder: Decoder[R]): IOResponse[R] =
-    super.fetchJson(request, token)
+    effect.fetchJson(request, token)
 
   final def fetchPlainText[B, R](
     request: FsClientRequestWithBody[B, R]
   )(implicit requestBodyEncoder: Encoder[B], responseDecoder: HttpPipe[IO, String, R]): IOResponse[R] =
-    super.fetchPlainText(request, token)
+    effect.fetchPlainText(request, token)
 }

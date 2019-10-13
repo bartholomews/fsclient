@@ -4,7 +4,34 @@
 <a href="https://typelevel.org/cats/"><img src="https://typelevel.org/cats/img/cats-badge.svg" height="40px" align="right" alt="Cats friendly" /></a>
 
 # fsclient
-Http wrapper on top of http4s
+Opinionated http client on top of http4s
+
+- OAuth
+- Logging
+- `Json` and `PlainText` http requests handling
+
+```
+import io.circe.generic.auto._
+
+val client = new IOSimpleClient(
+    OAuthConsumer(
+        "MY_APP_NAME",
+        appVersion = None,
+        appUrl = None,
+        "OAUTH_CONSUMER_KEY",
+        "OAUTH_CONSUMER_SECRET"
+    )
+)
+
+val getMyEntityEndpoint = new FsClientPlainRequest.GET[MyEntity] {
+    override val uri: Uri = Uri.unsafeFromString("0.0.0.0/endpoint")
+}
+
+case class MyEntity(message: String)
+
+client.getJson[ValidEntity](accessToken = None)(getMyEntityEndpoint)
+
+```
 
 ## Local development
 
@@ -15,5 +42,4 @@ circleci local execute
 ```
 
 ### TODO
-- [scalafmt](https://scalameta.org/scalafmt/)
 - [scala-steward](https://github.com/fthomas/scala-steward)

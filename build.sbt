@@ -33,5 +33,5 @@ coverageEnabled := true
 coverageMinimum := 100
 coverageFailOnMinimum := true
 
-addCommandAlias("test-coverage", "clean coverage test coverageReport")
+addCommandAlias("test-coverage", ";clean ;coverage ;test ;coverageReport")
 addCommandAlias("test-fast", "testOnly * -- -l org.scalatest.tags.Slow")

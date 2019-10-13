@@ -27,7 +27,7 @@ trait Logger extends HttpTypes {
   private[fsclient] def requestHeadersLogPipe[F[_]: Effect]: Pipe[F, Request[F], Request[F]] =
     _.map(request => {
       logger.info(s"Request: ${request.method.name} [${request.uri}]")
-      logger.debug(s"Request headers - {\n${List.empty.mkString("", "\n\t", "\n")}}")
+      logger.debug(s"Request headers - {\n${request.headers.toList.mkString("", "\n\t", "\n")}}")
       request
     })
 
