@@ -34,9 +34,9 @@ trait IOClientMatchers extends Matchers with Inside with HttpTypes {
 }
 
 object ExpectedErrorMessage {
-  val genericError: String = "There was a problem with the response. Please check the error logs"
+  val genericError: String = "There was a problem with the response. Please check the error logs."
   val decodingError: String = "There was a problem decoding or parsing this response, please check the error logs"
   val notFoundString: String = "The requested resource was not found."
   val notFoundJson: String = Map("message" -> notFoundString).asJson.spaces2
-  val emptyResponse: String = "Response was empty. Please check request logs"
+  val emptyResponse: String = "Response body was empty. Please check request logs."
 }

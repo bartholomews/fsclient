@@ -34,13 +34,14 @@ case object ResourceJsonTransformer extends ResponseDefinitionTransformer with M
             .withStatus(404)
             .withBodyFile(s"$requestUrl.json")
 
-        case str if str == badRequestNoContentTypeJsonResponse =>
+        case str if str == badRequestNoContentTypeNorBodyJsonResponse =>
           res.withStatus(400)
 
-        case str if str == badRequestWrongContentTypeJsonResponse =>
+        case str if str == badRequestMultipartJsonResponse =>
           res
             .withHeader(`Content-Type`, ContentType.MULTIPART_FORM_DATA.getMimeType)
             .withStatus(400)
+            .withBody("response=true&urlencoded=example")
 
         case _ =>
           res

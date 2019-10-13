@@ -12,7 +12,7 @@ object ResponseError extends Logger {
   private case class ResponseErrorImpl(status: Status, throwable: Throwable, override val getMessage: String)
       extends ResponseError
 
-  def apply(throwable: Throwable, status: Status = Status.InternalServerError): ResponseError =
+  def apply(throwable: Throwable, status: Status): ResponseError =
     throwable match {
       case circeError: io.circe.Error =>
         ResponseErrorImpl(
@@ -26,10 +26,10 @@ object ResponseError extends Logger {
 
 case object EmptyResponseException extends Exception {
   override val getMessage: String =
-    "Response was empty. Please check request logs"
+    "Response body was empty. Please check request logs."
 }
 
 case object GenericResponseError extends Exception {
   override val getMessage: String =
-    "There was a problem with the response. Please check the error logs"
+    "There was a problem with the response. Please check the error logs."
 }

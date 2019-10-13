@@ -9,6 +9,7 @@ import io.circe.Json
 import io.circe.syntax._
 import org.http4s.Status
 import org.scalatest.WordSpec
+import org.scalatest.tagobjects.Slow
 
 class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer with HttpTypes with OAuthServer {
 
@@ -84,7 +85,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         def notFoundEmptyJsonResponseGetEndpoint: FsClientPlainRequest.GET[Json] =
           getEndpoint(notFoundEmptyJsonBodyResponse)
 
-        "respond with error for http response timeout" in {
+        "respond with error for http response timeout" taggedAs Slow in {
           assert500 {
             client.getJson[Json](accessToken = None)(timeoutResponseGetEndpoint[Json])
           }
@@ -98,18 +99,17 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       }
 
       "response has no `Content-Type`" should {
-        "return 415 with the right error" in {
-          assertLeft(Status.UnsupportedMediaType, expectedErrorMessage = "`Content-Type` not provided") {
-            client.getJson(accessToken = None)(getEndpoint[Json](badRequestNoContentTypeJsonResponse))
+        "return the error status with the right message" in {
+          assertLeft(Status.BadRequest, expectedErrorMessage = "") { // FIXME: expectedErrorMessage
+            client.getJson(accessToken = None)(getEndpoint[String](badRequestNoContentTypeNorBodyJsonResponse))
           }
         }
       }
 
       "response has an unexpected `Content-Type`" should {
-        "return 415 with the right error" in {
-          assertLeft(Status.UnsupportedMediaType,
-                     expectedErrorMessage = "multipart/form-data: unexpected `Content-Type`") {
-            client.getJson(accessToken = None)(getEndpoint[Json](badRequestWrongContentTypeJsonResponse))
+        "return the error status with the right message" in {
+          assertLeft(Status.BadRequest, expectedErrorMessage = "response=true&urlencoded=example") {
+            client.getJson(accessToken = None)(getEndpoint[Json](badRequestMultipartJsonResponse))
           }
         }
       }
@@ -166,7 +166,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response is empty" should {
 
-        "respond with error for http response timeout" in {
+        "respond with error for http response timeout" taggedAs Slow in {
           assert500 {
             client.getJson[Json](accessToken = None)(timeoutResponseGetEndpoint)
           }
@@ -179,19 +179,10 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         }
       }
 
-      "response has no `Content-Type`" should {
-        "return 415 with the right error" in {
-          assertLeft(Status.UnsupportedMediaType, expectedErrorMessage = "`Content-Type` not provided") {
-            client.getPlainText(accessToken = None)(getEndpoint[String](badRequestNoContentTypeJsonResponse))
-          }
-        }
-      }
-
       "response has an unexpected `Content-Type`" should {
-        "return 415 with the right error" in {
-          assertLeft(Status.UnsupportedMediaType,
-                     expectedErrorMessage = "multipart/form-data: unexpected `Content-Type`") {
-            client.getPlainText(accessToken = None)(getEndpoint[String](badRequestWrongContentTypeJsonResponse))
+        "return the error status with the right message" in {
+          assertLeft(Status.BadRequest, expectedErrorMessage = "") { // FIXME: expectedErrorMessage
+            client.getPlainText(accessToken = None)(getEndpoint[String](badRequestNoContentTypeNorBodyJsonResponse))
           }
         }
       }
@@ -249,7 +240,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         def notFoundEmptyJsonResponsePostEndpoint: FsClientRequestWithBody[MyRequestBody, Json] =
           postEndpoint(notFoundEmptyJsonBodyResponse, requestBody)
 
-        "respond with error for http response timeout" in {
+        "respond with error for http response timeout" taggedAs Slow in {
           assert500 {
             client.fetchJson[MyRequestBody, Json](accessToken = None)(timeoutResponsePostEndpoint(requestBody))
           }
@@ -263,21 +254,10 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       }
 
       "response has no `Content-Type`" should {
-        "return 415 with the right error" in {
-          assertLeft(Status.UnsupportedMediaType, expectedErrorMessage = "`Content-Type` not provided") {
+        "return error status with the right message" in {
+          assertLeft(Status.BadRequest, expectedErrorMessage = "") { // FIXME: expectedErrorMessage
             client.fetchJson[MyRequestBody, Json](accessToken = None)(
-              postEndpoint(badRequestNoContentTypeJsonResponse, requestBody)
-            )
-          }
-        }
-      }
-
-      "response has an unexpected `Content-Type`" should {
-        "return 415 with the right error" in {
-          assertLeft(Status.UnsupportedMediaType,
-                     expectedErrorMessage = "multipart/form-data: unexpected `Content-Type`") {
-            client.fetchJson(accessToken = None)(
-              postEndpoint[MyRequestBody, Json](badRequestWrongContentTypeJsonResponse, requestBody)
+              postEndpoint(badRequestNoContentTypeNorBodyJsonResponse, requestBody)
             )
           }
         }
@@ -350,7 +330,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response is empty" should {
 
-        "respond with error for http response timeout" in {
+        "respond with error for http response timeout" taggedAs Slow in {
           assert500 {
             client.fetchJson(accessToken = None)(timeoutResponsePostEndpoint[MyRequestBody, String](requestBody))
           }
@@ -367,23 +347,22 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       }
 
       "response has no `Content-Type`" should {
-        "return 415 with the right error" in {
-          assertLeft(Status.UnsupportedMediaType, expectedErrorMessage = "`Content-Type` not provided") {
+        "return the error status with the right message" in {
+          assertLeft(Status.BadRequest, expectedErrorMessage = "") { // FIXME expectedErrorMessage
             client
               .fetchPlainText(accessToken = None)(
-                postEndpoint[MyRequestBody, String](badRequestNoContentTypeJsonResponse, requestBody)
+                postEndpoint[MyRequestBody, String](badRequestNoContentTypeNorBodyJsonResponse, requestBody)
               )
           }
         }
       }
 
       "response has an unexpected `Content-Type`" should {
-        "return 415 with the right error" in {
-          assertLeft(Status.UnsupportedMediaType,
-                     expectedErrorMessage = "multipart/form-data: unexpected `Content-Type`") {
+        "return the error status with the right message" in {
+          assertLeft(Status.BadRequest, expectedErrorMessage = "response=true&urlencoded=example") {
             client
               .fetchPlainText(accessToken = None)(
-                postEndpoint[MyRequestBody, String](badRequestWrongContentTypeJsonResponse, requestBody)
+                postEndpoint[MyRequestBody, String](badRequestMultipartJsonResponse, requestBody)
               )
           }
         }
@@ -404,8 +383,8 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
                   case accessTokenResponseRegex(tokenValue, tokenSecret) =>
                     Right(AccessToken(Token(tokenValue, tokenSecret)))
                   case invalid =>
-                    Left(ResponseError(new Exception(s"Unexpected response:\n[$invalid]")))
-                }
+                    Left(ResponseError(new Exception(s"Unexpected response:\n[$invalid]"), Status.UnsupportedMediaType))
+              }
             )
           )
 

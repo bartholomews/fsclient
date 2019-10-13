@@ -4,7 +4,7 @@ import cats.effect.{ContextShift, IO, Resource}
 import fsclient.config.OAuthConsumer
 import fsclient.entities.{GenericResponseError, HttpResponse, ResponseError}
 import fsclient.http.effect.HttpEffectClient
-import org.http4s.Headers
+import org.http4s.{Headers, Status}
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.oauth1.Consumer
@@ -24,7 +24,7 @@ private[http] class IOClient(override val consumer: OAuthConsumer)(implicit ec: 
   final override def run[A]: fs2.Stream[IO, HttpResponse[A]] => IO[HttpResponse[A]] =
     _.compile.last
       .flatMap(
-        _.toRight(ResponseError.apply(GenericResponseError)).fold(
+        _.toRight(ResponseError.apply(GenericResponseError, Status.InternalServerError)).fold(
           error => IO.pure(HttpResponse(Headers.empty, Left(error))),
           value => IO.pure(value)
         )

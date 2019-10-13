@@ -17,9 +17,9 @@ trait MockEndpoints {
   final val okEmptyPlainTextResponse = "empty-plaintext-response"
   final val okJsonResponse = "test-json-response"
   final val okPlainTextResponse = "test-plaintext-response"
-  final val badRequestNoContentTypeJsonResponse =
+  final val badRequestNoContentTypeNorBodyJsonResponse =
     "no-content-type-json-response"
-  final val badRequestWrongContentTypeJsonResponse =
+  final val badRequestMultipartJsonResponse =
     "wrong-content-type-json-response"
   final val badRequestNoContentTypePlainTextResponse =
     "no-content-type-plaintext-response"

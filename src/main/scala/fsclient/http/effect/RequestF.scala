@@ -63,7 +63,7 @@ private[http] trait RequestF extends HttpPipes with HttpTypes with OAuthSignatur
           Stream
             .emit(response)
             .through(errorHandler)
-            .through(decodeLeft)
+            .through(decodeLeft) // FIXME: WTF IS THIS
             .through(responseLogPipe)
 
       }).map(HttpResponse(response.headers, _))

@@ -26,22 +26,21 @@ trait Logger extends HttpTypes {
 
   private[fsclient] def requestHeadersLogPipe[F[_]: Effect]: Pipe[F, Request[F], Request[F]] =
     _.map(request => {
-      logger.info(s"${request.method.name} REQUEST: [${request.uri}]")
-      logger.info(s"${request.headers.toList.mkString("\n\t")}")
+      logger.info(s"Request: ${request.method.name} [${request.uri}]")
+      logger.debug(s"Request headers - {\n${List.empty.mkString("", "\n\t", "\n")}}")
       request
     })
 
   private[fsclient] def responseHeadersLogPipe[F[_]: Effect, T]: Pipe[F, Response[F], Response[F]] =
     _.map(res => {
-      val headers = res.headers.toList.mkString("\n\t")
-      val message = s"{\n\t${res.status}\n\t$headers\n}"
-      logger.debug(message)
+      logger.debug(s"Response status: [${res.status}]")
+      logger.debug(s"Response headers - {\n${res.headers.toList.mkString("", "\n\t", "\n")}}")
       res
     })
 
   private[fsclient] def responseLogPipe[F[_]: Effect, A]: Pipe[F, ErrorOr[A], ErrorOr[A]] =
     _.map(entity => {
-      logger.debug(s"RESPONSE:\n$entity")
+      logger.debug(s"Response entity - {\n\t$entity\n}")
       entity
     })
 
