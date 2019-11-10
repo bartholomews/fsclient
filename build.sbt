@@ -6,7 +6,7 @@ name := "fsclient"
 
 version := "0.2.0-SNAPSHOT"
 
-//skip in publish := isSnapshot.value
+skip in publish := isSnapshot.value
 
 scalaVersion := "2.13.0"
 
