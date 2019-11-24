@@ -36,7 +36,8 @@ object Compiler {
     "-Ywarn-unused:params", // Warn if a value parameter is unused.
     "-Ywarn-unused:patvars", // Warn if a variable bound in a pattern is unused.
     "-Ywarn-unused:privates", // Warn if a private member is unused.
-    "-Ywarn-value-discard" // Warn when non-Unit expression results are unused.
+    "-Ywarn-value-discard", // Warn when non-Unit expression results are unused.
+    "-Ymacro-annotations" // https://github.com/circe/circe/issues/975
   )
 
   lazy val unchecked = "-unchecked"

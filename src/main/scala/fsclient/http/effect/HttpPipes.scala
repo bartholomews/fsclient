@@ -9,8 +9,11 @@ import io.circe.fs2.{byteStreamParser, decoder}
 import io.circe.{Decoder, Json}
 import org.http4s.headers.`Content-Type`
 import org.http4s.{Response, Status}
+import HttpTypes._
 
-private[http] trait HttpPipes extends HttpTypes with Logger {
+private[http] object HttpPipes {
+
+  import Logger._
 
   def doNothing[F[_]: Effect, A]: Pipe[F, A, A] = _.map(identity)
 

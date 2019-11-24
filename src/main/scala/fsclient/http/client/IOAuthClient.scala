@@ -2,32 +2,43 @@ package fsclient.http.client
 
 import cats.effect.IO
 import fsclient.config.OAuthConsumer
-import fsclient.entities.{AccessToken, FsClientPlainRequest, FsClientRequestWithBody, OAuthToken}
-import io.circe.{Decoder, Encoder}
+import fsclient.entities._
+import fsclient.http.client.base.{IOBaseCalls, IOBaseClient}
+import fsclient.oauth.OAuthVersion
+import fsclient.utils.HttpTypes.{HttpPipe, IOResponse}
+import io.circe.Decoder
+import org.http4s.EntityEncoder
 
 import scala.concurrent.ExecutionContext
 
 // TODO: Load secret and key from config / env var / etc. so you give a purpose to this class
 //  instead of just using the simple client passing the token on auth defs
-class IOAuthClient(override val consumer: OAuthConsumer)(implicit val ec: ExecutionContext, accessToken: AccessToken)
-    extends IOClient(consumer) {
+/**
+ * Class which executes authenticated calls by default,
+ * without the need to pass the `accessToken` on each request.
+ */
+class IOAuthClient(override val consumer: OAuthConsumer, version: OAuthVersion)(implicit val ec: ExecutionContext,
+                                                                                accessToken: AccessToken)
+    extends IOBaseClient(consumer)
+    with IOBaseCalls {
 
-  private val token = Some(OAuthToken(accessToken))
+  private val oAuthTokenInfo = OAuthTokenInfo(accessToken, Some(version))
 
-  final def getJson[R](request: FsClientPlainRequest.GET[R])(implicit responseDecoder: Decoder[R]): IOResponse[R] =
-    effect.getJson(request, token)
+  final override def fetchJson[R](request: FsClientPlainRequest)(implicit responseDecoder: Decoder[R]): IOResponse[R] =
+    super.fetchJson[R](request.toHttpRequest[IO], oAuthTokenInfo)
 
-  final def getPlainText[R](
-    request: FsClientPlainRequest.GET[R]
-  )(implicit responseDecoder: IOHttpPipe[String, R]): IOResponse[R] =
-    effect.getPlainText(request, token)
+  final override def fetchPlainText[R](
+    request: FsClientPlainRequest
+  )(implicit responseDecoder: HttpPipe[IO, String, R]): IOResponse[R] =
+    super.fetchPlainText(request.toHttpRequest[IO], oAuthTokenInfo)
 
-  final def fetchJson[B, R](request: FsClientRequestWithBody[B, R])(implicit requestBodyEncoder: Encoder[B],
-                                                                    responseDecoder: Decoder[R]): IOResponse[R] =
-    effect.fetchJson(request, token)
+  final override def fetchJsonWithBody[B, R](
+    request: FsClientRequestWithBody[B]
+  )(implicit requestBodyEncoder: EntityEncoder[IO, B], responseDecoder: Decoder[R]): IOResponse[R] =
+    super.fetchJson(request.toHttpRequest[IO], oAuthTokenInfo)
 
-  final def fetchPlainText[B, R](
-    request: FsClientRequestWithBody[B, R]
-  )(implicit requestBodyEncoder: Encoder[B], responseDecoder: HttpPipe[IO, String, R]): IOResponse[R] =
-    effect.fetchPlainText(request, token)
+  final override def fetchPlainTextWithBody[B, R](
+    request: FsClientRequestWithBody[B]
+  )(implicit requestBodyEncoder: EntityEncoder[IO, B], responseDecoder: HttpPipe[IO, String, R]): IOResponse[R] =
+    super.fetchPlainText(request.toHttpRequest[IO], oAuthTokenInfo)
 }

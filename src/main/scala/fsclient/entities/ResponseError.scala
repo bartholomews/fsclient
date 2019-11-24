@@ -1,13 +1,12 @@
 package fsclient.entities
 
 import org.http4s.Status
-import fsclient.utils.Logger
 
 trait ResponseError extends Throwable {
   val status: Status
 }
 
-object ResponseError extends Logger {
+object ResponseError {
 
   private case class ResponseErrorImpl(status: Status, throwable: Throwable, override val getMessage: String)
       extends ResponseError

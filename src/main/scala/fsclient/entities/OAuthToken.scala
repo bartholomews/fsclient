@@ -1,25 +1,26 @@
 package fsclient.entities
 
+import fsclient.oauth.OAuthVersion
 import org.http4s.client.oauth1.Token
 
-trait OAuthToken {
-  def token: Token
-
-  def verifier: Option[String]
+sealed trait OAuthInfo {
+  def oAuthVersion: Option[OAuthVersion]
 }
 
-object OAuthToken {
-  def apply(requestToken: RequestToken): OAuthToken = new OAuthToken {
-    override val token: Token = requestToken.token
-    override val verifier: Option[String] = Some(requestToken.verifier)
-  }
+case class Basic(oAuthVersion: Option[OAuthVersion]) extends OAuthInfo
 
-  def apply(accessToken: AccessToken): OAuthToken = new OAuthToken {
-    override val token: Token = accessToken.token
-    override val verifier: Option[String] = None
-  }
+case class OAuthTokenInfo private (oAuthVersion: Option[OAuthVersion], oAuthToken: OAuthToken) extends OAuthInfo
+object OAuthTokenInfo {
+  def apply(requestToken: RequestToken, oAuthVersion: Option[OAuthVersion]): OAuthTokenInfo = new OAuthTokenInfo(
+    oAuthVersion,
+    OAuthToken(requestToken.token, Some(requestToken.verifier))
+  )
+  def apply(accessToken: AccessToken, oAuthVersion: Option[OAuthVersion]): OAuthTokenInfo = new OAuthTokenInfo(
+    oAuthVersion,
+    OAuthToken(accessToken.token, verifier = None)
+  )
 }
 
+case class OAuthToken(token: Token, verifier: Option[String])
 case class RequestToken(token: Token, verifier: String)
-
 case class AccessToken(token: Token)

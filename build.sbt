@@ -4,7 +4,7 @@ organization := "io.bartholomews"
 
 name := "fsclient"
 
-version := "0.2.0-SNAPSHOT"
+version := "0.2.1-SNAPSHOT"
 
 skip in publish := isSnapshot.value
 

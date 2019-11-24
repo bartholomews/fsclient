@@ -1,12 +1,12 @@
 package fsclient.http.client
 
 import fsclient.entities.HttpResponse
-import fsclient.utils.HttpTypes
+import fsclient.utils.HttpTypes.IOResponse
+import io.circe.syntax._
 import org.http4s.Status
 import org.scalatest.{Assertion, Inside, Matchers}
-import io.circe.syntax._
 
-trait IOClientMatchers extends Matchers with Inside with HttpTypes {
+trait IOClientMatchers extends Matchers with Inside {
 
   private def assertResponse[R](ioResponse: IOResponse[R])(pf: PartialFunction[HttpResponse[R], Assertion]): Assertion =
     inside(ioResponse.unsafeRunSync())(pf)

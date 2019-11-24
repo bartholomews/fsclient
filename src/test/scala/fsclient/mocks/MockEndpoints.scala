@@ -35,13 +35,13 @@ trait MockEndpoints {
       RequestToken(validToken, "")
     )
 
-  def postEndpoint[B, R](endpoint: String, requestBody: B): entities.FsClientRequestWithBody.POST[B, R] =
-    new FsClientRequestWithBody.POST[B, R] {
+  def postJsonEndpoint[B](endpoint: String, requestBody: B): entities.FsClientRequestWithBody.PostJson[B] =
+    new FsClientRequestWithBody.PostJson[B] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
       override val body: B = requestBody
     }
 
-  def getEndpoint[R](endpoint: String): FsClientPlainRequest.GET[R] = new FsClientPlainRequest.GET[R] {
+  def getEndpoint(endpoint: String): FsClientPlainRequest.Get = new FsClientPlainRequest.Get {
     override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
   }
 }

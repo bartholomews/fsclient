@@ -2,7 +2,8 @@ package fsclient.mocks
 
 import fsclient.config.OAuthConsumer
 import fsclient.entities.AccessToken
-import fsclient.http.client.{IOAuthClient, IOSimpleClient}
+import fsclient.http.client.{IOAuthClient, IOClient}
+import fsclient.oauth.OAuthVersion
 import org.http4s.client.oauth1.Token
 
 import scala.concurrent.ExecutionContext
@@ -28,18 +29,22 @@ trait MockClientConfig {
   )
   // override val verifier: Option[String] = Some(validOAuthVerifier)
 
-  def validSimpleClient: IOSimpleClient = simpleClientWith(validConsumerKey, validConsumerSecret)
+  def validSimpleClient(oAuthVersion: OAuthVersion): IOClient =
+    simpleClientWith(oAuthVersion, validConsumerKey, validConsumerSecret)
 
-  def validOAuthClient: IOAuthClient = oAuthClientWith(validConsumerKey, validConsumerSecret, validOAuthAccessToken)
+  def validOAuthClient(oAuthVersion: OAuthVersion): IOAuthClient =
+    oAuthClientWith(oAuthVersion, validConsumerKey, validConsumerSecret, validOAuthAccessToken)
 
-  def simpleClientWith(key: String,
+  def simpleClientWith(oAuthVersion: OAuthVersion,
+                       key: String,
                        secret: String,
                        appName: String = "someApp",
                        appVersion: Option[String] = Some("1.0"),
-                       appUrl: Option[String] = Some("app.git")): IOSimpleClient =
-    new IOSimpleClient(OAuthConsumer(appName, appVersion, appUrl, key, secret))
+                       appUrl: Option[String] = Some("app.git")): IOClient =
+    new IOClient(OAuthConsumer(appName, appVersion, appUrl, key, secret), oAuthVersion)
 
-  def oAuthClientWith(key: String,
+  def oAuthClientWith(oAuthVersion: OAuthVersion,
+                      key: String,
                       secret: String,
                       accessToken: AccessToken,
                       appName: String = "someApp",
@@ -47,6 +52,6 @@ trait MockClientConfig {
                       appUrl: Option[String] = Some("app.git")): IOAuthClient = {
 
     implicit val token: AccessToken = accessToken
-    new IOAuthClient(OAuthConsumer(appName, appVersion, appUrl, key, secret))
+    new IOAuthClient(OAuthConsumer(appName, appVersion, appUrl, key, secret), oAuthVersion)
   }
 }

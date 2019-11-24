@@ -1,22 +1,23 @@
 package fsclient.utils
 
 import cats.effect.Effect
+import cats.implicits._
 import fs2.Pipe
+import fsclient.utils.HttpTypes.ErrorOr
 import org.http4s.{Request, Response}
 import org.log4s.getLogger
-import cats.implicits._
 import pureconfig.ConfigSource
 
-trait Logger extends HttpTypes {
+object Logger {
 
   import pureconfig.generic.auto._
 
-  private[utils] case class LoggerConfig(logger: Logger)
+  private[utils] case class Config(logger: LoggerConfig)
 
-  private[utils] case class Logger(name: String)
+  private[utils] case class LoggerConfig(name: String)
 
   private val loggerName: String = ConfigSource.default
-    .load[LoggerConfig]
+    .load[Config]
     .map(_.logger.name)
     .getOrElse("fsclient-logger")
 
@@ -24,29 +25,36 @@ trait Logger extends HttpTypes {
 
   logger.info(s"$logger started.")
 
-  private[fsclient] def requestHeadersLogPipe[F[_]: Effect]: Pipe[F, Request[F], Request[F]] =
-    _.map(request => {
-      logger.info(s"Request: ${request.method.name} [${request.uri}]")
-      logger.debug(s"Request headers - {\n${request.headers.toList.mkString("", "\n\t", "\n")}}")
-      request
-    })
+  private[fsclient] def logRequest[F[_]: Effect](request: Request[F]): Request[F] = {
+    logger.info(s"Request: ${request.method.name} [${request.uri}]")
+    logger.debug(s"Request headers - {\n${request.headers.toList.mkString("\t", "\n\t", "\n")}}")
+    request
+  }
+
+  private[fsclient] def logRequest[F[_]: Effect, B](body: B, request: Request[F]): Request[F] = {
+    logRequest(request)
+    logger.debug(s"Request body - {\n\t$body\n}")
+    request
+  }
 
   private[fsclient] def responseHeadersLogPipe[F[_]: Effect, T]: Pipe[F, Response[F], Response[F]] =
     _.map(res => {
       logger.debug(s"Response status: [${res.status}]")
-      logger.debug(s"Response headers - {\n${res.headers.toList.mkString("", "\n\t", "\n")}}")
+      logger.debug(s"Response headers - {\n${res.headers.toList.mkString("\t", "\n\t", "\n")}}")
       res
     })
 
   private[fsclient] def responseLogPipe[F[_]: Effect, A]: Pipe[F, ErrorOr[A], ErrorOr[A]] =
-    _.map(entity => {
+    _.map(_.map(entity => {
       logger.debug(s"Response entity - {\n\t$entity\n}")
+      // TODO: figure out logger shape (entity, sumologic etc)
+      //  logger.debug(s"Response entity", s"{\n\t$entity\n}")
       entity
-    })
+    }))
 
   private[fsclient] def errorLogPipe[F[_]: Effect, A]: Pipe[F, Either[Throwable, A], Either[Throwable, A]] =
     _.map(_.leftMap(throwable => {
-      logger.error(throwable.getMessage)
+      logger.error("There was a problem with the request", throwable)
       throwable
     }))
 }

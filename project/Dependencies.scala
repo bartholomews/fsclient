@@ -48,8 +48,13 @@ object Dependencies {
     "io.circe" %% "circe-literal" % Versions.circe // string interpolation to JSON model
   )
 
+  lazy val apache: Seq[ModuleID] = Seq(
+    // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpcore
+    "org.apache.httpcomponents" % "httpcore" % "4.4.12"
+  )
+
   val dependencies: Seq[ModuleID] =
-    logback ++ pureConfig ++ typelevel
+    apache ++ logback ++ pureConfig ++ typelevel
 
   lazy val testDependencies: Seq[ModuleID] = Seq(
     "org.scalactic" %% "scalactic" % Versions.scalaTest,
