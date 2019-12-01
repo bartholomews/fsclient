@@ -26,7 +26,7 @@ class IOClient(val consumer: OAuthConsumer)(implicit val ec: ExecutionContext) {
     final override def accessTokenRequest(
       request: AccessTokenRequestV1
     )(implicit responseDecoder: IOHttpPipe[String, AccessTokenV1]): IO[HttpResponse[AccessTokenV1]] =
-      super.fetchPlainText(request.toHttpRequest[IO], OAuthVersion1(request.token))
+      super.fetchPlainText(request.toHttpRequest[IO], OAuthEnabled(request.token))
 
     // FIXME: Double check these:
     final override def toOAuthClientV1(
@@ -42,24 +42,24 @@ class IOClient(val consumer: OAuthConsumer)(implicit val ec: ExecutionContext) {
     final override def fetchJson[R](
       token: OAuthToken
     )(request: FsClientPlainRequest)(implicit responseDecoder: Decoder[R]): IOResponse[R] =
-      super.fetchJson(request.toHttpRequest[IO], OAuth(token))
+      super.fetchJson(request.toHttpRequest[IO], OAuthEnabled(token))
 
     final override def fetchPlainText[R](
       token: OAuthToken
     )(request: FsClientPlainRequest)(implicit responseDecoder: IOHttpPipe[String, R]): IOResponse[R] =
-      super.fetchPlainText(request.toHttpRequest[IO], OAuth(token))
+      super.fetchPlainText(request.toHttpRequest[IO], OAuthEnabled(token))
 
     final override def fetchJsonWithBody[B, R](
       token: OAuthToken
     )(request: FsClientRequestWithBody[B])(implicit requestBodyEncoder: EntityEncoder[IO, B],
                                            responseDecoder: Decoder[R]): IOResponse[R] =
-      super.fetchJson(request.toHttpRequest[IO], OAuth(token))
+      super.fetchJson(request.toHttpRequest[IO], OAuthEnabled(token))
 
     final override def fetchPlainTextWithBody[B, R](
       token: OAuthToken
     )(request: FsClientRequestWithBody[B])(implicit requestBodyEncoder: EntityEncoder[IO, B],
                                            responseDecoder: IOHttpPipe[String, R]): IOResponse[R] =
-      super.fetchPlainText(request.toHttpRequest[IO], OAuth(token))
+      super.fetchPlainText(request.toHttpRequest[IO], OAuthEnabled(token))
   }
 
   object simple extends IOBaseClient(consumer) with IOBaseCalls {

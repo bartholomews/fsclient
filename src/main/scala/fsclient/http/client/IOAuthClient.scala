@@ -21,7 +21,7 @@ class IOAuthClient(override val consumer: OAuthConsumer)(implicit val ec: Execut
     extends IOBaseClient(consumer)
     with IOBaseCalls {
 
-  private val oAuthInfo: OAuth = OAuth(token)
+  private val oAuthInfo: OAuthEnabled = OAuthEnabled(token)
 
   final override def fetchJson[R](request: FsClientPlainRequest)(implicit responseDecoder: Decoder[R]): IOResponse[R] =
     super.fetchJson[R](request.toHttpRequest[IO], oAuthInfo)

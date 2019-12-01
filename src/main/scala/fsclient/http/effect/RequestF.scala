@@ -4,7 +4,7 @@ import cats.effect.Effect
 import fs2.{Pipe, Pure, Stream}
 import fsclient.entities._
 import fsclient.http.effect.HttpPipes._
-import fsclient.oauth.FsHeaders
+import fsclient.oauth.{FsHeaders, OAuthTokenV1, OAuthTokenV2}
 import fsclient.oauth.OAuthVersion.OAuthV1
 import fsclient.oauth.OAuthVersion.OAuthV2.AccessTokenV2
 import fsclient.utils.HttpTypes.{ErrorOr, HttpPipe}
@@ -40,27 +40,22 @@ private[http] trait RequestF {
 
     val signed =
       oAuthInfo match {
-        case _ @OAuthVersion1(v1) =>
-          logger.debug("Signing request with OAuth 1.0...")
-          Stream.eval(OAuthV1.sign(consumer, v1)(request))
-
-        case _ @OAuthVersion2(token: AccessTokenV2) =>
-          logger.warn("OAuth 2.0 is currently not supported by `fsclient`, you have to implement it yourself.")
-          logger.warn("I am adding `Authorization: Bearer` header for now, but need to double check RFC...")
-          Stream[Pure, Request[F]](
-            request.putHeaders(
-              FsHeaders.authorizationBearer(token)
-            )
-          )
-
-        case _ @OAuthVersion2(_) =>
-          logger.warn("OAuth 2.0 is currently not supported by `fsclient`, you have to implement it yourself.")
-          logger.warn("TODO: Double check other non-`AccessTokenV2` calls like refresh etc, Request token...")
-          Stream[Pure, Request[F]](request)
-
         case OAuthDisabled =>
           logger.warn("No OAuth version selected, the request will not be signed.")
           Stream[Pure, Request[F]](request)
+
+        case _ @OAuthEnabled(v1: OAuthTokenV1) =>
+          logger.debug("Signing request with OAuth 1.0...")
+          Stream.eval(OAuthV1.sign(consumer, v1)(request))
+
+        case _ @OAuthEnabled(v2: OAuthTokenV2) =>
+          logger.warn("OAuth 2.0 is currently not supported by `fsclient`, you have to implement it yourself.")
+          v2 match {
+            case accessToken: AccessTokenV2 =>
+              logger.warn("Adding `Authorization: Bearer` header for now, but need to double check RFC...")
+              Stream[Pure, Request[F]](request.putHeaders(FsHeaders.authorizationBearer(accessToken)))
+            // TODO: Double check other non-`AccessTokenV2` calls like refresh etc, Request token...")
+          }
       }
 
     for {
