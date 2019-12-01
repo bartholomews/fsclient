@@ -1,10 +1,11 @@
 package fsclient.mocks
 
 import fsclient.config.OAuthConsumer
-import fsclient.entities.AccessToken
 import fsclient.http.client.{IOAuthClient, IOClient}
-import fsclient.oauth.OAuthVersion
+import fsclient.oauth.OAuthVersion.OAuthV1.AccessTokenV1
+import fsclient.oauth.{OAuthToken, OAuthVersion}
 import org.http4s.client.oauth1.Token
+import org.scalatest.Assertions._
 
 import scala.concurrent.ExecutionContext
 
@@ -24,34 +25,38 @@ trait MockClientConfig {
 
   final val validToken = Token(validOAuthTokenValue, validOAuthTokenSecret)
 
-  final val validOAuthAccessToken: AccessToken = AccessToken(
+  final val validOAuthAccessTokenV1: AccessTokenV1 = AccessTokenV1(
     Token(validOAuthTokenValue, validOAuthTokenSecret)
   )
   // override val verifier: Option[String] = Some(validOAuthVerifier)
 
-  def validSimpleClient(oAuthVersion: OAuthVersion): IOClient =
-    simpleClientWith(oAuthVersion, validConsumerKey, validConsumerSecret)
+  def validSimpleClient(): IOClient =
+    simpleClientWith(validConsumerKey, validConsumerSecret)
 
   def validOAuthClient(oAuthVersion: OAuthVersion): IOAuthClient =
-    oAuthClientWith(oAuthVersion, validConsumerKey, validConsumerSecret, validOAuthAccessToken)
+    oAuthVersion match {
+      case OAuthVersion.OAuthV1 =>
+        oAuthClientWith(validConsumerKey, validConsumerSecret, validOAuthAccessTokenV1)
 
-  def simpleClientWith(oAuthVersion: OAuthVersion,
-                       key: String,
+      case OAuthVersion.OAuthV2 =>
+        fail("OAuthV2 client: test setup not implemented")
+    }
+
+  def simpleClientWith(key: String,
                        secret: String,
                        appName: String = "someApp",
                        appVersion: Option[String] = Some("1.0"),
                        appUrl: Option[String] = Some("app.git")): IOClient =
-    new IOClient(OAuthConsumer(appName, appVersion, appUrl, key, secret), oAuthVersion)
+    new IOClient(OAuthConsumer(appName, appVersion, appUrl, key, secret))
 
-  def oAuthClientWith(oAuthVersion: OAuthVersion,
-                      key: String,
+  def oAuthClientWith(key: String,
                       secret: String,
-                      accessToken: AccessToken,
+                      accessToken: OAuthToken,
                       appName: String = "someApp",
                       appVersion: Option[String] = Some("1.0"),
                       appUrl: Option[String] = Some("app.git")): IOAuthClient = {
 
-    implicit val token: AccessToken = accessToken
-    new IOAuthClient(OAuthConsumer(appName, appVersion, appUrl, key, secret), oAuthVersion)
+    implicit val token: OAuthToken = accessToken
+    new IOAuthClient(OAuthConsumer(appName, appVersion, appUrl, key, secret))
   }
 }

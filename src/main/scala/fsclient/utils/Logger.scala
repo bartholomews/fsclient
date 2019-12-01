@@ -4,6 +4,7 @@ import cats.effect.Effect
 import cats.implicits._
 import fs2.Pipe
 import fsclient.utils.HttpTypes.ErrorOr
+import io.circe.Json
 import org.http4s.{Request, Response}
 import org.log4s.getLogger
 import pureconfig.ConfigSource
@@ -42,6 +43,18 @@ object Logger {
       logger.debug(s"Response status: [${res.status}]")
       logger.debug(s"Response headers - {\n${res.headers.toList.mkString("\t", "\n\t", "\n")}}")
       res
+    })
+
+  private[fsclient] def rawJsonResponseLogPipe[F[_]: Effect, A]: Pipe[F, Json, Json] =
+    _.map(json => {
+      logger.debug(s"Json response - ${json.spaces2}")
+      json
+    })
+
+  private[fsclient] def rawPlainTextResponseLogPipe[F[_]: Effect, A]: Pipe[F, String, String] =
+    _.map(text => {
+      logger.debug(s"PlainText response - [\n\t$text\n]")
+      text
     })
 
   private[fsclient] def responseLogPipe[F[_]: Effect, A]: Pipe[F, ErrorOr[A], ErrorOr[A]] =

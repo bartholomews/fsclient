@@ -29,6 +29,7 @@ private[http] object HttpPipes {
     _.flatMap(
       _.body
         .through(byteStreamParser)
+        .through(rawJsonResponseLogPipe)
         .through(decoder[F, A])
         .attempt
         .through(leftMapToResponseError(Status.UnprocessableEntity))
@@ -48,6 +49,7 @@ private[http] object HttpPipes {
     _.flatMap(res => {
       Stream
         .eval(res.as[String])
+        .through(rawPlainTextResponseLogPipe)
         .attempt
         .through(leftMapToResponseError[F, String](Status.UnprocessableEntity))
         .through(decoder)

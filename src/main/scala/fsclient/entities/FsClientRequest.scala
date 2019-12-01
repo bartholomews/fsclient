@@ -28,10 +28,6 @@ object FsClientPlainRequest {
   }
 }
 
-trait AccessTokenRequest extends FsClientPlainRequest {
-  def token: OAuthToken
-}
-
 trait FsClientRequestWithBody[Body] {
   def uri: Uri
   def method: Method
@@ -61,14 +57,4 @@ object FsClientRequestWithBody {
     implicit def entityJsonEncoder[F[_]: Effect](implicit encoder: Encoder[Body]): EntityEncoder[F, Body] =
       jsonEncoderOf[F, Body]
   }
-}
-
-// FIXME: If this is not a standard oAuth request, should be constructed client-side
-object AccessTokenRequest {
-  def apply(requestUri: Uri, requestToken: RequestToken): AccessTokenRequest =
-    new AccessTokenRequest {
-      override val token = OAuthToken(requestToken.token, Some(requestToken.verifier))
-      override val uri: Uri = requestUri
-      override val method: Method = Method.POST
-    }
 }

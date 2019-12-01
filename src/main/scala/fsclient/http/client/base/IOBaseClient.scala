@@ -26,7 +26,7 @@ abstract private[http] class IOBaseClient(override val consumer: OAuthConsumer)(
   final override def run[A]: fs2.Stream[IO, HttpResponse[A]] => IO[HttpResponse[A]] =
     _.compile.last
       .flatMap(
-        _.toRight(ResponseError.apply(GenericResponseError, Status.InternalServerError)).fold(
+        _.toRight(ResponseError.apply(EmptyResponseException, Status.InternalServerError)).fold(
           error => IO.pure(HttpResponse(Headers.empty, Left(error))),
           value => IO.pure(value)
         )

@@ -24,11 +24,5 @@ object ResponseError {
 }
 
 case object EmptyResponseException extends Exception {
-  override val getMessage: String =
-    "Response body was empty. Please check request logs."
-}
-
-case object GenericResponseError extends Exception {
-  override val getMessage: String =
-    "There was a problem with the response. Please check the error logs."
+  override val getMessage: String = "Response body was empty"
 }

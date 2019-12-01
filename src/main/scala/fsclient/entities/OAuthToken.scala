@@ -1,26 +1,27 @@
 package fsclient.entities
 
-import fsclient.oauth.OAuthVersion
-import org.http4s.client.oauth1.Token
+import fsclient.oauth.OAuthVersion.{OAuthV1, OAuthV2}
+import fsclient.oauth.{OAuthToken, OAuthTokenV1, OAuthTokenV2, OAuthVersion}
 
-sealed trait OAuthInfo {
-  def oAuthVersion: Option[OAuthVersion]
+sealed trait OAuthInfo
+
+case object OAuthDisabled extends OAuthInfo
+
+sealed trait OAuth extends OAuthInfo {
+  def oAuthVersion: OAuthVersion
 }
 
-case class Basic(oAuthVersion: Option[OAuthVersion]) extends OAuthInfo
-
-case class OAuthTokenInfo private (oAuthVersion: Option[OAuthVersion], oAuthToken: OAuthToken) extends OAuthInfo
-object OAuthTokenInfo {
-  def apply(requestToken: RequestToken, oAuthVersion: Option[OAuthVersion]): OAuthTokenInfo = new OAuthTokenInfo(
-    oAuthVersion,
-    OAuthToken(requestToken.token, Some(requestToken.verifier))
-  )
-  def apply(accessToken: AccessToken, oAuthVersion: Option[OAuthVersion]): OAuthTokenInfo = new OAuthTokenInfo(
-    oAuthVersion,
-    OAuthToken(accessToken.token, verifier = None)
-  )
+object OAuth {
+  def apply(token: OAuthToken): OAuth = token match {
+    case v1: OAuthTokenV1 => OAuthVersion1(v1)
+    case v2: OAuthTokenV2 => OAuthVersion2(v2)
+  }
 }
 
-case class OAuthToken(token: Token, verifier: Option[String])
-case class RequestToken(token: Token, verifier: String)
-case class AccessToken(token: Token)
+case class OAuthVersion1(oAuthToken: OAuthTokenV1) extends OAuth {
+  override val oAuthVersion: OAuthVersion.OAuthV1.type = OAuthV1
+}
+
+case class OAuthVersion2(oAuthToken: OAuthTokenV2) extends OAuth {
+  override val oAuthVersion: OAuthVersion.OAuthV2.type = OAuthV2
+}

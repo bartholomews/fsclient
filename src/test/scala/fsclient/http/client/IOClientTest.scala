@@ -4,7 +4,7 @@ import cats.effect.IO
 import cats.implicits._
 import fsclient.entities._
 import fsclient.mocks.server.{OAuthServer, WiremockServer}
-import fsclient.oauth.OAuthVersion
+import fsclient.oauth.OAuthVersion.OAuthV1.AccessTokenV1
 import fsclient.utils.HttpTypes.HttpPipe
 import io.circe.syntax._
 import io.circe.{Encoder, Json}
@@ -16,7 +16,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
   "A valid simple client with OAuth V1" when {
 
-    val client = validSimpleClient(OAuthVersion.OAuthV1).simple
+    val client = validSimpleClient().simple
 
     def validPlainTextResponseGetEndpoint[R]: FsClientPlainRequest.Get =
       getEndpoint(okPlainTextResponse)
@@ -92,7 +92,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
           getEndpoint(notFoundEmptyJsonBodyResponse)
 
         "respond with error for http response timeout" taggedAs Slow in {
-          assert500 {
+          assertEmptyResponseError {
             client.fetchJson[Json](timeoutResponseGetEndpoint[Json])
           }
         }
@@ -173,7 +173,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       "response is empty" should {
 
         "respond with error for http response timeout" taggedAs Slow in {
-          assert500 {
+          assertEmptyResponseError {
             client.fetchJson[Json](timeoutResponseGetEndpoint)
           }
         }
@@ -250,7 +250,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
           postJsonEndpoint(notFoundEmptyJsonBodyResponse, requestBody)
 
         "respond with error for http response timeout" taggedAs Slow in {
-          assert500 {
+          assertEmptyResponseError {
             client.fetchJsonWithBody[MyRequestBody, Json](timeoutResponsePostEndpoint(requestBody))
           }
         }
@@ -340,7 +340,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       "response is empty" should {
 
         "respond with error for http response timeout" taggedAs Slow in {
-          assert500 {
+          assertEmptyResponseError {
             client.fetchJsonWithBody[MyRequestBody, Json](timeoutResponsePostEndpoint(requestBody))
           }
         }
@@ -379,18 +379,18 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-      "calling `accessTokenRequest`" should {
+      "calling `accessTokenRequestV1`" should {
         "work" in {
 
           import org.http4s.client.oauth1.Token
 
-          implicit val decoder: HttpPipe[IO, String, AccessToken] = _.map(
+          implicit val decoder: HttpPipe[IO, String, AccessTokenV1] = _.map(
             _.fold(
               err => Left(err),
               str =>
                 str match {
                   case accessTokenResponseRegex(tokenValue, tokenSecret) =>
-                    Right(AccessToken(Token(tokenValue, tokenSecret)))
+                    Right(AccessTokenV1(Token(tokenValue, tokenSecret)))
                   case invalid =>
                     Left(ResponseError(new Exception(s"Unexpected response:\n[$invalid]"), Status.UnsupportedMediaType))
                 }
@@ -398,7 +398,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
           )
 
           val res =
-            validSimpleClient(OAuthVersion.OAuthV1).auth.toOAuthClient(validAccessTokenEndpoint).unsafeRunSync()
+            validSimpleClient().auth.toOAuthClientV1(validAccessTokenEndpointV1).unsafeRunSync()
           inside(res) {
             case Right(oAuthClient) =>
               oAuthClient.consumer shouldBe client.consumer
@@ -409,5 +409,6 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
   }
 }
 
+// TODO: test V2
 // TODO: test `oAuthClient` calls with valid and invalid token
 // TODO: test `simpleClient.auth` calls with valid and invalid token
