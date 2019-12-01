@@ -1,7 +1,7 @@
 package fsclient.http.client.base
 
 import cats.effect.{ContextShift, IO, Resource}
-import fsclient.config.OAuthConsumer
+import fsclient.config.AppConsumer
 import fsclient.entities._
 import fsclient.http.effect.HttpEffectClient
 import fsclient.utils.HttpTypes.IOHttpPipe
@@ -12,7 +12,7 @@ import org.http4s.{Headers, Status}
 
 import scala.concurrent.ExecutionContext
 
-abstract private[http] class IOBaseClient(override val consumer: OAuthConsumer)(implicit ec: ExecutionContext)
+abstract private[http] class IOBaseClient(override val consumer: AppConsumer)(implicit ec: ExecutionContext)
     extends HttpEffectClient[IO] {
 
   implicit val stringDecoderPipe: IOHttpPipe[String, String] = _.map(identity)

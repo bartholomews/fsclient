@@ -1,6 +1,6 @@
 package fsclient.mocks
 
-import fsclient.config.OAuthConsumer
+import fsclient.config.AppConsumer
 import fsclient.http.client.{IOAuthClient, IOClient}
 import fsclient.oauth.OAuthVersion.OAuthV1.AccessTokenV1
 import fsclient.oauth.{OAuthToken, OAuthVersion}
@@ -47,7 +47,7 @@ trait MockClientConfig {
                        appName: String = "someApp",
                        appVersion: Option[String] = Some("1.0"),
                        appUrl: Option[String] = Some("app.git")): IOClient =
-    new IOClient(OAuthConsumer(appName, appVersion, appUrl, key, secret))
+    new IOClient(AppConsumer(appName, appVersion, appUrl, key, secret))
 
   def oAuthClientWith(key: String,
                       secret: String,
@@ -57,6 +57,6 @@ trait MockClientConfig {
                       appUrl: Option[String] = Some("app.git")): IOAuthClient = {
 
     implicit val token: OAuthToken = accessToken
-    new IOAuthClient(OAuthConsumer(appName, appVersion, appUrl, key, secret))
+    new IOAuthClient(AppConsumer(appName, appVersion, appUrl, key, secret))
   }
 }

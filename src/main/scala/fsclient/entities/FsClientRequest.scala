@@ -1,6 +1,8 @@
 package fsclient.entities
 
 import cats.effect.Effect
+import fsclient.config.AppConsumer
+import fsclient.oauth.FsHeaders
 import fsclient.utils.Logger._
 import io.circe.Encoder
 import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
@@ -10,12 +12,12 @@ trait FsClientPlainRequest {
   def uri: Uri
   def method: Method
   def headers: Headers = Headers.empty
-  def toHttpRequest[F[_]: Effect]: Request[F] =
+  def toHttpRequest[F[_]: Effect](consumer: AppConsumer): Request[F] =
     logRequest {
       Request()
-        .withHeaders(headers)
         .withMethod(method)
         .withUri(uri)
+        .withHeaders(headers.++(Headers.of(FsHeaders.userAgent(consumer.userAgent))))
     }
 }
 
@@ -33,14 +35,16 @@ trait FsClientRequestWithBody[Body] {
   def method: Method
   def headers: Headers = Headers.empty
   def body: Body
-  def toHttpRequest[F[_]: Effect](implicit requestBodyEncoder: EntityEncoder[F, Body]): Request[F] =
+  def toHttpRequest[F[_]: Effect](
+    consumer: AppConsumer
+  )(implicit requestBodyEncoder: EntityEncoder[F, Body]): Request[F] =
     logRequest(
       body,
       Request()
         .withMethod(method)
         .withUri(uri)
         .withEntity(body)
-        .withHeaders(headers)
+        .withHeaders(headers.++(Headers.of(FsHeaders.userAgent(consumer.userAgent))))
     )
 }
 

@@ -14,22 +14,35 @@ Opinionated http client on top of http4s
 import io.circe.generic.auto._
 
 val client = new IOSimpleClient(
+    // will add header `User-Agent: myapp/0.0.1-SNAPSHOT (+com.github.bartholomews)`
     OAuthConsumer(
-        "MY_APP_NAME",
-        appVersion = None,
-        appUrl = None,
-        "OAUTH_CONSUMER_KEY",
-        "OAUTH_CONSUMER_SECRET"
+        appName = "myapp",
+        appVersion = Some("0.0.1-SNAPSHOT"),
+        appUrl = Some("com.github.bartholomews"),
+        key = "kasldklSAJSALKDKAsd",
+        secret = "asjdoASIDJASOdjasojdoasijd"
     )
 )
 
-val getMyEntityEndpoint = new FsClientPlainRequest.GET[MyEntity] {
+val getMyEntityEndpoint = new FsClientPlainRequest.Get {
     override val uri: Uri = Uri.unsafeFromString("0.0.0.0/endpoint")
 }
 
 case class MyEntity(message: String)
+object MyEntity {
+    import io.circe.Decoder
+    import io.circe.generic.semiauto.deriveDecoder
+    implicit val decoder: Decoder[MyEntity] = deriveDecoder[MyEntity]
+}
 
-client.getJson[ValidEntity](accessToken = None)(getMyEntityEndpoint)
+val message = client
+    .fetchJson[ValidEntity](getMyEntityEndpoint)
+    .map(_.entity)
+    .map(_.message)
+    .unsafeRunSync()
+
+val res: IO[HttpResponse[ValidEntity]] = client.fetchJson[ValidEntity](getMyEntityEndpoint)
+val entity: IO[Either[ResponseError, ValidEntity]] = res.map(_.entity)
 
 ```
 
