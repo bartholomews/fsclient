@@ -2,7 +2,7 @@ package fsclient.http.client.base
 
 import cats.effect.{ContextShift, IO, Resource}
 import fsclient.config.AppConsumer
-import fsclient.entities._
+import fsclient.requests._
 import fsclient.http.effect.HttpEffectClient
 import fsclient.utils.HttpTypes.IOHttpPipe
 import org.http4s.client.Client
@@ -20,7 +20,7 @@ abstract private[http] class IOBaseClient(override val consumer: AppConsumer)(im
   implicit val ioContextShift: ContextShift[IO] =
     IO.contextShift(ec)
 
-  implicit val resource: Resource[IO, Client[IO]] =
+  override implicit val resource: Resource[IO, Client[IO]] =
     BlazeClientBuilder[IO](ec).resource
 
   final override def run[A]: fs2.Stream[IO, HttpResponse[A]] => IO[HttpResponse[A]] =

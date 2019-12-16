@@ -1,9 +1,10 @@
 package fsclient.mocks
 
-import fsclient.entities
-import fsclient.entities._
+import fsclient.requests
+import fsclient.requests._
 import fsclient.oauth.OAuthVersion.OAuthV1.{AccessTokenRequestV1, RequestTokenV1}
 import org.http4s.Uri
+import org.http4s.client.oauth1.Consumer
 
 trait MockEndpoints {
 
@@ -30,19 +31,33 @@ trait MockEndpoints {
   final val ok = "timeout-response"
   final val okAccessTokenResponse = "valid-access-token-plaintext-response"
 
-  val validAccessTokenEndpointV1 =
+  def validAccessTokenEndpointV1(implicit consumer: Consumer): AccessTokenRequestV1 =
     AccessTokenRequestV1(
       Uri.unsafeFromString(s"$wiremockBaseUri/$okAccessTokenResponse"),
       RequestTokenV1(validToken, "")
     )
 
-  def postJsonEndpoint[B](endpoint: String, requestBody: B): entities.FsClientRequestWithBody.PostJson[B] =
-    new FsClientRequestWithBody.PostJson[B] {
+  def postPlainTextEndpoint[B, R](endpoint: String,
+                                  requestBody: B): requests.FsSimplePlainTextRequestWithBody.PostJson[B, R] =
+    new FsSimplePlainTextRequestWithBody.PostJson[B, R] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
       override val body: B = requestBody
     }
 
-  def getEndpoint(endpoint: String): FsClientPlainRequest.Get = new FsClientPlainRequest.Get {
-    override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
-  }
+  def postJsonEndpoint[B, R](endpoint: String,
+                             requestBody: B): requests.FsSimpleJsonRequestWithBody.PostJson[B, R] =
+    new FsSimpleJsonRequestWithBody.PostJson[B, R] {
+      override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
+      override val body: B = requestBody
+    }
+
+  def getPlainTextEndpoint[Res](endpoint: String): FsSimplePlainTextRequest.Get[Res] =
+    new FsSimplePlainTextRequest.Get[Res] {
+      override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
+    }
+
+  def getJsonEndpoint[Res](endpoint: String): FsSimpleJsonRequest.Get[Res] =
+    new FsSimpleJsonRequest.Get[Res] {
+      override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
+    }
 }

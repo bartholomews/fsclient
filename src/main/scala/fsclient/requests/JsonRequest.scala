@@ -1,4 +1,4 @@
-package fsclient.entities
+package fsclient.requests
 
 import cats.effect.Effect
 import io.circe.Encoder

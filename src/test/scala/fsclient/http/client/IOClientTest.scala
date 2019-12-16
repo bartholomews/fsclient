@@ -2,32 +2,33 @@ package fsclient.http.client
 
 import cats.effect.IO
 import cats.implicits._
-import fsclient.entities._
 import fsclient.mocks.server.{OAuthServer, WiremockServer}
 import fsclient.oauth.OAuthVersion.OAuthV1.AccessTokenV1
+import fsclient.requests._
 import fsclient.utils.HttpTypes.HttpPipe
 import io.circe.syntax._
 import io.circe.{Encoder, Json}
 import org.http4s.Status
+import org.http4s.client.oauth1.Consumer
 import org.scalatest.WordSpec
 import org.scalatest.tagobjects.Slow
 
 class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer with OAuthServer {
 
-  "A valid simple client with OAuth V1" when {
+  "A valid simple client with no OAuth" when {
 
-    val client = validSimpleClient().simple
+    val client = validSimpleClient()
 
-    def validPlainTextResponseGetEndpoint[R]: FsClientPlainRequest.Get =
-      getEndpoint(okPlainTextResponse)
+    def validPlainTextResponseGetEndpoint[R]: FsSimplePlainTextRequest.Get[R] =
+      getPlainTextEndpoint[R](okPlainTextResponse)
 
-    def validPlainTextResponsePostEndpoint[B](body: B): FsClientRequestWithBody[B] =
-      postJsonEndpoint(okPlainTextResponse, body)
+    def validPlainTextResponsePostEndpoint[B, R](body: B): FsSimplePlainTextRequestWithBody[B, R] =
+      postPlainTextEndpoint(okPlainTextResponse, body)
 
-    def timeoutResponseGetEndpoint[R]: FsClientPlainRequest.Get =
-      getEndpoint(timeoutResponse)
+    def timeoutResponseGetEndpoint[R]: FsSimpleJsonRequest.Get[R] =
+      getJsonEndpoint(timeoutResponse)
 
-    def timeoutResponsePostEndpoint[B](body: B): FsClientRequestWithBody[B] =
+    def timeoutResponsePostEndpoint[B, R](body: B): FsSimpleJsonRequestWithBody[B, R] =
       postJsonEndpoint(timeoutResponse, body)
 
     case class MyRequestBody(a: String, b: List[Int])
@@ -44,12 +45,12 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response is 200" should {
 
-        def validResponseGetEndpoint[R]: FsClientPlainRequest.Get =
-          getEndpoint(okJsonResponse)
+        def validResponseGetEndpoint[R]: FsSimpleJsonRequest.Get[R] =
+          getJsonEndpoint(okJsonResponse)
 
         "retrieve the json with Status Ok and entity" in {
           assertRight(Map("message" -> "this is a json response").asJson) {
-            client.fetchJson[Json](validResponseGetEndpoint)
+            validResponseGetEndpoint[Json].runWith(client)
           }
         }
 
@@ -57,7 +58,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
           import io.circe.generic.auto._
           case class ValidEntity(message: String)
           assertRight(ValidEntity("this is a json response")) {
-            client.fetchJson[ValidEntity](validResponseGetEndpoint)
+            validResponseGetEndpoint[ValidEntity].runWith(client)
           }
         }
 
@@ -65,7 +66,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
           assertDecodingFailure {
-            client.fetchJson[InvalidEntity](validResponseGetEndpoint)
+            validResponseGetEndpoint[InvalidEntity].runWith(client)
           }
         }
 
@@ -73,7 +74,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
           assertDecodingFailure {
-            client.fetchJson[InvalidEntity](validResponseGetEndpoint[InvalidEntity])
+            validResponseGetEndpoint[InvalidEntity].runWith(client)
           }
         }
       }
@@ -81,25 +82,25 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       "response is 404" should {
         "retrieve the json response with Status NotFound and entity prettified with spaces2" in {
           assertLeft(Status.NotFound, ExpectedErrorMessage.notFoundJson) {
-            client.fetchJson[Json](getEndpoint(notFoundJsonResponse))
+            getJsonEndpoint[Json](notFoundJsonResponse).runWith(client)
           }
         }
       }
 
       "response is empty" should {
 
-        def notFoundEmptyJsonResponseGetEndpoint: FsClientPlainRequest.Get =
-          getEndpoint(notFoundEmptyJsonBodyResponse)
+        def notFoundEmptyJsonResponseGetEndpoint[Res]: FsSimpleJsonRequest.Get[Res] =
+          getJsonEndpoint(notFoundEmptyJsonBodyResponse)
 
         "respond with error for http response timeout" taggedAs Slow in {
           assertEmptyResponseError {
-            client.fetchJson[Json](timeoutResponseGetEndpoint[Json])
+            timeoutResponseGetEndpoint[Json].runWith(client)
           }
         }
 
         "return error with response status and default message" in {
           assertLeft(Status.NotFound, ExpectedErrorMessage.emptyResponse) {
-            client.fetchJson[Json](notFoundEmptyJsonResponseGetEndpoint)
+            notFoundEmptyJsonResponseGetEndpoint[Json].runWith(client)
           }
         }
       }
@@ -107,7 +108,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       "response has no `Content-Type`" should {
         "return the error status with the right message" in {
           assertLeft(Status.BadRequest, expectedErrorMessage = "") { // FIXME: expectedErrorMessage
-            client.fetchJson[Json](getEndpoint(badRequestNoContentTypeNorBodyJsonResponse))
+            getJsonEndpoint[Json](badRequestNoContentTypeNorBodyJsonResponse).runWith(client)
           }
         }
       }
@@ -115,7 +116,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       "response has an unexpected `Content-Type`" should {
         "return the error status with the right message" in {
           assertLeft(Status.BadRequest, expectedErrorMessage = "response=true&urlencoded=example") {
-            client.fetchJson[Json](getEndpoint(badRequestMultipartJsonResponse))
+            getJsonEndpoint[Json](badRequestMultipartJsonResponse).runWith(client)
           }
         }
       }
@@ -128,7 +129,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
         "retrieve the response with Status Ok and string entity" in {
           assertRight(expectedEntity = "This is a valid plaintext response") {
-            client.fetchPlainText(validPlainTextResponseGetEndpoint[String])
+            validPlainTextResponseGetEndpoint[String].runWith(client)
           }
         }
 
@@ -139,13 +140,13 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
             _.map(e => MyEntity(e.toOption).asRight[ResponseError])
 
           assertRight(expectedEntity = MyEntity(Some("This is a valid plaintext response"))) {
-            client.fetchPlainText(validPlainTextResponseGetEndpoint[MyEntity])
+            validPlainTextResponseGetEndpoint[MyEntity].runWith(client)
           }
         }
 
         "respond with empty string if the response body is empty" in {
           assertRight(expectedEntity = "") {
-            client.fetchPlainText(getEndpoint(okEmptyPlainTextResponse))
+            getJsonEndpoint(okEmptyPlainTextResponse).runWith(client)
           }
         }
       }
@@ -154,7 +155,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
         "retrieve the string response with Status NotFound" in {
           assertLeft(Status.NotFound, ExpectedErrorMessage.notFoundString) {
-            client.fetchJson[Json](getEndpoint(notFoundPlainTextResponse))
+            getJsonEndpoint[Json](notFoundPlainTextResponse).runWith(client)
           }
         }
 
@@ -165,7 +166,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
             _.map(e => MyEntity(e.toOption).asRight[ResponseError])
 
           assertRight(MyEntity(None)) {
-            client.fetchPlainText[MyEntity](getEndpoint(notFoundPlainTextResponse))
+            getPlainTextEndpoint[MyEntity](notFoundPlainTextResponse).runWith(client)
           }
         }
       }
@@ -174,13 +175,13 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
         "respond with error for http response timeout" taggedAs Slow in {
           assertEmptyResponseError {
-            client.fetchJson[Json](timeoutResponseGetEndpoint)
+            timeoutResponseGetEndpoint[Json].runWith(client)
           }
         }
 
         "return error with response status and empty message" in {
           assertLeft(Status.NotFound, expectedErrorMessage = "") {
-            client.fetchJson[Json](getEndpoint(notFoundEmptyPlainTextBodyResponse))
+            getJsonEndpoint[Json](notFoundEmptyPlainTextBodyResponse).runWith(client)
           }
         }
       }
@@ -188,7 +189,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       "response has an unexpected `Content-Type`" should {
         "return the error status with the right message" in {
           assertLeft(Status.BadRequest, expectedErrorMessage = "") { // FIXME: expectedErrorMessage
-            client.fetchPlainText[String](getEndpoint(badRequestNoContentTypeNorBodyJsonResponse))
+            getJsonEndpoint[String](badRequestNoContentTypeNorBodyJsonResponse).runWith(client)
           }
         }
       }
@@ -200,12 +201,12 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response is 200" should {
 
-        def validResponsePostJsonEndpoint: FsClientRequestWithBody[MyRequestBody] =
-          postJsonEndpoint(okJsonResponse, requestBody)
+        def validResponsePostJsonEndpoint[R]: FsSimpleJsonRequestWithBody[MyRequestBody, R] =
+          postJsonEndpoint[MyRequestBody, R](okJsonResponse, requestBody)
 
         "retrieve the json with Status Ok and entity" in {
           assertRight(Map("message" -> "this is a json response").asJson) {
-            client.fetchJsonWithBody[MyRequestBody, Json](validResponsePostJsonEndpoint)
+            validResponsePostJsonEndpoint[Json].runWith(client)
           }
         }
 
@@ -213,7 +214,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
           import io.circe.generic.auto._
           case class ValidEntity(message: String)
           assertRight(ValidEntity("this is a json response")) {
-            client.fetchJsonWithBody[MyRequestBody, ValidEntity](validResponsePostJsonEndpoint)
+            validResponsePostJsonEndpoint[ValidEntity].runWith(client)
           }
         }
 
@@ -221,7 +222,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
           assertDecodingFailure {
-            client.fetchJsonWithBody[MyRequestBody, InvalidEntity](validResponsePostJsonEndpoint)
+            validResponsePostJsonEndpoint[InvalidEntity].runWith(client)
           }
         }
 
@@ -229,35 +230,35 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
           assertDecodingFailure {
-            client.fetchJsonWithBody[MyRequestBody, InvalidEntity](validResponsePostJsonEndpoint)
+            validResponsePostJsonEndpoint[InvalidEntity].runWith(client)
           }
         }
       }
 
       "response is 404" should {
-        def notFoundJsonResponsePostEndpoint: FsClientRequestWithBody[MyRequestBody] =
+        def notFoundJsonResponsePostEndpoint[R]: FsSimpleJsonRequestWithBody[MyRequestBody, R] =
           postJsonEndpoint(notFoundJsonResponse, requestBody)
 
         "retrieve the json response with Status NotFound and entity prettified with spaces2" in {
           assertLeft(Status.NotFound, ExpectedErrorMessage.notFoundJson) {
-            client.fetchJsonWithBody[MyRequestBody, Json](notFoundJsonResponsePostEndpoint)
+            notFoundJsonResponsePostEndpoint[Json].runWith(client)
           }
         }
       }
 
       "response is empty" should {
-        def notFoundEmptyJsonResponsePostEndpoint: FsClientRequestWithBody[MyRequestBody] =
+        def notFoundEmptyJsonResponsePostEndpoint[R]: FsSimpleJsonRequestWithBody[MyRequestBody, R] =
           postJsonEndpoint(notFoundEmptyJsonBodyResponse, requestBody)
 
         "respond with error for http response timeout" taggedAs Slow in {
           assertEmptyResponseError {
-            client.fetchJsonWithBody[MyRequestBody, Json](timeoutResponsePostEndpoint(requestBody))
+            timeoutResponsePostEndpoint[MyRequestBody, Json](requestBody).runWith(client)
           }
         }
 
         "return error with response status and default message" in {
           assertLeft(Status.NotFound, ExpectedErrorMessage.emptyResponse) {
-            client.fetchJsonWithBody[MyRequestBody, Json](notFoundEmptyJsonResponsePostEndpoint)
+            notFoundEmptyJsonResponsePostEndpoint[Json].runWith(client)
           }
         }
       }
@@ -265,9 +266,8 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       "response has no `Content-Type`" should {
         "return error status with the right message" in {
           assertLeft(Status.BadRequest, expectedErrorMessage = "") { // FIXME: expectedErrorMessage
-            client.fetchJsonWithBody[MyRequestBody, Json](
-              postJsonEndpoint(badRequestNoContentTypeNorBodyJsonResponse, requestBody)
-            )
+            postJsonEndpoint[MyRequestBody, Json](badRequestNoContentTypeNorBodyJsonResponse, requestBody)
+              .runWith(client)
           }
         }
       }
@@ -281,10 +281,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
         "retrieve the response with Status Ok and string entity" in {
           assertRight("This is a valid plaintext response") {
-            client
-              .fetchPlainTextWithBody {
-                validPlainTextResponsePostEndpoint[MyRequestBody](requestBody)
-              }
+            validPlainTextResponsePostEndpoint[MyRequestBody, String](requestBody).runWith(client)
           }
         }
 
@@ -295,19 +292,13 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
             _.map(e => MyEntity(e.toOption).asRight[ResponseError])
 
           assertRight(MyEntity(Some("This is a valid plaintext response"))) {
-            client
-              .fetchPlainTextWithBody[MyRequestBody, MyEntity] {
-                validPlainTextResponsePostEndpoint(requestBody)
-              }
+            validPlainTextResponsePostEndpoint[MyRequestBody, MyEntity](requestBody).runWith(client)
           }
         }
 
         "respond with empty string if the response body is empty" in {
           assertRight(expectedEntity = "") {
-            client
-              .fetchPlainTextWithBody {
-                postJsonEndpoint[MyRequestBody](okEmptyPlainTextResponse, requestBody)
-              }
+            postPlainTextEndpoint[MyRequestBody, String](okEmptyPlainTextResponse, requestBody).runWith(client)
           }
         }
       }
@@ -316,9 +307,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
         "retrieve the string response with Status NotFound" in {
           assertLeft(Status.NotFound, ExpectedErrorMessage.notFoundString) {
-            client.fetchJsonWithBody[MyRequestBody, Json] {
-              postJsonEndpoint(notFoundPlainTextResponse, requestBody)
-            }
+            postJsonEndpoint[MyRequestBody, Json](notFoundPlainTextResponse, requestBody).runWith(client)
           }
         }
 
@@ -329,10 +318,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
             _.map(e => MyEntity(e.toOption).asRight[ResponseError])
 
           assertRight(MyEntity(None)) {
-            client
-              .fetchPlainTextWithBody {
-                postJsonEndpoint[MyRequestBody](notFoundPlainTextResponse, requestBody)
-              }
+            postPlainTextEndpoint[MyRequestBody, MyEntity](notFoundPlainTextResponse, requestBody).runWith(client)
           }
         }
       }
@@ -341,16 +327,13 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
         "respond with error for http response timeout" taggedAs Slow in {
           assertEmptyResponseError {
-            client.fetchJsonWithBody[MyRequestBody, Json](timeoutResponsePostEndpoint(requestBody))
+            timeoutResponsePostEndpoint[MyRequestBody, Json](requestBody).runWith(client)
           }
         }
 
         "return error with response status and empty message" in {
           assertLeft(Status.NotFound, expectedErrorMessage = "") {
-            client
-              .fetchJsonWithBody[MyRequestBody, Json](
-                postJsonEndpoint(notFoundEmptyPlainTextBodyResponse, requestBody)
-              )
+            postJsonEndpoint[MyRequestBody, Json](notFoundEmptyPlainTextBodyResponse, requestBody).runWith(client)
           }
         }
       }
@@ -358,10 +341,8 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       "response has no `Content-Type`" should {
         "return the error status with the right message" in {
           assertLeft(Status.BadRequest, expectedErrorMessage = "") { // FIXME expectedErrorMessage
-            client
-              .fetchPlainTextWithBody[MyRequestBody, String](
-                postJsonEndpoint(badRequestNoContentTypeNorBodyJsonResponse, requestBody)
-              )
+            postJsonEndpoint[MyRequestBody, String](badRequestNoContentTypeNorBodyJsonResponse, requestBody)
+              .runWith(client)
           }
         }
       }
@@ -369,10 +350,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       "response has an unexpected `Content-Type`" should {
         "return the error status with the right message" in {
           assertLeft(Status.BadRequest, expectedErrorMessage = "response=true&urlencoded=example") {
-            client
-              .fetchPlainTextWithBody[MyRequestBody, String](
-                postJsonEndpoint(badRequestMultipartJsonResponse, requestBody)
-              )
+            postJsonEndpoint[MyRequestBody, String](badRequestMultipartJsonResponse, requestBody).runWith(client)
           }
         }
       }
@@ -383,6 +361,8 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "work" in {
 
           import org.http4s.client.oauth1.Token
+
+          implicit val consumer: Consumer = validConsumer
 
           implicit val decoder: HttpPipe[IO, String, AccessTokenV1] = _.map(
             _.fold(
@@ -398,7 +378,8 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
           )
 
           val res =
-            validSimpleClient().auth.toOAuthClientV1(validAccessTokenEndpointV1).unsafeRunSync()
+            validSimpleClient().toOAuthClientV1(validAccessTokenEndpointV1).unsafeRunSync()
+
           inside(res) {
             case Right(oAuthClient) =>
               oAuthClient.consumer shouldBe client.consumer

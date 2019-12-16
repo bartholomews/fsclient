@@ -1,7 +1,7 @@
 package fsclient.utils
 
 import cats.effect.IO
-import fsclient.entities.{HttpResponse, ResponseError}
+import fsclient.requests.{HttpResponse, ResponseError}
 import fs2.Pipe
 
 object HttpTypes {

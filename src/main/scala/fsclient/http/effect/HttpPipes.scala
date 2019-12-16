@@ -3,7 +3,7 @@ package fsclient.http.effect
 import cats.effect.Effect
 import cats.implicits._
 import fs2.{Pipe, Stream}
-import fsclient.entities.{EmptyResponseException, ResponseError}
+import fsclient.requests.{EmptyResponseException, ResponseError}
 import fsclient.utils.{HttpTypes, Logger}
 import io.circe.fs2.{byteStreamParser, decoder}
 import io.circe.{Decoder, Json}

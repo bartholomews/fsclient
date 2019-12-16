@@ -4,7 +4,7 @@ import fsclient.config.AppConsumer
 import fsclient.http.client.{IOAuthClient, IOClient}
 import fsclient.oauth.OAuthVersion.OAuthV1.AccessTokenV1
 import fsclient.oauth.{OAuthToken, OAuthVersion}
-import org.http4s.client.oauth1.Token
+import org.http4s.client.oauth1.{Consumer, Token}
 import org.scalatest.Assertions._
 
 import scala.concurrent.ExecutionContext
@@ -16,6 +16,8 @@ trait MockClientConfig {
   final val validConsumerKey = "VALID_CONSUMER_KEY"
   final val validConsumerSecret = "VALID_CONSUMER_SECRET"
 
+  final val validConsumer = Consumer(validConsumerKey, validConsumerSecret)
+
   final val invalidConsumerKey = "INVALID_CONSUMER_KEY"
   final val invalidConsumerSecret = "INVALID_CONSUMER_SECRET"
 
@@ -25,9 +27,6 @@ trait MockClientConfig {
 
   final val validToken = Token(validOAuthTokenValue, validOAuthTokenSecret)
 
-  final val validOAuthAccessTokenV1: AccessTokenV1 = AccessTokenV1(
-    Token(validOAuthTokenValue, validOAuthTokenSecret)
-  )
   // override val verifier: Option[String] = Some(validOAuthVerifier)
 
   def validSimpleClient(): IOClient =
@@ -36,7 +35,7 @@ trait MockClientConfig {
   def validOAuthClient(oAuthVersion: OAuthVersion): IOAuthClient =
     oAuthVersion match {
       case OAuthVersion.OAuthV1 =>
-        oAuthClientWith(validConsumerKey, validConsumerSecret, validOAuthAccessTokenV1)
+        oAuthClientWith(validConsumerKey, validConsumerSecret, validToken)
 
       case OAuthVersion.OAuthV2 =>
         fail("OAuthV2 client: test setup not implemented")
@@ -51,12 +50,14 @@ trait MockClientConfig {
 
   def oAuthClientWith(key: String,
                       secret: String,
-                      accessToken: OAuthToken,
+                      token: Token,
                       appName: String = "someApp",
                       appVersion: Option[String] = Some("1.0"),
                       appUrl: Option[String] = Some("app.git")): IOAuthClient = {
 
-    implicit val token: OAuthToken = accessToken
-    new IOAuthClient(AppConsumer(appName, appVersion, appUrl, key, secret))
+    val appConsumer: AppConsumer = AppConsumer(appName, appVersion, appUrl, key, secret)
+    implicit val consumer: Consumer = Consumer(appConsumer.key, appConsumer.secret)
+    implicit val oAuthToken: OAuthToken = AccessTokenV1(token)
+    new IOAuthClient(appConsumer)
   }
 }

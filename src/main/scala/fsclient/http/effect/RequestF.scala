@@ -2,16 +2,15 @@ package fsclient.http.effect
 
 import cats.effect.Effect
 import fs2.{Pipe, Pure, Stream}
-import fsclient.entities._
 import fsclient.http.effect.HttpPipes._
-import fsclient.oauth.{FsHeaders, OAuthTokenV1, OAuthTokenV2}
 import fsclient.oauth.OAuthVersion.OAuthV1
 import fsclient.oauth.OAuthVersion.OAuthV2.AccessTokenV2
+import fsclient.oauth.{FsHeaders, OAuthTokenV1, OAuthTokenV2}
+import fsclient.requests._
 import fsclient.utils.HttpTypes.{ErrorOr, HttpPipe}
 import fsclient.utils.Logger
 import io.circe.Decoder
 import org.http4s.client.Client
-import org.http4s.client.oauth1.Consumer
 import org.http4s.{Request, Response, Status}
 
 private[http] trait RequestF {
@@ -19,16 +18,14 @@ private[http] trait RequestF {
   import Logger._
 
   def jsonRequest[F[_]: Effect, A](client: Client[F])(request: Request[F], oAuthInfo: OAuthInfo)(
-    implicit
-    consumer: Consumer,
-    decoder: Decoder[A]
+    implicit decoder: Decoder[A]
   ): Stream[F, HttpResponse[A]] =
     processHttpRequest(client)(request, oAuthInfo, decodeJsonResponse, doNothing)
 
   def plainTextRequest[F[_]: Effect, A](client: Client[F])(
     request: Request[F],
     oAuthInfo: OAuthInfo
-  )(implicit consumer: Consumer, decoder: HttpPipe[F, String, A]): Stream[F, HttpResponse[A]] =
+  )(implicit decoder: HttpPipe[F, String, A]): Stream[F, HttpResponse[A]] =
     processHttpRequest(client)(request, oAuthInfo, decodeTextPlainResponse, decoder)
 
   private def processHttpRequest[F[_]: Effect, A](client: Client[F])(
@@ -36,7 +33,7 @@ private[http] trait RequestF {
     oAuthInfo: OAuthInfo,
     decodeRight: Pipe[F, Response[F], ErrorOr[A]],
     decodeLeft: Pipe[F, ErrorOr[Nothing], ErrorOr[A]]
-  )(implicit consumer: Consumer): Stream[F, HttpResponse[A]] = {
+  ): Stream[F, HttpResponse[A]] = {
 
     val signed =
       oAuthInfo match {
@@ -46,7 +43,7 @@ private[http] trait RequestF {
 
         case _ @OAuthEnabled(v1: OAuthTokenV1) =>
           logger.debug("Signing request with OAuth 1.0...")
-          Stream.eval(OAuthV1.sign(consumer, v1)(request))
+          Stream.eval(OAuthV1.sign(v1)(request))
 
         case _ @OAuthEnabled(v2: OAuthTokenV2) =>
           logger.warn("OAuth 2.0 is currently not supported by `fsclient`, you have to implement it yourself.")

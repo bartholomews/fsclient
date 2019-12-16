@@ -6,9 +6,9 @@ name := "fsclient"
 
 version := "0.2.1-SNAPSHOT"
 
-skip in publish := isSnapshot.value
+//skip in publish := isSnapshot.value
 
-scalaVersion := "2.13.0"
+scalaVersion := "2.13.1"
 
 licenses += ("Unlicense", url("https://unlicense.org"))
 
@@ -30,7 +30,7 @@ testOptions in Test ++= Seq(
 )
 
 coverageEnabled := true
-coverageMinimum := 59 // FIXME
+coverageMinimum := 56 // FIXME
 coverageFailOnMinimum := true
 
 addCommandAlias("test-coverage", ";clean ;coverage ;test ;coverageReport")
