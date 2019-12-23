@@ -3,13 +3,14 @@ package fsclient.http.effect
 import cats.effect.Effect
 import cats.implicits._
 import fs2.{Pipe, Stream}
+import fsclient.http.client.base.RawDecoder
 import fsclient.requests.{EmptyResponseException, ResponseError}
-import fsclient.utils.{HttpTypes, Logger}
-import io.circe.fs2.{byteStreamParser, decoder}
-import io.circe.{Decoder, Json}
+import fsclient.utils.HttpTypes._
+import fsclient.utils.Logger
+import io.circe.Json
+import io.circe.fs2.byteStreamParser
 import org.http4s.headers.`Content-Type`
 import org.http4s.{Response, Status}
-import HttpTypes._
 
 private[http] object HttpPipes {
 
@@ -20,40 +21,24 @@ private[http] object HttpPipes {
   /**
    * Attempt to decode an Http Response with the provided decoder
    *
-   * @param decode a decoder for type `A`
+   * @param rawDecoder a Pipe from `Byte` to `Raw`
+   * @param resDecoder a Pipe from `Raw` to `Res`
    * @tparam F the `Effect`
-   * @tparam A the type of expected response entity
-   * @return a Pipe transformed in an `Either[ResponseError, A]`
+   * @tparam Raw the raw type of the response to decode (e.g. Json, PlainText string)
+   * @tparam Res the type of expected decoded response entity
+   * @return a Pipe transformed in an `Either[ResponseError, Res]`
    */
-  def decodeJsonResponse[F[_]: Effect, A](implicit decode: Decoder[A]): Pipe[F, Response[F], ErrorOr[A]] =
+  def decodeResponse[F[_]: Effect, Raw, Res](
+    rawDecoder: RawDecoder[Raw],
+    resDecoder: Pipe[F, Raw, Res]
+  ): Pipe[F, Response[F], ErrorOr[Res]] =
     _.flatMap(
       _.body
-        .through(byteStreamParser)
-        .through(rawJsonResponseLogPipe)
-        .through(decoder[F, A])
+        .through(rawDecoder.decode)
+        .through(resDecoder)
         .attempt
         .through(leftMapToResponseError(Status.UnprocessableEntity))
     )
-
-  /**
-   * Attempt to decode a PlainText Http Response with the provided decoder
-   *
-   * @param decoder a Pipe decoder from String to type `A`
-   * @tparam F the `Effect`
-   * @tparam A the type of expected response entity
-   * @return a Pipe transformed in an `Either[ResponseError, A]`
-   */
-  def decodeTextPlainResponse[F[_]: Effect, A](
-    implicit decoder: HttpPipe[F, String, A]
-  ): Pipe[F, Response[F], ErrorOr[A]] =
-    _.flatMap(res => {
-      Stream
-        .eval(res.as[String])
-        .through(rawPlainTextResponseLogPipe)
-        .attempt
-        .through(leftMapToResponseError[F, String](Status.UnprocessableEntity))
-        .through(decoder)
-    })
 
   /**
    * Map the left side of an `Either[Throwable, A]` into a `ResponseError`

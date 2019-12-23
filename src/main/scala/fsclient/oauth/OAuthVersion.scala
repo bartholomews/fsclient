@@ -64,7 +64,6 @@ object OAuthVersion {
   // https://tools.ietf.org/html/rfc6749
   case object OAuthV2 extends OAuthVersion {
     // https://tools.ietf.org/html/rfc6749#section-4.2.2
-//    @ConfiguredJsonCodec(decodeOnly = true)
     case class AccessTokenResponse(
       accessToken: String,
       tokenType: String,
@@ -73,7 +72,7 @@ object OAuthVersion {
       state: Option[String]
     )
 
-    object AccessTokenResponse {
+    object AccessTokenResponse extends JsonEntityResponse[AccessTokenResponse] {
       implicit val decode: Decoder[AccessTokenResponse] = semiauto.deriveConfiguredDecoder
     }
 

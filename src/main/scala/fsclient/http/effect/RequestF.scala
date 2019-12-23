@@ -2,38 +2,26 @@ package fsclient.http.effect
 
 import cats.effect.Effect
 import fs2.{Pipe, Pure, Stream}
+import fsclient.http.client.base.RawDecoder
 import fsclient.http.effect.HttpPipes._
 import fsclient.oauth.OAuthVersion.OAuthV1
 import fsclient.oauth.OAuthVersion.OAuthV2.AccessTokenV2
 import fsclient.oauth.{FsHeaders, OAuthTokenV1, OAuthTokenV2}
 import fsclient.requests._
-import fsclient.utils.HttpTypes.{ErrorOr, HttpPipe}
 import fsclient.utils.Logger
-import io.circe.Decoder
 import org.http4s.client.Client
-import org.http4s.{Request, Response, Status}
+import org.http4s.{Request, Status}
 
 private[http] trait RequestF {
 
   import Logger._
 
-  def jsonRequest[F[_]: Effect, A](client: Client[F])(request: Request[F], oAuthInfo: OAuthInfo)(
-    implicit decoder: Decoder[A]
-  ): Stream[F, HttpResponse[A]] =
-    processHttpRequest(client)(request, oAuthInfo, decodeJsonResponse, doNothing)
-
-  def plainTextRequest[F[_]: Effect, A](client: Client[F])(
-    request: Request[F],
-    oAuthInfo: OAuthInfo
-  )(implicit decoder: HttpPipe[F, String, A]): Stream[F, HttpResponse[A]] =
-    processHttpRequest(client)(request, oAuthInfo, decodeTextPlainResponse, decoder)
-
-  private def processHttpRequest[F[_]: Effect, A](client: Client[F])(
+  def processHttpRequest[F[_]: Effect, Raw, Res](client: Client[F])(
     request: Request[F],
     oAuthInfo: OAuthInfo,
-    decodeRight: Pipe[F, Response[F], ErrorOr[A]],
-    decodeLeft: Pipe[F, ErrorOr[Nothing], ErrorOr[A]]
-  ): Stream[F, HttpResponse[A]] = {
+    rawDecoder: RawDecoder[Raw],
+    resDecoder: Pipe[F, Raw, Res]
+  ): Stream[F, HttpResponse[Res]] = {
 
     val signed =
       oAuthInfo match {
@@ -77,14 +65,14 @@ private[http] trait RequestF {
         case Status.Ok =>
           Stream
             .emit(response)
-            .through(decodeRight)
+            .through(decodeResponse(rawDecoder, resDecoder))
             .through(responseLogPipe)
 
         case _ =>
           Stream
             .emit(response)
             .through(errorHandler)
-            .through(decodeLeft) // FIXME: WTF IS THIS
+            //            .through(decodeLeft) // FIXME: WTF IS THIS? Does a Pipe[F, ErrorOr[Nothing], ErrorOr[Res]] make sense?
             .through(responseLogPipe)
 
       }).map(HttpResponse(response.headers, _))

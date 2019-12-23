@@ -1,10 +1,10 @@
 package fsclient.http.effect
 
 import cats.effect.{Effect, Resource}
+import fs2.Pipe
 import fsclient.config.AppConsumer
+import fsclient.http.client.base.RawDecoder
 import fsclient.requests.{HttpResponse, OAuthInfo}
-import fsclient.utils.HttpTypes.HttpPipe
-import io.circe.Decoder
 import org.http4s._
 import org.http4s.client.Client
 
@@ -16,23 +16,13 @@ trait HttpEffectClient[F[_]] extends RequestF {
 
   def run[A]: fs2.Stream[F, HttpResponse[A]] => F[HttpResponse[A]]
 
-  private[fsclient] def fetchJson[R](request: Request[F], oAuthInfo: OAuthInfo)(
+  private[fsclient] def fetch[Raw, Res](request: Request[F], oAuthInfo: OAuthInfo)(
     implicit
     effect: Effect[F],
-    responseDecoder: Decoder[R]
-  ): F[HttpResponse[R]] =
+    rawDecoder: RawDecoder[Raw],
+    decode: Pipe[F, Raw, Res]
+  ): F[HttpResponse[Res]] =
     resource.use { client =>
-      run(jsonRequest[F, R](client)(request, oAuthInfo))
-    }
-
-  private[fsclient] def fetchPlainText[R](request: Request[F], oAuthInfo: OAuthInfo)(
-    implicit
-    effect: Effect[F],
-    responseDecoder: HttpPipe[F, String, R]
-  ): F[HttpResponse[R]] =
-    resource.use { client =>
-      run(
-        plainTextRequest[F, R](client)(request, oAuthInfo)
-      )
+      run(processHttpRequest[F, Raw, Res](client)(request, oAuthInfo, rawDecoder, decode))
     }
 }

@@ -1,40 +1,43 @@
 package fsclient.http.client
 
 import cats.effect.IO
-import cats.implicits._
+import fs2.Pipe
+import fsclient.implicits.{jsonPipe, plainTextPipe}
 import fsclient.mocks.server.{OAuthServer, WiremockServer}
 import fsclient.oauth.OAuthVersion.OAuthV1.AccessTokenV1
 import fsclient.requests._
-import fsclient.utils.HttpTypes.HttpPipe
+import io.circe.generic.extras.Configuration
 import io.circe.syntax._
-import io.circe.{Encoder, Json}
+import io.circe.{Decoder, Encoder, Json}
 import org.http4s.Status
 import org.http4s.client.oauth1.Consumer
 import org.scalatest.WordSpec
 import org.scalatest.tagobjects.Slow
+import fsclient.implicits._
 
 class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer with OAuthServer {
 
   "A valid simple client with no OAuth" when {
 
-    val client = validSimpleClient()
+    val client: IOClient = validSimpleClient()
 
-    def validPlainTextResponseGetEndpoint[R]: FsSimplePlainTextRequest.Get[R] =
+    def validPlainTextResponseGetEndpoint[R]: FsSimpleRequest.Get[String, R] =
       getPlainTextEndpoint[R](okPlainTextResponse)
 
-    def validPlainTextResponsePostEndpoint[B, R](body: B): FsSimplePlainTextRequestWithBody[B, R] =
+    def validPlainTextResponsePostEndpoint[B, R](body: B): FsSimpleRequestWithBody[B, String, R] =
       postPlainTextEndpoint(okPlainTextResponse, body)
 
-    def timeoutResponseGetEndpoint[R]: FsSimpleJsonRequest.Get[R] =
+    def timeoutResponseGetEndpoint[R]: FsSimpleRequest.Get[Json, R] =
       getJsonEndpoint(timeoutResponse)
 
-    def timeoutResponsePostEndpoint[B, R](body: B): FsSimpleJsonRequestWithBody[B, R] =
+    def timeoutResponsePostEndpoint[B, R](body: B): FsSimpleRequestWithBody[B, Json, R] =
       postJsonEndpoint(timeoutResponse, body)
 
     case class MyRequestBody(a: String, b: List[Int])
-    object MyRequestBody extends JsonRequest {
+    object MyRequestBody extends JsonEntityResponse[MyRequestBody] {
       import io.circe.generic.semiauto._
       implicit val encoder: Encoder[MyRequestBody] = deriveEncoder
+      implicit val decoder: Decoder[MyRequestBody] = deriveDecoder
     }
 
     val requestBody: MyRequestBody = MyRequestBody("A", List(1, 2, 3))
@@ -45,7 +48,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response is 200" should {
 
-        def validResponseGetEndpoint[R]: FsSimpleJsonRequest.Get[R] =
+        def validResponseGetEndpoint[R]: FsSimpleRequest.Get[Json, R] =
           getJsonEndpoint(okJsonResponse)
 
         "retrieve the json with Status Ok and entity" in {
@@ -55,16 +58,22 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         }
 
         "retrieve the decoded json with Status Ok and entity" in {
-          import io.circe.generic.auto._
           case class ValidEntity(message: String)
+          object ValidEntity extends JsonEntityResponse[ValidEntity] {
+            implicit val decoder: Decoder[ValidEntity] = io.circe.generic.semiauto.deriveDecoder
+          }
           assertRight(ValidEntity("this is a json response")) {
-            validResponseGetEndpoint[ValidEntity].runWith(client)
+            val r: FsSimpleRequest.Get[Json, ValidEntity] = validResponseGetEndpoint[ValidEntity]
+            r.runWith[IO](client)
           }
         }
 
         "respond with error if the response json is unexpected" in {
-          import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
+          object InvalidEntity extends JsonEntityResponse[InvalidEntity] {
+            implicit val conf: Configuration = io.circe.generic.extras.defaults.defaultGenericConfiguration
+            implicit val dec: Decoder[InvalidEntity] = io.circe.generic.extras.semiauto.deriveConfiguredDecoder
+          }
           assertDecodingFailure {
             validResponseGetEndpoint[InvalidEntity].runWith(client)
           }
@@ -73,6 +82,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "respond with error if the response body is empty" in {
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
+          object InvalidEntity extends JsonEntityResponse[InvalidEntity]
           assertDecodingFailure {
             validResponseGetEndpoint[InvalidEntity].runWith(client)
           }
@@ -89,7 +99,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response is empty" should {
 
-        def notFoundEmptyJsonResponseGetEndpoint[Res]: FsSimpleJsonRequest.Get[Res] =
+        def notFoundEmptyJsonResponseGetEndpoint[Res]: FsSimpleRequest.Get[Json, Res] =
           getJsonEndpoint(notFoundEmptyJsonBodyResponse)
 
         "respond with error for http response timeout" taggedAs Slow in {
@@ -134,19 +144,21 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         }
 
         "respond applying the provided `plainTextDecoder`" in {
-          case class MyEntity(str: Option[String])
+          case class MyEntity(str: String)
 
-          implicit val plainTextDecoder: HttpPipe[IO, String, MyEntity] =
-            _.map(e => MyEntity(e.toOption).asRight[ResponseError])
+          implicit val plainTextDecoder: Pipe[IO, String, MyEntity] =
+            _.map(str => MyEntity(str))
 
-          assertRight(expectedEntity = MyEntity(Some("This is a valid plaintext response"))) {
+          assertRight(expectedEntity = MyEntity("This is a valid plaintext response")) {
             validPlainTextResponseGetEndpoint[MyEntity].runWith(client)
           }
         }
 
         "respond with empty string if the response body is empty" in {
-          assertRight(expectedEntity = "") {
-            getJsonEndpoint(okEmptyPlainTextResponse).runWith(client)
+          assertResponse(getJsonEndpoint[String](okEmptyPlainTextResponse).runWith(client)) {
+            case response @ HttpResponse(_, Right(entity)) =>
+              response.status shouldBe Status.Ok
+              entity shouldBe ""
           }
         }
       }
@@ -162,8 +174,8 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "respond applying the provided `plainTextDecoder`" in {
           case class MyEntity(str: Option[String])
 
-          implicit val plainTextDecoder: HttpPipe[IO, String, MyEntity] =
-            _.map(e => MyEntity(e.toOption).asRight[ResponseError])
+          implicit val plainTextDecoder: Pipe[IO, String, MyEntity] =
+            _.map(str => MyEntity(Some(str)))
 
           assertRight(MyEntity(None)) {
             getPlainTextEndpoint[MyEntity](notFoundPlainTextResponse).runWith(client)
@@ -188,7 +200,8 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response has an unexpected `Content-Type`" should {
         "return the error status with the right message" in {
-          assertLeft(Status.BadRequest, expectedErrorMessage = "") { // FIXME: expectedErrorMessage
+          import fsclient.implicits._
+          assertLeft(Status.BadRequest, expectedErrorMessage = "") {
             getJsonEndpoint[String](badRequestNoContentTypeNorBodyJsonResponse).runWith(client)
           }
         }
@@ -201,7 +214,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response is 200" should {
 
-        def validResponsePostJsonEndpoint[R]: FsSimpleJsonRequestWithBody[MyRequestBody, R] =
+        def validResponsePostJsonEndpoint[R]: FsSimpleRequestWithBody[MyRequestBody, Json, R] =
           postJsonEndpoint[MyRequestBody, R](okJsonResponse, requestBody)
 
         "retrieve the json with Status Ok and entity" in {
@@ -213,6 +226,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "retrieve the decoded json with Status Ok and entity" in {
           import io.circe.generic.auto._
           case class ValidEntity(message: String)
+          object ValidEntity extends JsonEntityResponse[ValidEntity]
           assertRight(ValidEntity("this is a json response")) {
             validResponsePostJsonEndpoint[ValidEntity].runWith(client)
           }
@@ -221,6 +235,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "respond with error if the response json is unexpected" in {
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
+          object InvalidEntity extends JsonEntityResponse[InvalidEntity]
           assertDecodingFailure {
             validResponsePostJsonEndpoint[InvalidEntity].runWith(client)
           }
@@ -229,6 +244,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "respond with error if the response body is empty" in {
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
+          object InvalidEntity extends JsonEntityResponse[InvalidEntity]
           assertDecodingFailure {
             validResponsePostJsonEndpoint[InvalidEntity].runWith(client)
           }
@@ -236,7 +252,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       }
 
       "response is 404" should {
-        def notFoundJsonResponsePostEndpoint[R]: FsSimpleJsonRequestWithBody[MyRequestBody, R] =
+        def notFoundJsonResponsePostEndpoint[R]: FsSimpleRequestWithBody[MyRequestBody, Json, R] =
           postJsonEndpoint(notFoundJsonResponse, requestBody)
 
         "retrieve the json response with Status NotFound and entity prettified with spaces2" in {
@@ -247,7 +263,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       }
 
       "response is empty" should {
-        def notFoundEmptyJsonResponsePostEndpoint[R]: FsSimpleJsonRequestWithBody[MyRequestBody, R] =
+        def notFoundEmptyJsonResponsePostEndpoint[R]: FsSimpleRequestWithBody[MyRequestBody, Json, R] =
           postJsonEndpoint(notFoundEmptyJsonBodyResponse, requestBody)
 
         "respond with error for http response timeout" taggedAs Slow in {
@@ -288,8 +304,8 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "respond applying the provided `plainTextDecoder`" in {
           case class MyEntity(str: Option[String])
 
-          implicit val plainTextDecoder: HttpPipe[IO, String, MyEntity] =
-            _.map(e => MyEntity(e.toOption).asRight[ResponseError])
+          implicit val plainTextDecoder: Pipe[IO, String, MyEntity] =
+            _.map(str => MyEntity(Some(str)))
 
           assertRight(MyEntity(Some("This is a valid plaintext response"))) {
             validPlainTextResponsePostEndpoint[MyRequestBody, MyEntity](requestBody).runWith(client)
@@ -314,8 +330,8 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "respond applying the provided `plainTextDecoder`" in {
           case class MyEntity(str: Option[String])
 
-          implicit val plainTextDecoder: HttpPipe[IO, String, MyEntity] =
-            _.map(e => MyEntity(e.toOption).asRight[ResponseError])
+          implicit val plainTextDecoder: Pipe[IO, String, MyEntity] =
+            _.map(str => MyEntity(Some(str)))
 
           assertRight(MyEntity(None)) {
             postPlainTextEndpoint[MyRequestBody, MyEntity](notFoundPlainTextResponse, requestBody).runWith(client)
@@ -340,6 +356,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response has no `Content-Type`" should {
         "return the error status with the right message" in {
+          import fsclient.implicits._
           assertLeft(Status.BadRequest, expectedErrorMessage = "") { // FIXME expectedErrorMessage
             postJsonEndpoint[MyRequestBody, String](badRequestNoContentTypeNorBodyJsonResponse, requestBody)
               .runWith(client)
@@ -350,6 +367,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       "response has an unexpected `Content-Type`" should {
         "return the error status with the right message" in {
           assertLeft(Status.BadRequest, expectedErrorMessage = "response=true&urlencoded=example") {
+            import fsclient.implicits._
             postJsonEndpoint[MyRequestBody, String](badRequestMultipartJsonResponse, requestBody).runWith(client)
           }
         }
@@ -364,18 +382,14 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
           implicit val consumer: Consumer = validConsumer
 
-          implicit val decoder: HttpPipe[IO, String, AccessTokenV1] = _.map(
-            _.fold(
-              err => Left(err),
-              str =>
-                str match {
-                  case accessTokenResponseRegex(tokenValue, tokenSecret) =>
-                    Right(AccessTokenV1(Token(tokenValue, tokenSecret)))
-                  case invalid =>
-                    Left(ResponseError(new Exception(s"Unexpected response:\n[$invalid]"), Status.UnsupportedMediaType))
-                }
-            )
-          )
+          implicit val decoder: Pipe[IO, String, AccessTokenV1] = _.flatMap {
+            case accessTokenResponseRegex(tokenValue, tokenSecret) =>
+              fs2.Stream.emit(AccessTokenV1(Token(tokenValue, tokenSecret)))
+            case invalid =>
+              fs2.Stream.raiseError[IO](
+                new Exception(s"Unexpected response:\n[$invalid]")
+              )
+          }
 
           val res =
             validSimpleClient().toOAuthClientV1(validAccessTokenEndpointV1).unsafeRunSync()

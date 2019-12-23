@@ -8,7 +8,7 @@ import org.scalatest.{Assertion, Inside, Matchers}
 
 trait IOClientMatchers extends Matchers with Inside {
 
-  private def assertResponse[R](ioResponse: IOResponse[R])(pf: PartialFunction[HttpResponse[R], Assertion]): Assertion =
+  def assertResponse[R](ioResponse: IOResponse[R])(pf: PartialFunction[HttpResponse[R], Assertion]): Assertion =
     inside(ioResponse.unsafeRunSync())(pf)
 
   def assertRight[R](expectedEntity: R)(ioResponse: IOResponse[R]): Assertion =
