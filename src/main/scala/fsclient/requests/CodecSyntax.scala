@@ -1,7 +1,7 @@
 package fsclient.requests
 
 import cats.effect.Effect
-import fs2.{Pipe, text}
+import fs2.{text, Pipe}
 import fsclient.http.client.base.RawDecoder
 import fsclient.utils.Logger.{rawJsonResponseLogPipe, rawPlainTextResponseLogPipe}
 import io.circe.fs2.byteStreamParser
@@ -11,16 +11,16 @@ import org.http4s.circe.jsonEncoderOf
 
 trait CodecSyntax {
 
-  implicit def deriveEntityJsonEncoder[F[_]: Effect, Body](implicit encode: Encoder[Body]): EntityEncoder[F, Body] =
+  implicit def deriveJsonBodyEncoder[F[_]: Effect, Body](implicit encode: Encoder[Body]): EntityEncoder[F, Body] =
     jsonEncoderOf[F, Body]
 
-  implicit val plainTextPipe: RawDecoder[String] = new RawDecoder[String] {
+  implicit val rawPlainTextPipe: RawDecoder[String] = new RawDecoder[String] {
     override def decode[F[_]: Effect]: Pipe[F, Byte, String] =
       _.through(text.utf8Decode)
         .through(rawPlainTextResponseLogPipe)
   }
 
-  implicit val jsonPipe: RawDecoder[Json] = new RawDecoder[Json] {
+  implicit val rawJsonPipe: RawDecoder[Json] = new RawDecoder[Json] {
     override def decode[F[_]: Effect]: Pipe[F, Byte, Json] =
       _.through(byteStreamParser)
         .through(rawJsonResponseLogPipe)

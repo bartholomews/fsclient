@@ -10,9 +10,8 @@ import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 trait FsSimpleRequest[Raw, Res] extends FsClientPlainRequest {
   final def runWith[F[_]: Effect](
     client: HttpEffectClient[F]
-  )(implicit rawDecoder: RawDecoder[Raw], decode: Pipe[F, Raw, Res]): F[HttpResponse[Res]] = {
+  )(implicit rawDecoder: RawDecoder[Raw], decode: Pipe[F, Raw, Res]): F[HttpResponse[Res]] =
     client.fetch[Raw, Res](this.toHttpRequest[F](client.consumer), OAuthDisabled)
-  }
 }
 
 object FsSimpleRequest {

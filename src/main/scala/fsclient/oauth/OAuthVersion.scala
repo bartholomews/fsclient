@@ -72,7 +72,7 @@ object OAuthVersion {
       state: Option[String]
     )
 
-    object AccessTokenResponse extends JsonEntityResponse[AccessTokenResponse] {
+    object AccessTokenResponse extends FsJsonResponsePipe[AccessTokenResponse] {
       implicit val decode: Decoder[AccessTokenResponse] = semiauto.deriveConfiguredDecoder
     }
 

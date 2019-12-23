@@ -2,7 +2,7 @@ package fsclient.http.client
 
 import cats.effect.IO
 import fs2.Pipe
-import fsclient.implicits.{jsonPipe, plainTextPipe}
+import fsclient.implicits.{rawJsonPipe, rawPlainTextPipe}
 import fsclient.mocks.server.{OAuthServer, WiremockServer}
 import fsclient.oauth.OAuthVersion.OAuthV1.AccessTokenV1
 import fsclient.requests._
@@ -34,7 +34,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       postJsonEndpoint(timeoutResponse, body)
 
     case class MyRequestBody(a: String, b: List[Int])
-    object MyRequestBody extends JsonEntityResponse[MyRequestBody] {
+    object MyRequestBody extends FsJsonResponsePipe[MyRequestBody] {
       import io.circe.generic.semiauto._
       implicit val encoder: Encoder[MyRequestBody] = deriveEncoder
       implicit val decoder: Decoder[MyRequestBody] = deriveDecoder
@@ -59,7 +59,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
         "retrieve the decoded json with Status Ok and entity" in {
           case class ValidEntity(message: String)
-          object ValidEntity extends JsonEntityResponse[ValidEntity] {
+          object ValidEntity extends FsJsonResponsePipe[ValidEntity] {
             implicit val decoder: Decoder[ValidEntity] = io.circe.generic.semiauto.deriveDecoder
           }
           assertRight(ValidEntity("this is a json response")) {
@@ -70,7 +70,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
         "respond with error if the response json is unexpected" in {
           case class InvalidEntity(something: Boolean)
-          object InvalidEntity extends JsonEntityResponse[InvalidEntity] {
+          object InvalidEntity extends FsJsonResponsePipe[InvalidEntity] {
             implicit val conf: Configuration = io.circe.generic.extras.defaults.defaultGenericConfiguration
             implicit val dec: Decoder[InvalidEntity] = io.circe.generic.extras.semiauto.deriveConfiguredDecoder
           }
@@ -82,7 +82,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "respond with error if the response body is empty" in {
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
-          object InvalidEntity extends JsonEntityResponse[InvalidEntity]
+          object InvalidEntity extends FsJsonResponsePipe[InvalidEntity]
           assertDecodingFailure {
             validResponseGetEndpoint[InvalidEntity].runWith(client)
           }
@@ -226,7 +226,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "retrieve the decoded json with Status Ok and entity" in {
           import io.circe.generic.auto._
           case class ValidEntity(message: String)
-          object ValidEntity extends JsonEntityResponse[ValidEntity]
+          object ValidEntity extends FsJsonResponsePipe[ValidEntity]
           assertRight(ValidEntity("this is a json response")) {
             validResponsePostJsonEndpoint[ValidEntity].runWith(client)
           }
@@ -235,7 +235,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "respond with error if the response json is unexpected" in {
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
-          object InvalidEntity extends JsonEntityResponse[InvalidEntity]
+          object InvalidEntity extends FsJsonResponsePipe[InvalidEntity]
           assertDecodingFailure {
             validResponsePostJsonEndpoint[InvalidEntity].runWith(client)
           }
@@ -244,7 +244,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "respond with error if the response body is empty" in {
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
-          object InvalidEntity extends JsonEntityResponse[InvalidEntity]
+          object InvalidEntity extends FsJsonResponsePipe[InvalidEntity]
           assertDecodingFailure {
             validResponsePostJsonEndpoint[InvalidEntity].runWith(client)
           }

@@ -21,7 +21,7 @@ class IOClient(override val consumer: AppConsumer)(implicit val ec: ExecutionCon
   final def accessTokenRequest(
     request: AccessTokenRequestV1
   )(implicit decode: Pipe[IO, String, AccessTokenV1]): IO[HttpResponse[AccessTokenV1]] = {
-    import fsclient.implicits.plainTextPipe
+    import fsclient.implicits.rawPlainTextPipe
     super.fetch[String, AccessTokenV1](request.toHttpRequest[IO](consumer), OAuthEnabled(request.token))
   }
 

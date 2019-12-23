@@ -17,7 +17,7 @@ abstract private[http] class IOBaseClient(override val consumer: AppConsumer)(im
   implicit val ioContextShift: ContextShift[IO] =
     IO.contextShift(ec)
 
-  override implicit val resource: Resource[IO, Client[IO]] =
+  implicit override val resource: Resource[IO, Client[IO]] =
     BlazeClientBuilder[IO](ec).resource
 
   final override def run[A]: fs2.Stream[IO, HttpResponse[A]] => IO[HttpResponse[A]] =
