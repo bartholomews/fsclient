@@ -1,4 +1,4 @@
-package fsclient.requests
+package fsclient.codecs
 
 import cats.effect.Effect
 import fs2.Pipe

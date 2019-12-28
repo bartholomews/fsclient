@@ -1,9 +1,9 @@
-package fsclient.oauth
+package fsclient.utils
 
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
-import fsclient.oauth.OAuthVersion.OAuthV2.AccessTokenV2
+import fsclient.entities.OAuthVersion.OAuthV2.AccessTokenV2
 import org.apache.http.entity.ContentType
 import org.http4s.Header
 

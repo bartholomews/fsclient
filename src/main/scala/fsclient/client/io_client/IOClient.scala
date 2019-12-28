@@ -1,12 +1,11 @@
-package fsclient.http.client
+package fsclient.client.io_client
 
 import cats.data.EitherT
 import cats.effect.IO
 import fs2.Pipe
 import fsclient.config.AppConsumer
-import fsclient.http.client.base.IOBaseClient
-import fsclient.oauth.OAuthVersion.OAuthV1.{AccessTokenRequestV1, AccessTokenV1}
-import fsclient.requests._
+import fsclient.entities.OAuthVersion.OAuthV1.{AccessTokenRequestV1, AccessTokenV1}
+import fsclient.entities.{HttpResponse, OAuthEnabled, ResponseError}
 
 import scala.concurrent.ExecutionContext
 

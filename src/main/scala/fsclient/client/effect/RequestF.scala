@@ -1,18 +1,17 @@
-package fsclient.http.effect
+package fsclient.client.effect
 
 import cats.effect.Effect
 import fs2.{Pipe, Pure, Stream}
-import fsclient.http.client.base.RawDecoder
-import fsclient.http.effect.HttpPipes._
-import fsclient.oauth.OAuthVersion.OAuthV1
-import fsclient.oauth.OAuthVersion.OAuthV2.AccessTokenV2
-import fsclient.oauth.{FsHeaders, OAuthTokenV1, OAuthTokenV2}
-import fsclient.requests._
-import fsclient.utils.Logger
+import fsclient.client.effect.HttpPipes._
+import fsclient.codecs.RawDecoder
+import fsclient.entities.OAuthVersion.OAuthV1
+import fsclient.entities.OAuthVersion.OAuthV2.AccessTokenV2
+import fsclient.entities._
+import fsclient.utils.{FsHeaders, Logger}
 import org.http4s.client.Client
 import org.http4s.{Request, Status}
 
-private[http] trait RequestF {
+private[client] trait RequestF {
 
   import Logger._
 

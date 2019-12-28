@@ -1,6 +1,6 @@
 package fsclient.mocks
 
-import fsclient.oauth.OAuthVersion.OAuthV1.{AccessTokenRequestV1, RequestTokenV1}
+import fsclient.entities.OAuthVersion.OAuthV1.{AccessTokenRequestV1, RequestTokenV1}
 import fsclient.requests._
 import io.circe.Json
 import org.http4s.Uri

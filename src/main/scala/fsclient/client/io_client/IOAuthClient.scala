@@ -1,9 +1,7 @@
-package fsclient.http.client
+package fsclient.client.io_client
 
 import fsclient.config.AppConsumer
-import fsclient.http.client.base.IOBaseClient
-import fsclient.oauth.OAuthToken
-import fsclient.requests._
+import fsclient.entities.{OAuthEnabled, OAuthToken}
 
 import scala.concurrent.ExecutionContext
 

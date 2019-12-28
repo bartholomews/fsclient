@@ -13,9 +13,9 @@ object Logger {
 
   import pureconfig.generic.auto._
 
-  private[utils] case class Config(logger: LoggerConfig)
+  private case class Config(logger: LoggerConfig)
 
-  private[utils] case class LoggerConfig(name: String)
+  private case class LoggerConfig(name: String)
 
   private val loggerName: String = ConfigSource.default
     .load[Config]

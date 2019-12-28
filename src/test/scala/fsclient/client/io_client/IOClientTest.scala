@@ -1,10 +1,11 @@
-package fsclient.http.client
+package fsclient.client.io_client
 
 import cats.effect.IO
 import fs2.Pipe
+import fsclient.codecs.FsJsonResponsePipe
 import fsclient.implicits.{rawJsonPipe, rawPlainTextPipe}
 import fsclient.mocks.server.{OAuthServer, WiremockServer}
-import fsclient.oauth.OAuthVersion.OAuthV1.AccessTokenV1
+import fsclient.entities.OAuthVersion.OAuthV1.AccessTokenV1
 import fsclient.requests._
 import io.circe.generic.extras.Configuration
 import io.circe.syntax._
@@ -14,6 +15,7 @@ import org.http4s.client.oauth1.Consumer
 import org.scalatest.WordSpec
 import org.scalatest.tagobjects.Slow
 import fsclient.implicits._
+import fsclient.entities.HttpResponse
 
 class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer with OAuthServer {
 

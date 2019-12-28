@@ -1,10 +1,10 @@
-package fsclient.http.effect
+package fsclient.client.effect
 
 import cats.effect.Effect
 import cats.implicits._
 import fs2.{Pipe, Stream}
-import fsclient.http.client.base.RawDecoder
-import fsclient.requests.{EmptyResponseException, ResponseError}
+import fsclient.codecs.RawDecoder
+import fsclient.entities.{EmptyResponseException, ResponseError}
 import fsclient.utils.HttpTypes._
 import fsclient.utils.Logger
 import io.circe.Json
@@ -12,7 +12,7 @@ import io.circe.fs2.byteStreamParser
 import org.http4s.headers.`Content-Type`
 import org.http4s.{Response, Status}
 
-private[http] object HttpPipes {
+private[client] object HttpPipes {
 
   import Logger._
 

@@ -1,9 +1,9 @@
 package fsclient.mocks
 
+import fsclient.client.io_client.{IOAuthClient, IOClient}
 import fsclient.config.AppConsumer
-import fsclient.http.client.{IOAuthClient, IOClient}
-import fsclient.oauth.OAuthVersion.OAuthV1.AccessTokenV1
-import fsclient.oauth.{OAuthToken, OAuthVersion}
+import fsclient.entities.OAuthVersion.OAuthV1.AccessTokenV1
+import fsclient.entities.{OAuthToken, OAuthVersion}
 import org.http4s.client.oauth1.{Consumer, Token}
 import org.scalatest.Assertions._
 

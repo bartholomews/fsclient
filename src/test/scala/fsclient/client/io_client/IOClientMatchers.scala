@@ -1,6 +1,6 @@
-package fsclient.http.client
+package fsclient.client.io_client
 
-import fsclient.requests.HttpResponse
+import fsclient.entities.HttpResponse
 import fsclient.utils.HttpTypes.IOResponse
 import io.circe.syntax._
 import org.http4s.Status

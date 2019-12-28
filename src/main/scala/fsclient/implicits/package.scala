@@ -1,5 +1,5 @@
 package fsclient
 
-import fsclient.requests.CodecSyntax
+import fsclient.codecs.CodecSyntax
 
 package object implicits extends CodecSyntax

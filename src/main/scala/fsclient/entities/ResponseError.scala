@@ -1,4 +1,4 @@
-package fsclient.requests
+package fsclient.entities
 
 import org.http4s.Status
 

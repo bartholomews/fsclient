@@ -1,6 +1,7 @@
-package fsclient.oauth
+package fsclient.entities
 
 import cats.effect.Effect
+import fsclient.codecs.FsJsonResponsePipe
 import fsclient.config.AppConsumer
 import fsclient.defaultConfig
 import fsclient.requests._

@@ -1,6 +1,4 @@
-package fsclient.requests
-
-import fsclient.oauth.OAuthToken
+package fsclient.entities
 
 sealed trait OAuthInfo
 

@@ -1,9 +1,9 @@
-package fsclient.http.client.base
+package fsclient.client.io_client
 
 import cats.effect.{ContextShift, IO, Resource}
+import fsclient.client.effect.HttpEffectClient
 import fsclient.config.AppConsumer
-import fsclient.http.effect.HttpEffectClient
-import fsclient.requests._
+import fsclient.entities.{EmptyResponseException, HttpResponse, ResponseError}
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.oauth1.Consumer
@@ -11,7 +11,7 @@ import org.http4s.{Headers, Status}
 
 import scala.concurrent.ExecutionContext
 
-abstract private[http] class IOBaseClient(override val consumer: AppConsumer)(implicit ec: ExecutionContext)
+abstract private[client] class IOBaseClient(override val consumer: AppConsumer)(implicit ec: ExecutionContext)
     extends HttpEffectClient[IO] {
 
   implicit val ioContextShift: ContextShift[IO] =

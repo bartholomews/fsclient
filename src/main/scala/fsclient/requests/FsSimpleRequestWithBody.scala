@@ -2,8 +2,9 @@ package fsclient.requests
 
 import cats.effect.Effect
 import fs2.Pipe
-import fsclient.http.client.base.RawDecoder
-import fsclient.http.effect.HttpEffectClient
+import fsclient.client.effect.HttpEffectClient
+import fsclient.codecs.RawDecoder
+import fsclient.entities.{HttpResponse, OAuthDisabled}
 import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s.{EntityEncoder, Method}
 

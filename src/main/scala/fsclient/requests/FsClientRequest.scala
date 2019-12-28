@@ -2,11 +2,11 @@ package fsclient.requests
 
 import cats.effect.Effect
 import fsclient.config.AppConsumer
-import fsclient.oauth.FsHeaders
+import fsclient.utils.FsHeaders
 import fsclient.utils.Logger._
 import org.http4s._
 
-// FIXME: Find a good way to unify these combinations: `Simple/Auth` / `NoBody/WithBody` / `Json/PlainText`
+// FIXME: Find a good way to unify these combinations: `Simple/Auth` / `NoBody/WithBody`
 
 trait FsClientPlainRequest {
   def uri: Uri

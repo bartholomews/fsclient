@@ -1,10 +1,10 @@
-package fsclient.http.effect
+package fsclient.client.effect
 
 import cats.effect.{Effect, Resource}
 import fs2.Pipe
+import fsclient.codecs.RawDecoder
 import fsclient.config.AppConsumer
-import fsclient.http.client.base.RawDecoder
-import fsclient.requests.{HttpResponse, OAuthInfo}
+import fsclient.entities.{HttpResponse, OAuthInfo}
 import org.http4s._
 import org.http4s.client.Client
 
