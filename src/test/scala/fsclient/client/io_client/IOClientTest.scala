@@ -15,7 +15,7 @@ import org.http4s.client.oauth1.Consumer
 import org.scalatest.WordSpec
 import org.scalatest.tagobjects.Slow
 import fsclient.implicits._
-import fsclient.entities.HttpResponse
+import fsclient.entities.{EmptyResponseException, HttpResponse, ResponseError}
 
 class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer with OAuthServer {
 
@@ -156,11 +156,11 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
           }
         }
 
-        "respond with empty string if the response body is empty" in {
+        "respond with `EmptyResponseException` if the response body is empty" in {
           assertResponse(getJsonEndpoint[String](okEmptyPlainTextResponse).runWith(client)) {
-            case response @ HttpResponse(_, Right(entity)) =>
-              response.status shouldBe Status.Ok
-              entity shouldBe ""
+            case response @ HttpResponse(_, Left(error: ResponseError)) =>
+              response.status shouldBe Status.UnprocessableEntity
+              error shouldBe ResponseError(EmptyResponseException, Status.UnprocessableEntity)
           }
         }
       }
@@ -170,17 +170,6 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "retrieve the string response with Status NotFound" in {
           assertLeft(Status.NotFound, ExpectedErrorMessage.notFoundString) {
             getJsonEndpoint[Json](notFoundPlainTextResponse).runWith(client)
-          }
-        }
-
-        "respond applying the provided `plainTextDecoder`" in {
-          case class MyEntity(str: Option[String])
-
-          implicit val plainTextDecoder: Pipe[IO, String, MyEntity] =
-            _.map(str => MyEntity(Some(str)))
-
-          assertRight(MyEntity(None)) {
-            getPlainTextEndpoint[MyEntity](notFoundPlainTextResponse).runWith(client)
           }
         }
       }
@@ -326,17 +315,6 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "retrieve the string response with Status NotFound" in {
           assertLeft(Status.NotFound, ExpectedErrorMessage.notFoundString) {
             postJsonEndpoint[MyRequestBody, Json](notFoundPlainTextResponse, requestBody).runWith(client)
-          }
-        }
-
-        "respond applying the provided `plainTextDecoder`" in {
-          case class MyEntity(str: Option[String])
-
-          implicit val plainTextDecoder: Pipe[IO, String, MyEntity] =
-            _.map(str => MyEntity(Some(str)))
-
-          assertRight(MyEntity(None)) {
-            postPlainTextEndpoint[MyRequestBody, MyEntity](notFoundPlainTextResponse, requestBody).runWith(client)
           }
         }
       }

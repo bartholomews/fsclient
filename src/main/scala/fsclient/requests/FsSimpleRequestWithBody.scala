@@ -8,7 +8,7 @@ import fsclient.entities.{HttpResponse, OAuthDisabled}
 import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s.{EntityEncoder, Method}
 
-trait FsSimpleRequestWithBody[Body, Raw, Res] extends FsClientRequestWithBody[Body] {
+sealed trait FsSimpleRequestWithBody[Body, Raw, Res] extends FsClientRequestWithBody[Body] {
   final def runWith[F[_]: Effect](
     client: HttpEffectClient[F]
   )(implicit

@@ -15,7 +15,7 @@ object ResponseError {
     throwable match {
       case circeError: io.circe.Error =>
         ResponseErrorImpl(
-          Status.InternalServerError,
+          Status.UnprocessableEntity,
           circeError,
           "There was a problem decoding or parsing this response, please check the error logs"
         )

@@ -8,7 +8,7 @@ import org.http4s._
 
 // FIXME: Find a good way to unify these combinations: `Simple/Auth` / `NoBody/WithBody`
 
-trait FsClientPlainRequest {
+private[fsclient] trait FsClientPlainRequest {
   def uri: Uri
   def method: Method
   def headers: Headers = Headers.empty
@@ -21,7 +21,7 @@ trait FsClientPlainRequest {
     }
 }
 
-trait FsClientRequestWithBody[Body] {
+private[fsclient] trait FsClientRequestWithBody[Body] {
   def uri: Uri
   def method: Method
   def headers: Headers = Headers.empty

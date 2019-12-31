@@ -8,10 +8,13 @@ import fsclient.entities.{HttpResponse, OAuthEnabled, OAuthToken}
 import org.http4s.Method
 import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 
-trait FsAuthRequest[Raw, Res] extends FsClientPlainRequest {
+sealed trait FsAuthRequest[Raw, Res] extends FsClientPlainRequest {
   final def runWith[F[_]: Effect](
     client: HttpEffectClient[F]
-  )(implicit token: OAuthToken, rawDecoder: RawDecoder[Raw], decode: Pipe[F, Raw, Res]): F[HttpResponse[Res]] =
+  )(implicit
+    token: OAuthToken,
+    rawDecoder: RawDecoder[Raw],
+    decode: Pipe[F, Raw, Res]): F[HttpResponse[Res]] =
     client.fetch(this.toHttpRequest[F](client.consumer), OAuthEnabled(token))
 }
 

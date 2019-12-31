@@ -32,24 +32,11 @@ private[client] object HttpPipes {
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
   ): Pipe[F, Response[F], ErrorOr[Res]] =
-    _.flatMap(
-      _.body
-        .through(rawDecoder.decode)
-        .through(resDecoder)
-        .attempt
-        .through(leftMapToResponseError(Status.UnprocessableEntity))
-    )
-
-  /**
-   * Map the left side of an `Either[Throwable, A]` into a `ResponseError`
-   *
-   * @param status the Status Code of the `ResponseError`
-   * @tparam F the `Effect`
-   * @tparam A the type of expected response entity
-   * @return an `Either[ResponseError, A]`
-   */
-  def leftMapToResponseError[F[_]: Effect, A](status: Status): Pipe[F, Either[Throwable, A], ErrorOr[A]] =
-    _.through(errorLogPipe).map(_.leftMap(ResponseError(_, status)))
+    _.through(rawDecoder.decode)
+      .through(resDecoder)
+      .attempt
+      .through(errorLogPipe)
+      .map(_.leftMap(ResponseError(_, Status.UnprocessableEntity)))
 
   /**
    *

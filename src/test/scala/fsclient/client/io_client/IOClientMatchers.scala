@@ -27,10 +27,10 @@ trait IOClientMatchers extends Matchers with Inside {
     }
 
   def assertEmptyResponseError[R](ioResponse: IOResponse[R]): Assertion =
-    assertLeft(Status.InternalServerError, ExpectedErrorMessage.emptyResponse)(ioResponse)
+    assertLeft(Status.UnprocessableEntity, ExpectedErrorMessage.emptyResponse)(ioResponse)
 
   def assertDecodingFailure[R](ioResponse: IOResponse[R]): Assertion =
-    assertLeft(Status.InternalServerError, ExpectedErrorMessage.decodingError)(ioResponse)
+    assertLeft(Status.UnprocessableEntity, ExpectedErrorMessage.decodingError)(ioResponse)
 }
 
 object ExpectedErrorMessage {
