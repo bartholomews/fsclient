@@ -16,6 +16,8 @@ import scala.concurrent.ExecutionContext
  */
 class IOClient(override val consumer: AppConsumer)(implicit val ec: ExecutionContext) extends IOBaseClient(consumer) {
 
+  import fsclient.implicits.emptyEntityEncoder
+
   // FIXME: Double check these:
   final def accessTokenRequest(
     request: AccessTokenRequestV1

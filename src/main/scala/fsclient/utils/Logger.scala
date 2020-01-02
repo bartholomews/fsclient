@@ -26,15 +26,10 @@ object Logger {
 
   logger.info(s"$logger started.")
 
-  private[fsclient] def logRequest[F[_]: Effect](request: Request[F]): Request[F] = {
+  private[fsclient] def logRequest[F[_]: Effect, B](body: Option[B], request: Request[F]): Request[F] = {
     logger.info(s"Request: ${request.method.name} [${request.uri}]")
     logger.debug(s"Request headers - {\n${request.headers.toList.mkString("\t", "\n\t", "\n")}}")
-    request
-  }
-
-  private[fsclient] def logRequest[F[_]: Effect, B](body: B, request: Request[F]): Request[F] = {
-    logRequest(request)
-    logger.debug(s"Request body - {\n\t$body\n}")
+    body.foreach(b => logger.debug(s"Request body - {\n\t$b\n}"))
     request
   }
 

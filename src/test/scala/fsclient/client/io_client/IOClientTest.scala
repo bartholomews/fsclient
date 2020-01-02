@@ -3,9 +3,10 @@ package fsclient.client.io_client
 import cats.effect.IO
 import fs2.Pipe
 import fsclient.codecs.FsJsonResponsePipe
-import fsclient.implicits.{rawJsonPipe, rawPlainTextPipe}
-import fsclient.mocks.server.{OAuthServer, WiremockServer}
 import fsclient.entities.OAuthVersion.OAuthV1.AccessTokenV1
+import fsclient.entities.{EmptyResponseException, HttpResponse, ResponseError}
+import fsclient.implicits.{rawJsonPipe, rawPlainTextPipe, _}
+import fsclient.mocks.server.{OAuthServer, WiremockServer}
 import fsclient.requests._
 import io.circe.generic.extras.Configuration
 import io.circe.syntax._
@@ -14,8 +15,6 @@ import org.http4s.Status
 import org.http4s.client.oauth1.Consumer
 import org.scalatest.WordSpec
 import org.scalatest.tagobjects.Slow
-import fsclient.implicits._
-import fsclient.entities.{EmptyResponseException, HttpResponse, ResponseError}
 
 class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer with OAuthServer {
 
@@ -23,16 +22,16 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
     val client: IOClient = validSimpleClient()
 
-    def validPlainTextResponseGetEndpoint[R]: FsSimpleRequest.Get[String, R] =
+    def validPlainTextResponseGetEndpoint[R]: FsSimpleRequest.Get[Nothing, String, R] =
       getPlainTextEndpoint[R](okPlainTextResponse)
 
-    def validPlainTextResponsePostEndpoint[B, R](body: B): FsSimpleRequestWithBody[B, String, R] =
+    def validPlainTextResponsePostEndpoint[B, R](body: B): FsSimpleRequest[B, String, R] =
       postPlainTextEndpoint(okPlainTextResponse, body)
 
-    def timeoutResponseGetEndpoint[R]: FsSimpleRequest.Get[Json, R] =
+    def timeoutResponseGetEndpoint[R]: FsSimpleRequest.Get[Nothing, Json, R] =
       getJsonEndpoint(timeoutResponse)
 
-    def timeoutResponsePostEndpoint[B, R](body: B): FsSimpleRequestWithBody[B, Json, R] =
+    def timeoutResponsePostEndpoint[B, R](body: B): FsSimpleRequest[B, Json, R] =
       postJsonEndpoint(timeoutResponse, body)
 
     case class MyRequestBody(a: String, b: List[Int])
@@ -50,7 +49,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response is 200" should {
 
-        def validResponseGetEndpoint[R]: FsSimpleRequest.Get[Json, R] =
+        def validResponseGetEndpoint[R]: FsSimpleRequest.Get[Nothing, Json, R] =
           getJsonEndpoint(okJsonResponse)
 
         "retrieve the json with Status Ok and entity" in {
@@ -65,7 +64,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
             implicit val decoder: Decoder[ValidEntity] = io.circe.generic.semiauto.deriveDecoder
           }
           assertRight(ValidEntity("this is a json response")) {
-            val r: FsSimpleRequest.Get[Json, ValidEntity] = validResponseGetEndpoint[ValidEntity]
+            val r: FsSimpleRequest.Get[Nothing, Json, ValidEntity] = validResponseGetEndpoint[ValidEntity]
             r.runWith[IO](client)
           }
         }
@@ -101,7 +100,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response is empty" should {
 
-        def notFoundEmptyJsonResponseGetEndpoint[Res]: FsSimpleRequest.Get[Json, Res] =
+        def notFoundEmptyJsonResponseGetEndpoint[Res]: FsSimpleRequest.Get[Nothing, Json, Res] =
           getJsonEndpoint(notFoundEmptyJsonBodyResponse)
 
         "respond with error for http response timeout" taggedAs Slow in {
@@ -205,7 +204,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
       "response is 200" should {
 
-        def validResponsePostJsonEndpoint[R]: FsSimpleRequestWithBody[MyRequestBody, Json, R] =
+        def validResponsePostJsonEndpoint[R]: FsSimpleRequest[MyRequestBody, Json, R] =
           postJsonEndpoint[MyRequestBody, R](okJsonResponse, requestBody)
 
         "retrieve the json with Status Ok and entity" in {
@@ -243,7 +242,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       }
 
       "response is 404" should {
-        def notFoundJsonResponsePostEndpoint[R]: FsSimpleRequestWithBody[MyRequestBody, Json, R] =
+        def notFoundJsonResponsePostEndpoint[R]: FsSimpleRequest[MyRequestBody, Json, R] =
           postJsonEndpoint(notFoundJsonResponse, requestBody)
 
         "retrieve the json response with Status NotFound and entity prettified with spaces2" in {
@@ -254,7 +253,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       }
 
       "response is empty" should {
-        def notFoundEmptyJsonResponsePostEndpoint[R]: FsSimpleRequestWithBody[MyRequestBody, Json, R] =
+        def notFoundEmptyJsonResponsePostEndpoint[R]: FsSimpleRequest[MyRequestBody, Json, R] =
           postJsonEndpoint(notFoundEmptyJsonBodyResponse, requestBody)
 
         "respond with error for http response timeout" taggedAs Slow in {

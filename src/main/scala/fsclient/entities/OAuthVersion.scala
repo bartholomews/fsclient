@@ -48,7 +48,7 @@ object OAuthVersion {
         Some(v1.token)
       )
 
-    trait AccessTokenRequestV1 extends FsClientPlainRequest {
+    trait AccessTokenRequestV1 extends FsClientRequest[Nothing] {
       def token: OAuthTokenV1
     }
 

@@ -10,6 +10,8 @@ import org.http4s.{EntityEncoder, Response}
 
 trait CodecSyntax extends PlainTextDecodingSyntax {
 
+  implicit def emptyEntityEncoder[F[_]: Effect]: EntityEncoder[F, Nothing] = EntityEncoder.emptyEncoder[F, Nothing]
+
   implicit def deriveJsonBodyEncoder[F[_]: Effect, Body](implicit encode: Encoder[Body]): EntityEncoder[F, Body] =
     jsonEncoderOf[F, Body]
 

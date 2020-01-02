@@ -30,7 +30,7 @@ testOptions in Test ++= Seq(
 )
 
 coverageEnabled := true
-coverageMinimum := 76 // FIXME
+coverageMinimum := 97 // FIXME
 coverageFailOnMinimum := true
 
 addCommandAlias("test-coverage", ";clean ;coverage ;test ;coverageReport")

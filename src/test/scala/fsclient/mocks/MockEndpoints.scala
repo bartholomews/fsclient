@@ -37,25 +37,25 @@ trait MockEndpoints {
       RequestTokenV1(validToken, "")
     )
 
-  def postPlainTextEndpoint[B, R](endpoint: String, requestBody: B): FsSimpleRequestWithBody.Post[B, String, R] =
-    new FsSimpleRequestWithBody.Post[B, String, R] {
+  def postPlainTextEndpoint[B, R](endpoint: String, requestBody: B): FsSimpleRequest.Post[B, String, R] =
+    new FsSimpleRequest.Post[B, String, R] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
-      override val body: B = requestBody
+      override val body: Option[B] = Some(requestBody)
     }
 
-  def postJsonEndpoint[B, R](endpoint: String, requestBody: B): FsSimpleRequestWithBody.Post[B, Json, R] =
-    new FsSimpleRequestWithBody.Post[B, Json, R] {
+  def postJsonEndpoint[B, R](endpoint: String, requestBody: B): FsSimpleRequest.Post[B, Json, R] =
+    new FsSimpleRequest.Post[B, Json, R] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
-      override val body: B = requestBody
+      override val body: Option[B] = Some(requestBody)
     }
 
-  def getPlainTextEndpoint[Res](endpoint: String): FsSimpleRequest.Get[String, Res] =
-    new FsSimpleRequest.Get[String, Res] {
+  def getPlainTextEndpoint[Res](endpoint: String): FsSimpleRequest.Get[Nothing, String, Res] =
+    new FsSimpleRequest.Get[Nothing, String, Res] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
     }
 
-  def getJsonEndpoint[Res](endpoint: String): FsSimpleRequest.Get[Json, Res] =
-    new FsSimpleRequest.Get[Json, Res] {
+  def getJsonEndpoint[Res](endpoint: String): FsSimpleRequest.Get[Nothing, Json, Res] =
+    new FsSimpleRequest.Get[Nothing, Json, Res] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
     }
 }
