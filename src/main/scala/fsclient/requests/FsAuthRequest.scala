@@ -5,6 +5,7 @@ import fs2.Pipe
 import fsclient.client.effect.HttpEffectClient
 import fsclient.codecs.RawDecoder
 import fsclient.entities.{HttpResponse, OAuthEnabled, OAuthToken}
+import io.circe.Json
 import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s.{EntityEncoder, Method}
 
@@ -28,4 +29,14 @@ object FsAuthRequest {
   trait Post[Body, Raw, Res] extends FsAuthRequest[Body, Raw, Res] {
     override val method: DefaultMethodWithBody = Method.POST
   }
+}
+
+object AuthJsonRequest {
+  trait Get[Res] extends FsAuthRequest.Get[Nothing, Json, Res]
+  trait Post[Body, Res] extends FsSimpleRequest.Post[Body, Json, Res]
+}
+
+object AuthPlainTextRequest {
+  trait Get[Res] extends FsAuthRequest.Get[Nothing, String, Res]
+  trait Post[Body, Res] extends FsSimpleRequest.Post[Body, String, Res]
 }
