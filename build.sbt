@@ -29,7 +29,6 @@ testOptions in Test ++= Seq(
   )
 )
 
-coverageEnabled := true
 coverageMinimum := 56 // FIXME
 coverageFailOnMinimum := true
 

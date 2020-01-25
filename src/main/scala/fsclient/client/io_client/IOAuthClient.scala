@@ -2,7 +2,7 @@ package fsclient.client.io_client
 
 import cats.effect.IO
 import fs2.Pipe
-import fsclient.conf.{FsClientConfig, UserAgent}
+import fsclient.config.{FsClientConfig, UserAgent}
 import fsclient.entities.AuthVersion.V1
 import fsclient.entities._
 import fsclient.requests.{AccessTokenEndpointBase, AccessTokenRequestV1}

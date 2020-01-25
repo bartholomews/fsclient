@@ -1,7 +1,7 @@
 package fsclient.requests
 
 import cats.effect.Effect
-import fsclient.conf.UserAgent
+import fsclient.config.UserAgent
 import fsclient.utils.{FsHeaders, Logger}
 import org.http4s._
 import org.http4s.client.oauth1.Consumer

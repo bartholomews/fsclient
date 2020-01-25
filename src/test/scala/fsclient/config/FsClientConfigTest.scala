@@ -1,4 +1,4 @@
-package fsclient.conf
+package fsclient.config
 
 import fsclient.entities.AuthEnabled
 import fsclient.entities.AuthVersion.V1.BasicSignature

@@ -1,4 +1,4 @@
-package fsclient.conf
+package fsclient.config
 
 import org.http4s.Uri
 

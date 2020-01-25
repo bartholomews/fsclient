@@ -3,7 +3,7 @@ package fsclient.utils
 import cats.effect.Effect
 import cats.implicits._
 import fs2.Pipe
-import fsclient.conf.FsClientConfig
+import fsclient.config.FsClientConfig
 import fsclient.utils.HttpTypes.ErrorOr
 import io.circe.Json
 import org.http4s.{Request, Response}
