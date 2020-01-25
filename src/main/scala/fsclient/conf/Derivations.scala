@@ -1,4 +1,4 @@
-package fsclient.config
+package fsclient.conf
 
 import pureconfig.{ConfigReader, Derivation}
 

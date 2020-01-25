@@ -4,7 +4,7 @@ import cats.effect.{Effect, Resource}
 import cats.implicits._
 import fs2.Pipe
 import fsclient.codecs.RawDecoder
-import fsclient.config.FsClientConfig
+import fsclient.conf.FsClientConfig
 import fsclient.entities._
 import org.http4s._
 import org.http4s.client.Client

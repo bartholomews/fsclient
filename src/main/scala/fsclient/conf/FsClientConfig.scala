@@ -1,4 +1,4 @@
-package fsclient.config
+package fsclient.conf
 
 import fsclient.entities.AuthVersion.V1
 import fsclient.entities._

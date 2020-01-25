@@ -1,4 +1,4 @@
-package fsclient.config
+package fsclient.conf
 
 case class UserAgent(appName: String, appVersion: Option[String], appUrl: Option[String]) {
 

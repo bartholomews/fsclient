@@ -1,7 +1,7 @@
 package fsclient.mocks
 
 import fsclient.client.io_client.{IOAuthClient, IOClient}
-import fsclient.config.{FsClientConfig, UserAgent}
+import fsclient.conf.{FsClientConfig, UserAgent}
 import fsclient.entities.AuthVersion.V1
 import fsclient.entities.AuthVersion.V1.BasicSignature
 import fsclient.entities.{AuthEnabled, AuthInfo, AuthVersion}
