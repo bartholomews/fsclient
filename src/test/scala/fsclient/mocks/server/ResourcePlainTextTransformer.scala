@@ -12,10 +12,12 @@ case object ResourcePlainTextTransformer extends ResponseDefinitionTransformer w
 
   override val applyGlobally = false
 
-  override def transform(request: Request,
-                         response: ResponseDefinition,
-                         files: FileSource,
-                         parameters: Parameters): ResponseDefinition = {
+  override def transform(
+    request: Request,
+    response: ResponseDefinition,
+    files: FileSource,
+    parameters: Parameters
+  ): ResponseDefinition = {
 
     def plainTextResponse(res: ResponseDefinitionBuilder): ResponseDefinitionBuilder = {
 

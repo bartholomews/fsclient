@@ -3,16 +3,14 @@ package fsclient.client.io_client
 import cats.effect.IO
 import fs2.Pipe
 import fsclient.codecs.FsJsonResponsePipe
-import fsclient.entities.OAuthVersion.OAuthV1.AccessTokenV1
 import fsclient.entities.{EmptyResponseException, HttpResponse, ResponseError}
-import fsclient.implicits.{rawJsonPipe, rawPlainTextPipe, _}
+import fsclient.implicits._
 import fsclient.mocks.server.{OAuthServer, WiremockServer}
 import fsclient.requests._
 import io.circe.generic.extras.Configuration
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json}
 import org.http4s.Status
-import org.http4s.client.oauth1.Consumer
 import org.scalatest.WordSpec
 import org.scalatest.tagobjects.Slow
 
@@ -83,7 +81,8 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "respond with error if the response body is empty" in {
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
-          object InvalidEntity extends FsJsonResponsePipe[InvalidEntity]
+          implicit val entityPipe: Pipe[IO, Json, InvalidEntity] =
+            fsclient.implicits.deriveJsonPipe[IO, InvalidEntity]
           assertDecodingFailure {
             validResponseGetEndpoint[InvalidEntity].runWith(client)
           }
@@ -216,7 +215,8 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "retrieve the decoded json with Status Ok and entity" in {
           import io.circe.generic.auto._
           case class ValidEntity(message: String)
-          object ValidEntity extends FsJsonResponsePipe[ValidEntity]
+          implicit val entityPipe: Pipe[IO, Json, ValidEntity] =
+            fsclient.implicits.deriveJsonPipe[IO, ValidEntity]
           assertRight(ValidEntity("this is a json response")) {
             validResponsePostJsonEndpoint[ValidEntity].runWith(client)
           }
@@ -225,7 +225,8 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "respond with error if the response json is unexpected" in {
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
-          object InvalidEntity extends FsJsonResponsePipe[InvalidEntity]
+          implicit val entityPipe: Pipe[IO, Json, InvalidEntity] =
+            fsclient.implicits.deriveJsonPipe[IO, InvalidEntity]
           assertDecodingFailure {
             validResponsePostJsonEndpoint[InvalidEntity].runWith(client)
           }
@@ -234,7 +235,8 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
         "respond with error if the response body is empty" in {
           import io.circe.generic.auto._
           case class InvalidEntity(something: Boolean)
-          object InvalidEntity extends FsJsonResponsePipe[InvalidEntity]
+          implicit val entityPipe: Pipe[IO, Json, InvalidEntity] =
+            fsclient.implicits.deriveJsonPipe[IO, InvalidEntity]
           assertDecodingFailure {
             validResponsePostJsonEndpoint[InvalidEntity].runWith(client)
           }
@@ -353,32 +355,6 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
       }
 
       // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-      "calling `accessTokenRequestV1`" should {
-        "work" in {
-
-          import org.http4s.client.oauth1.Token
-
-          implicit val consumer: Consumer = validConsumer
-
-          implicit val decoder: Pipe[IO, String, AccessTokenV1] = _.flatMap {
-            case accessTokenResponseRegex(tokenValue, tokenSecret) =>
-              fs2.Stream.emit(AccessTokenV1(Token(tokenValue, tokenSecret)))
-            case invalid =>
-              fs2.Stream.raiseError[IO](
-                new Exception(s"Unexpected response:\n[$invalid]")
-              )
-          }
-
-          val res =
-            validSimpleClient().toOAuthClientV1(validAccessTokenEndpointV1).unsafeRunSync()
-
-          inside(res) {
-            case Right(oAuthClient) =>
-              oAuthClient.consumer shouldBe client.consumer
-          }
-        }
-      }
     }
   }
 }

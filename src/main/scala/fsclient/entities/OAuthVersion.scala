@@ -2,68 +2,50 @@ package fsclient.entities
 
 import cats.effect.Effect
 import fsclient.codecs.FsJsonResponsePipe
-import fsclient.config.AppConsumer
 import fsclient.defaultConfig
-import fsclient.requests._
 import io.circe.Decoder
 import io.circe.generic.extras._
+import org.http4s.Request
 import org.http4s.client.oauth1.{signRequest, Consumer, Token}
-import org.http4s.{Method, Request, Uri}
 
-sealed trait OAuthVersion
+sealed trait AuthVersion
 
-sealed trait OAuthToken
-
-sealed trait OAuthTokenV1 extends OAuthToken {
-  def token: Token
-  def verifier: Option[String]
+sealed trait Signer {
   def consumer: Consumer
 }
 
-sealed trait OAuthTokenV2 extends OAuthToken
+object AuthVersion {
+  // https://tools.ietf.org/html/rfc5849 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  case object V1 extends AuthVersion {
 
-object OAuthVersion {
-  // https://tools.ietf.org/html/rfc5849
-  case object OAuthV1 extends OAuthVersion {
+    // Sign with consumer key/secret, but without token (i.e. not a full OAuth request)
+    case class BasicSignature(consumer: Consumer) extends Signer
 
-    case class RequestTokenV1 private (token: Token, verifier: Option[String], consumer: Consumer) extends OAuthTokenV1
-    object RequestTokenV1 {
+    // Full OAuth v1 request
+    sealed trait OAuthToken extends Signer {
+      def token: Token
+      def verifier: Option[String]
+    }
+
+    case class RequestToken private (token: Token, verifier: Option[String], consumer: Consumer) extends OAuthToken
+    object RequestToken {
       def apply(token: Token, tokenVerifier: String)(implicit consumer: Consumer) =
-        new RequestTokenV1(token, Some(tokenVerifier), consumer)
+        new RequestToken(token, Some(tokenVerifier), consumer)
     }
 
-    case class AccessTokenV1 private (token: Token, verifier: Option[String], consumer: Consumer) extends OAuthTokenV1
-    object AccessTokenV1 {
-      def apply(token: Token)(implicit consumer: Consumer) = new AccessTokenV1(token, verifier = None, consumer)
-      def apply(appConsumer: AppConsumer, token: Token) =
-        new AccessTokenV1(token, verifier = None, Consumer(appConsumer.key, appConsumer.secret))
+    case class AccessToken private (token: Token, verifier: Option[String], consumer: Consumer) extends OAuthToken
+    object AccessToken {
+      def apply(token: Token)(implicit consumer: Consumer) = new AccessToken(token, verifier = None, consumer)
     }
 
-    private[fsclient] def sign[F[_]: Effect](v1: OAuthTokenV1)(req: Request[F]): F[Request[F]] =
-      signRequest(
-        req,
-        v1.consumer,
-        callback = None,
-        v1.verifier,
-        Some(v1.token)
-      )
+    private[fsclient] def sign[F[_]: Effect](v1: BasicSignature)(req: Request[F]): F[Request[F]] =
+      signRequest(req, v1.consumer, callback = None, verifier = None, token = None)
 
-    trait AccessTokenRequestV1 extends FsClientRequest[Nothing] {
-      def token: OAuthTokenV1
-    }
-
-    // FIXME: If this is not a standard oAuth request, should be constructed client-side: double check RFC
-    object AccessTokenRequestV1 {
-      def apply(requestUri: Uri, requestToken: RequestTokenV1)(implicit consumer: Consumer): AccessTokenRequestV1 =
-        new AccessTokenRequestV1 {
-          override val token: OAuthTokenV1 = RequestTokenV1(requestToken.token, requestToken.verifier, consumer)
-          override val uri: Uri = requestUri
-          override val method: Method = Method.POST
-        }
-    }
+    private[fsclient] def sign[F[_]: Effect](v1: OAuthToken)(req: Request[F]): F[Request[F]] =
+      signRequest(req, v1.consumer, callback = None, v1.verifier, Some(v1.token))
   }
-  // https://tools.ietf.org/html/rfc6749
-  case object OAuthV2 extends OAuthVersion {
+  // https://tools.ietf.org/html/rfc6749 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  case object V2 extends AuthVersion {
     // https://tools.ietf.org/html/rfc6749#section-4.2.2
     case class AccessTokenResponse(
       accessToken: String,
@@ -77,6 +59,9 @@ object OAuthVersion {
       implicit val decode: Decoder[AccessTokenResponse] = semiauto.deriveConfiguredDecoder
     }
 
-    case class AccessTokenV2(value: String) extends OAuthTokenV2
+    sealed trait OAuthToken extends Signer
+
+    // FIXME: Does v2 has consumer? check Spotify
+    case class AccessToken(value: String, consumer: Consumer) extends OAuthToken
   }
 }

@@ -13,10 +13,12 @@ object ValidateTokenRequestBodyTransformer
 
   override val applyGlobally = false
 
-  override def transform(request: Request,
-                         response: ResponseDefinition,
-                         files: FileSource,
-                         parameters: Parameters): ResponseDefinition = {
+  override def transform(
+    request: Request,
+    response: ResponseDefinition,
+    files: FileSource,
+    parameters: Parameters
+  ): ResponseDefinition = {
 
     def validateVerifier: ResponseDefinition = oAuthRequestHeaders(request) match {
       case requestTokenResponseRegex(_, _, _, _, _, _, _, verifier) =>

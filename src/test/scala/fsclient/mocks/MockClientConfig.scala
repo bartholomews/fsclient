@@ -1,9 +1,10 @@
 package fsclient.mocks
 
 import fsclient.client.io_client.{IOAuthClient, IOClient}
-import fsclient.config.AppConsumer
-import fsclient.entities.OAuthVersion.OAuthV1.AccessTokenV1
-import fsclient.entities.{OAuthToken, OAuthVersion}
+import fsclient.config.{FsClientConfig, UserAgent}
+import fsclient.entities.AuthVersion.V1
+import fsclient.entities.AuthVersion.V1.BasicSignature
+import fsclient.entities.{AuthEnabled, AuthInfo, AuthVersion}
 import org.http4s.client.oauth1.{Consumer, Token}
 import org.scalatest.Assertions._
 
@@ -11,7 +12,7 @@ import scala.concurrent.ExecutionContext
 
 trait MockClientConfig {
 
-  implicit val ec: ExecutionContext = ExecutionContext.global
+  implicit val executionContext: ExecutionContext = ExecutionContext.global
 
   final val validConsumerKey = "VALID_CONSUMER_KEY"
   final val validConsumerSecret = "VALID_CONSUMER_SECRET"
@@ -32,32 +33,43 @@ trait MockClientConfig {
   def validSimpleClient(): IOClient =
     simpleClientWith(validConsumerKey, validConsumerSecret)
 
-  def validOAuthClient(oAuthVersion: OAuthVersion): IOAuthClient =
-    oAuthVersion match {
-      case OAuthVersion.OAuthV1 =>
+  def validOAuthClient(authVersion: AuthVersion): IOAuthClient[authVersion.type] =
+    authVersion match {
+      case AuthVersion.V1 =>
         oAuthClientWith(validConsumerKey, validConsumerSecret, validToken)
 
-      case OAuthVersion.OAuthV2 =>
+      case AuthVersion.V2 =>
         fail("OAuthV2 client: test setup not implemented")
     }
 
-  def simpleClientWith(key: String,
-                       secret: String,
-                       appName: String = "someApp",
-                       appVersion: Option[String] = Some("1.0"),
-                       appUrl: Option[String] = Some("app.git")): IOClient =
-    new IOClient(AppConsumer(appName, appVersion, appUrl, key, secret))
+  def simpleClientWith(
+    key: String,
+    secret: String,
+    appName: String = "someApp",
+    appVersion: Option[String] = Some("1.0"),
+    appUrl: Option[String] = Some("app.git")
+  ): IOClient =
+    new IOClient {
+      UserAgent(appName, appVersion, appUrl)
 
-  def oAuthClientWith(key: String,
-                      secret: String,
-                      token: Token,
-                      appName: String = "someApp",
-                      appVersion: Option[String] = Some("1.0"),
-                      appUrl: Option[String] = Some("app.git")): IOAuthClient = {
+      override def appConfig: FsClientConfig[AuthInfo] = FsClientConfig(
+        UserAgent(appName, appVersion, appUrl),
+        AuthEnabled(BasicSignature(Consumer(key, secret)))
+      )
 
-    val appConsumer: AppConsumer = AppConsumer(appName, appVersion, appUrl, key, secret)
-    implicit val consumer: Consumer = Consumer(appConsumer.key, appConsumer.secret)
-    implicit val oAuthToken: OAuthToken = AccessTokenV1(token)
-    new IOAuthClient(appConsumer)
+      implicit override def ec: ExecutionContext = executionContext
+    }
+
+  def oAuthClientWith[Version <: AuthVersion](
+    key: String,
+    secret: String,
+    token: Token,
+    appName: String = "someApp",
+    appVersion: Option[String] = Some("1.0"),
+    appUrl: Option[String] = Some("app.git")
+  ): IOAuthClient[Version] = {
+    val userAgent: UserAgent = UserAgent(appName, appVersion, appUrl)
+    val consumer: Consumer = Consumer(key, secret)
+    new IOAuthClient(userAgent, V1.AccessToken(token)(consumer))
   }
 }

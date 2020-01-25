@@ -1,6 +1,6 @@
 package fsclient.mocks
 
-import fsclient.entities.OAuthVersion.OAuthV1.{AccessTokenRequestV1, RequestTokenV1}
+import fsclient.entities.AuthVersion.V1
 import fsclient.requests._
 import io.circe.Json
 import org.http4s.Uri
@@ -34,19 +34,19 @@ trait MockEndpoints {
   def validAccessTokenEndpointV1(implicit consumer: Consumer): AccessTokenRequestV1 =
     AccessTokenRequestV1(
       Uri.unsafeFromString(s"$wiremockBaseUri/$okAccessTokenResponse"),
-      RequestTokenV1(validToken, "")
+      V1.RequestToken(validToken, "")
     )
 
   def postPlainTextEndpoint[B, R](endpoint: String, requestBody: B): FsSimpleRequest.Post[B, String, R] =
     new PlainTextRequest.Post[B, R] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
-      override val body: Option[B] = Some(requestBody)
+      override def entityBody: B = requestBody
     }
 
   def postJsonEndpoint[B, R](endpoint: String, requestBody: B): FsSimpleRequest.Post[B, Json, R] =
     new JsonRequest.Post[B, R] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
-      override val body: Option[B] = Some(requestBody)
+      override def entityBody: B = requestBody
     }
 
   def getPlainTextEndpoint[Res](endpoint: String): FsSimpleRequest.Get[Nothing, String, Res] =

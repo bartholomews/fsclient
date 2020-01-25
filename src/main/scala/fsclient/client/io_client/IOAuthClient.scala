@@ -1,18 +1,26 @@
 package fsclient.client.io_client
 
-import fsclient.config.AppConsumer
-import fsclient.entities.{OAuthEnabled, OAuthToken}
+import cats.effect.IO
+import fs2.Pipe
+import fsclient.config.{FsClientConfig, UserAgent}
+import fsclient.entities.AuthVersion.V1
+import fsclient.entities._
+import fsclient.requests.{AccessTokenEndpointBase, AccessTokenRequestV1}
 
 import scala.concurrent.ExecutionContext
 
-// TODO: Load secret and key from config / env var / etc. so you give a purpose to this class
-//  instead of just using the simple client passing the token on auth defs
-/**
- * Class which executes authenticated calls by default,
- * without the need to pass the `accessToken` on each request.
- */
-class IOAuthClient(override val consumer: AppConsumer)(implicit val ec: ExecutionContext, token: OAuthToken)
-    extends IOBaseClient(consumer) {
+class IOAuthClient[V <: AuthVersion](userAgent: UserAgent, signer: Signer)(implicit val ec: ExecutionContext)
+    extends IOClient {
 
-  val oAuthInfo: OAuthEnabled = OAuthEnabled(token)
+  // TODO: Double check with OAuth RFC
+  final def accessTokenRequest(
+    requestToken: V1.RequestToken,
+    endpoint: AccessTokenEndpointBase
+  )(implicit decode: Pipe[IO, String, V1.AccessToken]): IO[HttpResponse[V1.AccessToken]] = {
+    import fsclient.implicits._
+    val request = AccessTokenRequestV1(endpoint.uri, requestToken)(signer.consumer)
+    super.fetch[String, V1.AccessToken](request.toHttpRequest[IO](appConfig.userAgent), AuthEnabled(request.token))
+  }
+
+  final override val appConfig: FsClientConfig[AuthInfo] = FsClientConfig(userAgent, AuthEnabled(signer))
 }

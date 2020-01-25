@@ -12,10 +12,12 @@ case object ResourceJsonTransformer extends ResponseDefinitionTransformer with M
 
   override val applyGlobally = false
 
-  override def transform(request: Request,
-                         response: ResponseDefinition,
-                         files: FileSource,
-                         parameters: Parameters): ResponseDefinition = {
+  override def transform(
+    request: Request,
+    response: ResponseDefinition,
+    files: FileSource,
+    parameters: Parameters
+  ): ResponseDefinition = {
 
     def jsonResponse(res: ResponseDefinitionBuilder): ResponseDefinitionBuilder = {
 

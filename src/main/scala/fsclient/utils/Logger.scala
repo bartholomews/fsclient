@@ -3,6 +3,7 @@ package fsclient.utils
 import cats.effect.Effect
 import cats.implicits._
 import fs2.Pipe
+import fsclient.config.FsClientConfig
 import fsclient.utils.HttpTypes.ErrorOr
 import io.circe.Json
 import org.http4s.{Request, Response}
@@ -13,12 +14,8 @@ object Logger {
 
   import pureconfig.generic.auto._
 
-  private case class Config(logger: LoggerConfig)
-
-  private case class LoggerConfig(name: String)
-
   private val loggerName: String = ConfigSource.default
-    .load[Config]
+    .load[FsClientConfig.Config]
     .map(_.logger.name)
     .getOrElse("fsclient-logger")
 
@@ -26,11 +23,15 @@ object Logger {
 
   logger.info(s"$logger started.")
 
-  private[fsclient] def logRequest[F[_]: Effect, B](body: Option[B], request: Request[F]): Request[F] = {
+  private[fsclient] def logRequest[F[_]: Effect, B](request: Request[F]): Request[F] = {
     logger.info(s"Request: ${request.method.name} [${request.uri}]")
     logger.debug(s"Request headers - {\n${request.headers.toList.mkString("\t", "\n\t", "\n")}}")
-    body.foreach(b => logger.debug(s"Request body - {\n\t$b\n}"))
     request
+  }
+
+  private[fsclient] def logRequestBody[F[_]: Effect, B](body: B): B = {
+    logger.debug(s"Request body - {\n\t$body\n}")
+    body
   }
 
   private[fsclient] def responseHeadersLogPipe[F[_]: Effect, T]: Pipe[F, Response[F], Response[F]] =

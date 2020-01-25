@@ -16,10 +16,12 @@ case object AuthenticatedRequestTransformer
 
   override val applyGlobally = false
 
-  override def transform(request: Request,
-                         response: ResponseDefinition,
-                         files: FileSource,
-                         parameters: Parameters): ResponseDefinition = {
+  override def transform(
+    request: Request,
+    response: ResponseDefinition,
+    files: FileSource,
+    parameters: Parameters
+  ): ResponseDefinition = {
 
     val textPlainResponse = ResponseDefinitionBuilder
       .like(response)

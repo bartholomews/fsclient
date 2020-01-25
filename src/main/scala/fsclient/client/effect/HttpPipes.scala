@@ -16,8 +16,6 @@ private[client] object HttpPipes {
 
   import Logger._
 
-  def doNothing[F[_]: Effect, A]: Pipe[F, A, A] = _.map(identity)
-
   /**
    * Attempt to decode an Http Response with the provided decoder
    *

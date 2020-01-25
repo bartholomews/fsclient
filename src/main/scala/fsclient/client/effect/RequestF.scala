@@ -4,8 +4,7 @@ import cats.effect.Effect
 import fs2.{Pipe, Pure, Stream}
 import fsclient.client.effect.HttpPipes._
 import fsclient.codecs.RawDecoder
-import fsclient.entities.OAuthVersion.OAuthV1
-import fsclient.entities.OAuthVersion.OAuthV2.AccessTokenV2
+import fsclient.entities.AuthVersion.{V1, V2}
 import fsclient.entities._
 import fsclient.utils.{FsHeaders, Logger}
 import org.http4s.client.Client
@@ -17,25 +16,29 @@ private[client] trait RequestF {
 
   def processHttpRequest[F[_]: Effect, Raw, Res](client: Client[F])(
     request: Request[F],
-    oAuthInfo: OAuthInfo,
+    oAuthInfo: AuthInfo,
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
   ): Stream[F, HttpResponse[Res]] = {
 
     val signed =
       oAuthInfo match {
-        case OAuthDisabled =>
+        case AuthDisabled =>
           logger.warn("No OAuth version selected, the request will not be signed.")
           Stream[Pure, Request[F]](request)
 
-        case _ @OAuthEnabled(v1: OAuthTokenV1) =>
-          logger.debug("Signing request with OAuth 1.0...")
-          Stream.eval(OAuthV1.sign(v1)(request))
+        case _ @AuthEnabled(signer: V1.BasicSignature) =>
+          logger.debug("Signing request with OAuth 1.0 (Consumer info only)...")
+          Stream.eval(V1.sign(signer)(request))
 
-        case _ @OAuthEnabled(v2: OAuthTokenV2) =>
+        case _ @AuthEnabled(signer: V1.OAuthToken) =>
+          logger.debug("Signing request with OAuth 1.0...")
+          Stream.eval(V1.sign(signer)(request))
+
+        case _ @AuthEnabled(v2: V2.OAuthToken) =>
           logger.warn("OAuth 2.0 is currently not supported by `fsclient`, you have to implement it yourself.")
           v2 match {
-            case accessToken: AccessTokenV2 =>
+            case accessToken: V2.AccessToken =>
               logger.warn("Adding `Authorization: Bearer` header for now, but need to double check RFC...")
               Stream[Pure, Request[F]](request.putHeaders(FsHeaders.authorizationBearer(accessToken)))
             // TODO: Double check other non-`AccessTokenV2` calls like refresh etc, Request token...")
@@ -71,7 +74,7 @@ private[client] trait RequestF {
           Stream
             .emit(response)
             .through(errorHandler)
-            //            .through(decodeLeft) // FIXME: WTF IS THIS? Does a Pipe[F, ErrorOr[Nothing], ErrorOr[Res]] make sense?
+            //            .through(decodeLeft) // FIXME: Does a Pipe[F, ErrorOr[Nothing], ErrorOr[Res]] make sense? Probably not
             .through(responseLogPipe)
 
       }).map(HttpResponse(response.headers, _))
