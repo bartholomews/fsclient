@@ -3,12 +3,11 @@ package fsclient.codecs
 import cats.effect.Effect
 import fs2.{INothing, Pipe}
 import fsclient.entities.EmptyResponseException
+import cats.implicits._
 
 import scala.util.matching.Regex
 
 trait PlainTextDecodingSyntax {
-
-  private val emptyResponseMessage = "Response was empty, please check request uri"
 
   private def raiseError[F[_]: Effect](either: Either[String, String]): fs2.Stream[F, INothing] =
     fs2.Stream.raiseError[F] {
@@ -21,8 +20,8 @@ trait PlainTextDecodingSyntax {
   final def plainTextDecoderPipe[F[_]: Effect, A](
     pf: PartialFunction[Either[String, String], A]
   ): Pipe[F, String, A] =
-    _.last
-      .map(_.toLeft(emptyResponseMessage))
+    _.attempt
+      .map(_.leftMap(_.getMessage))
       .flatMap(pf.andThen(entity => fs2.Stream.emit(entity)).orElse {
         case other => raiseError[F](other)
       })
