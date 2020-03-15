@@ -46,9 +46,13 @@ jobs:
       #        command: bash <(curl -s https://codecov.io/bash)
 
       # https://discuss.circleci.com/t/gpg-keys-as-environment-variables/28641/3:
+#      - run:
+      #          name: set PINENTRY
+      #          command: touch ~/.gnupg/gpg.conf && echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf && cat ~/.gnupg/gpg.conf
+
       - run:
           name: import GPG key
-          command: echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$GPG_PASSPHRASE" --import
+          command: echo -e "$GPG_PRIVATE" | gpg --no-tty --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --import
 
       - run:
           name: Publish
