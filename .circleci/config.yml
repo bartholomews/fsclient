@@ -48,7 +48,7 @@ jobs:
   # https://discuss.circleci.com/t/gpg-keys-as-environment-variables/28641/3:
     - run:
         name: import GPG key
-        command: echo -e "GPG_PRIVATE" | gpg --import
+        command: echo -e "$GPG_PRIVATE" | gpg --import
 
     - run:
         name: Publish
