@@ -51,11 +51,13 @@ jobs:
       #          command: touch ~/.gnupg/gpg.conf && echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf && cat ~/.gnupg/gpg.conf
 
       - run:
+          name: set tty env var
+          command: echo "export GPG_TTY=$(tty)" >> $BASH_ENV
+
+      - run:
           name: import GPG key
           command: echo -e "$GPG_PRIVATE" | gpg --no-tty --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --import
 
       - run:
           name: Publish
-          command: |
-            echo "export GPG_TTY=$(tty)" >> $BASH_ENV
-            cat /dev/null | sbt publish
+          command: cat /dev/null | sbt publish
