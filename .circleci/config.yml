@@ -48,7 +48,7 @@ jobs:
       # https://discuss.circleci.com/t/gpg-keys-as-environment-variables/28641/3:
       - run:
           name: decrypt secrets
-          command: gpg --no-tty --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --output secrets.env --decrypt secrets.env.gpg
+          command: touch secrets.env.gpg && gpg --no-tty --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --output secrets.env --decrypt secrets.env.gpg
 
       - run:
           name: import GPG key

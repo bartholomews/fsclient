@@ -81,17 +81,17 @@ object SimpleRequestExample {
 }
 ```
 
-## Local development
+## CircleCI deployment
 
-### Run CircleCI locally
+### Verify local configuration
 https://circleci.com/docs/2.0/local-cli/
 ```bash
 circleci local execute
 ```
 
-## Deployment
+### Deploy to Sonatype
 
-Follow the instructions [here](https://unix.stackexchange.com/a/482559) 
+Follow the instructions [here](https://discuss.circleci.com/t/gpg-keys-as-environment-variables/28641/4) 
 to pass the gpg private key to a CI machine (required for publishing to Sonatype)
 
 ### TODO
