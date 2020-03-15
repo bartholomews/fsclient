@@ -89,5 +89,10 @@ https://circleci.com/docs/2.0/local-cli/
 circleci local execute
 ```
 
+## Deployment
+
+Follow the instructions [here](https://unix.stackexchange.com/a/482559) 
+to pass the gpg private key to a CI machine (required for publishing to Sonatype)
+
 ### TODO
 - [scala-steward](https://github.com/fthomas/scala-steward)
