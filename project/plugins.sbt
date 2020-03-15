@@ -1,4 +1,5 @@
-addSbtPlugin("io.crashbox" % "sbt-gpg" % "0.2.1")
+// https://github.com/sbt/sbt-pgp
+addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.0.1")
 // https://scalacenter.github.io/scalafix
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.11")
 // https://github.com/scoverage/sbt-scoverage/releases

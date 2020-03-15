@@ -56,19 +56,17 @@ jobs:
 
 
       #             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf && cat ~/.gnupg/gpg.conf
+      #            echo -e "$GPG_PUBLIC" | gpg --import
+      #            touch ~/.gnupg/gpg.conf
+      #            echo use-agent >> ~/.gnupg/gpg.conf
+      #            echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+      #            echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+      #            echo RELOADAGENT | gpg-connect-agent
       - run:
           name: Setup GPG
           command: |
-            echo -e "$GPG_PUBLIC" | gpg --import
-            touch ~/.gnupg/gpg.conf
-            echo use-agent >> ~/.gnupg/gpg.conf
-            echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
-            echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
-            sudo apt-get install gpg-preset-passphrase
-            gpg-preset-passphrase -p $GPG_PASSPHRASE
-            echo RELOADAGENT | gpg-connect-agent
-            echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$GPG_PASSPHRASE" --import
+            echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$PGP_PASSPHRASE" --import
 
       - run:
           name: Publish
-          command: sbt publish
+          command: sbt publishSigned
