@@ -52,8 +52,10 @@ jobs:
 
       - run:
           name: import GPG key
-          command: export GPG_TTY=$(tty) && echo -e "$GPG_PRIVATE" | gpg --no-tty --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --import
+          command: echo -e "$GPG_PRIVATE" | gpg --no-tty --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --import
 
       - run:
           name: Publish
-          command: cat /dev/null | sbt publish
+          command: |
+            echo "export GPG_TTY=$(tty)" >> $BASH_ENV
+            cat /dev/null | sbt publish
