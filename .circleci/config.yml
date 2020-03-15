@@ -65,7 +65,7 @@ jobs:
       - run:
           name: Setup GPG
           command: |
-            echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$PGP_PASSPHRASE" --import
+            echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --import
 
       - run:
           name: Publish
