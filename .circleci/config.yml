@@ -6,7 +6,7 @@ version: 2
 jobs:
   build:
     docker:
-    - image: circleci/openjdk:8-jdk
+      - image: circleci/openjdk:8-jdk
 
     # Specify service dependencies here if necessary
     # CircleCI maintains a library of pre-built images
@@ -21,39 +21,39 @@ jobs:
       TERM: dumb
 
     steps:
-    - checkout
-    # Download and cache dependencies
-    - restore_cache:
-        keys:
-        - v1-dependencies-{{ checksum "build.sbt" }}
-        # fallback to using the latest cache if no exact match is found
-        - v1-dependencies-
-    - run:
-        name: Compile code
-        command: cat /dev/null | sbt clean compile
+      - checkout
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.sbt" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - run:
+          name: Compile code
+          command: cat /dev/null | sbt clean compile
 
-    - save_cache:
-        paths:
-        - ~/.m2
-        key: v1-dependencies--{{ checksum "build.sbt" }}
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies--{{ checksum "build.sbt" }}
 
-#    - run:
-#        name: Test / Coverage
-#        command: cat /dev/null | sbt coverage test coverageReport
+      #    - run:
+      #        name: Test / Coverage
+      #        command: cat /dev/null | sbt coverage test coverageReport
 
-#    - run:
-#        name: Codecov report
-#        command: bash <(curl -s https://codecov.io/bash)
+      #    - run:
+      #        name: Codecov report
+      #        command: bash <(curl -s https://codecov.io/bash)
 
-  # https://discuss.circleci.com/t/gpg-keys-as-environment-variables/28641/3:
-    - run:
-        name: decrypt secrets
-        command: gpg --no-tty --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --output secrets.env --decrypt secrets.env.gpg
+      # https://discuss.circleci.com/t/gpg-keys-as-environment-variables/28641/3:
+      - run:
+          name: decrypt secrets
+          command: gpg --no-tty --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --output secrets.env --decrypt secrets.env.gpg
 
-    - run:
-        name: import GPG key
-        command: echo -e "$GPG_PRIVATE" | gpg --import
+      - run:
+          name: import GPG key
+          command: echo -e "$GPG_PRIVATE" | gpg --import
 
-    - run:
-        name: Publish
-        command: cat /dev/null | sbt publish
+      - run:
+          name: Publish
+          command: cat /dev/null | sbt publish
