@@ -1,4 +1,4 @@
-object Sonatype extends sbt.Import {
+object SonatypeSettings extends sbt.Import {
 
   private val gpg = Credentials(
     "GnuPG Key ID",
