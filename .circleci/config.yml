@@ -55,12 +55,12 @@ jobs:
       #          command: echo "export GPG_TTY=$(tty)" >> $BASH_ENV
 
       - run:
-          name: set pinentry-mode
-          command: mkdir ~/.gnupg && touch ~/.gnupg/gpg.conf && echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf && cat ~/.gnupg/gpg.conf
-
-      - run:
-          name: import GPG key
-          command: echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$GPG_PASSPHRASE" --import
+          name: Setup GPG
+          command: |
+            echo -e "$GPG_PUBLIC" | gpg --import
+            touch ~/.gnupg/gpg.conf
+            echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf && cat ~/.gnupg/gpg.conf
+            echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$GPG_PASSPHRASE" --import
 
       - run:
           name: Publish
