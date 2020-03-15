@@ -1,16 +1,44 @@
 import Dependencies.{dependencies, testDependencies}
 
 organization := "io.bartholomews"
-
 name := "fsclient"
-
-version := "0.0.1"
-
-skip in publish := isSnapshot.value
-
 scalaVersion := "2.13.1"
-
 licenses += ("Unlicense", url("https://unlicense.org"))
+
+ThisBuild / organizationName := "io.bartholomews"
+ThisBuild / organizationHomepage := Some(url("https://bartholomews.io"))
+
+ThisBuild / scmInfo := Some(
+  ScmInfo(
+    url("https://github.com/bartholomews/fsclient"),
+    "scm:git@github.com:bartholomews/fsclient.git"
+  )
+)
+ThisBuild / developers := List(
+  Developer(
+    id    = "bartholomews",
+    name  = "Federico Bartolomei",
+    email = "fsclient@bartholomews.io",
+    url   = url("https://bartholomews.io")
+  )
+)
+
+ThisBuild / description := "Opinionated http wrapper on top of http4s."
+ThisBuild / homepage := Some(url("https://github.com/bartholomews/fsclient"))
+
+// Remove all additional repository other than Maven Central from POM
+ThisBuild / pomIncludeRepository := { _ => false }
+ThisBuild / publishTo := {
+  val nexus = "https://oss.sonatype.org/"
+  if (isSnapshot.value) Some("snapshots" at nexus + "content/repositories/snapshots")
+  else Some("releases" at nexus + "service/local/staging/deploy/maven2")
+}
+ThisBuild / publishMavenStyle := true
+
+version := "0.0.1-SNAPSHOT"
+publishMavenStyle := true
+
+credentials ++= Sonatype.credentials
 
 libraryDependencies ++= dependencies ++ testDependencies
 
@@ -25,7 +53,7 @@ testOptions in Test ++= Seq(
     TestFrameworks.ScalaTest,
     "-oU", // enable standard output reporter
     "-u", // enable xml reporter
-    "target/test-reports", // xml reporter output dir
+    "target/test-reports" // xml reporter output dir
   )
 )
 
