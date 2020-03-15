@@ -44,9 +44,11 @@ jobs:
 #    - run:
 #        name: Codecov report
 #        command: bash <(curl -s https://codecov.io/bash)
-    - run:
-        name: Import gpg private key
-        command: echo $GPG_PRIVATE | gpg --import
+
+  # https://discuss.circleci.com/t/gpg-keys-as-environment-variables/28641/3:
+  - run:
+      name: import GPG key
+      command: echo -e "GPG_PRIVATE" | gpg --import
 
     - run:
         name: Publish
