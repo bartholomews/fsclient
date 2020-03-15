@@ -54,12 +54,17 @@ jobs:
       #          name: set tty env var
       #          command: echo "export GPG_TTY=$(tty)" >> $BASH_ENV
 
+
+      #             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf && cat ~/.gnupg/gpg.conf
       - run:
           name: Setup GPG
           command: |
             echo -e "$GPG_PUBLIC" | gpg --import
             touch ~/.gnupg/gpg.conf
-            echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf && cat ~/.gnupg/gpg.conf
+            echo use-agent >> ~/.gnupg/gpg.conf
+            echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+            echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+            echo RELOADAGENT | gpg-connect-agent
             echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$GPG_PASSPHRASE" --import
 
       - run:
