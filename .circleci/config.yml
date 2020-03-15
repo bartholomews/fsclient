@@ -64,9 +64,10 @@ jobs:
             echo use-agent >> ~/.gnupg/gpg.conf
             echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
             echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+            gpg-preset-passphrase -p $GPG_PASSPHRASE
             echo RELOADAGENT | gpg-connect-agent
             echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$GPG_PASSPHRASE" --import
 
       - run:
           name: Publish
-          command: cat /dev/null | sbt publish
+          command: sbt publish
