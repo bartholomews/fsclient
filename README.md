@@ -92,7 +92,7 @@ circleci local execute
 ### Deploy to Sonatype
 
 Follow the instructions [here](https://discuss.circleci.com/t/gpg-keys-as-environment-variables/28641/4) 
-to pass the gpg private key to a CI machine (required for publishing to Sonatype)
+to setup the gpg private key to a CI machine (required for publishing to Sonatype)
 
 ### TODO
 - [scala-steward](https://github.com/fthomas/scala-steward)

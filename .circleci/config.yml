@@ -45,15 +45,6 @@ jobs:
       #        name: Codecov report
       #        command: bash <(curl -s https://codecov.io/bash)
 
-      # https://discuss.circleci.com/t/gpg-keys-as-environment-variables/28641/3:
-      #      - run:
-      #          name: set PINENTRY
-      #          command: touch ~/.gnupg/gpg.conf && echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf && cat ~/.gnupg/gpg.conf
-
-      #      - run:
-      #          name: set tty env var
-      #          command: echo "export GPG_TTY=$(tty)" >> $BASH_ENV
-      #            echo -e "$GPG_PUBLIC" | gpg --import
       - run:
           name: Setup GPG
           command: |

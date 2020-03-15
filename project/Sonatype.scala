@@ -1,4 +1,5 @@
 object Sonatype extends sbt.Import {
+
   private val gpg = Credentials(
     "GnuPG Key ID",
     "gpg",
@@ -13,5 +14,5 @@ object Sonatype extends sbt.Import {
     sys.env("SONATYPE_OSS_PASSWORD")
   )
 
-  val credentials = Seq(gpg, sonatype)
+  val credentials = List(gpg, sonatype)
 }
