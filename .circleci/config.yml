@@ -49,7 +49,7 @@ jobs:
       - run:
           name: import GPG key
           command: echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$GPG_PASSPHRASE" --import
-8
+
       - run:
           name: Publish
           command: cat /dev/null | sbt publish
