@@ -56,7 +56,7 @@ jobs:
 
       - run:
           name: import GPG key
-          command: echo -e "$GPG_PRIVATE" | gpg --no-tty --batch --passphrase "$GPG_PASSPHRASE" --pinentry-mode loopback --import
+          command: echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$GPG_PASSPHRASE" --import
 
       - run:
           name: set pinentry-mode
