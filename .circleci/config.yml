@@ -50,9 +50,9 @@ jobs:
       #          name: set PINENTRY
       #          command: touch ~/.gnupg/gpg.conf && echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf && cat ~/.gnupg/gpg.conf
 
-      - run:
-          name: set tty env var
-          command: echo "export GPG_TTY=$(tty)" >> $BASH_ENV
+      #      - run:
+      #          name: set tty env var
+      #          command: echo "export GPG_TTY=$(tty)" >> $BASH_ENV
 
       - run:
           name: import GPG key
