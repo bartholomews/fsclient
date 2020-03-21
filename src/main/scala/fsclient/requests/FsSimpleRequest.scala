@@ -22,11 +22,11 @@ sealed trait FsSimpleRequest[Body, Raw, Res] extends FsClientRequest[Body] {
 object FsSimpleRequest {
 
   trait Get[Body, Raw, Res] extends FsSimpleRequest[Body, Raw, Res] {
-    override def method: SafeMethodWithBody = Method.GET
+    final override private[fsclient] def method: SafeMethodWithBody = Method.GET
   }
 
   trait Post[Body, Raw, Res] extends FsSimpleRequest[Body, Raw, Res] {
-    override def method: DefaultMethodWithBody = Method.POST
+    final override private[fsclient] def method: DefaultMethodWithBody = Method.POST
   }
 }
 

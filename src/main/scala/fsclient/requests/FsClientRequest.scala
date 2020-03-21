@@ -31,7 +31,7 @@ private[fsclient] trait FsClientRequest[Body] {
 
 import fsclient.entities.AuthVersion._
 
-trait AccessTokenRequestV1 extends FsClientRequest[Nothing] {
+trait AccessTokenRequestV1 extends FsAuthRequest.Post[Nothing, String, V1.AccessToken] {
   def token: V1.OAuthToken
 }
 
@@ -41,7 +41,6 @@ object AccessTokenRequestV1 {
     new AccessTokenRequestV1 {
       final override val token: V1.OAuthToken = V1.RequestToken(requestToken.token, requestToken.verifier, consumer)
       final override val uri: Uri = requestUri
-      final override val method: Method = Method.POST
       final override val body: Option[Nothing] = None
     }
 }
