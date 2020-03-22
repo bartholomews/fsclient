@@ -17,11 +17,11 @@ trait CodecSyntax extends PlainTextDecodingSyntax {
 
   implicit val rawPlainTextPipe: RawDecoder[String] = new RawDecoder[String] {
     override def decode[F[_]: Effect]: Pipe[F, Response[F], String] =
-      _.flatMap(response => {
+      _.flatMap { response =>
         fs2.Stream
           .eval(response.as[String])
           .through(rawPlainTextResponseLogPipe)
-      })
+      }
   }
 
   implicit val rawJsonPipe: RawDecoder[Json] = new RawDecoder[Json] {

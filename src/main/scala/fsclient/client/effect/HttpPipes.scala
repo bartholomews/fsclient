@@ -65,27 +65,24 @@ private[client] object HttpPipes {
    * @return a Pipe transformed in an `Either.left[ResponseError, Nothing]`
    */
   def errorHandler[F[_]: Effect]: Pipe[F, Response[F], ErrorOr[Nothing]] =
-    _.flatMap(
-      response => {
+    _.flatMap { response =>
+      response.headers.get(`Content-Type`).map(_.value) match {
 
-        response.headers.get(`Content-Type`).map(_.value) match {
+        case Some("application/json") =>
+          response.body
+            .through(byteStreamParser)
+            .last
+            .flatMap(_.fold[Stream[F, Json]](Stream.raiseError[F](EmptyResponseException))(Stream.emit))
+            .attempt
+            // FIXME: could try to parse a { "message": "[value]" } instead of _.spaces2
+            .through(foldToResponseError(response, _.spaces2))
 
-          case Some("application/json") =>
-            response.body
-              .through(byteStreamParser)
-              .last
-              .flatMap(_.fold[Stream[F, Json]](Stream.raiseError[F](EmptyResponseException))(Stream.emit))
-              .attempt
-              // FIXME: could try to parse a { "message": "[value]" } instead of _.spaces2
-              .through(foldToResponseError(response, _.spaces2))
-
-          case _ =>
-            Stream
-              .eval(response.as[String])
-              .attempt
-              .through(foldToResponseError(response, res => res))
-        }
+        case _ =>
+          Stream
+            .eval(response.as[String])
+            .attempt
+            .through(foldToResponseError(response, res => res))
       }
-    )
+    }
 
 }
