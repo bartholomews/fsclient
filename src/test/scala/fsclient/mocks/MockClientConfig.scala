@@ -30,10 +30,10 @@ trait MockClientConfig {
 
   // override val verifier: Option[String] = Some(validOAuthVerifier)
 
-  def validSimpleClient(): IOClient[OAuthEnabled] =
+  def validSimpleClient(): IOClient[OAuthEnabled[V1.type]] =
     simpleClientWith(validConsumerKey, validConsumerSecret)
 
-  def validOAuthClient(authVersion: OAuthVersion): IOAuthClient[authVersion.type] =
+  def validOAuthClient[V <: OAuthVersion](authVersion: V): IOAuthClient[OAuthVersion.V1.type] =
     authVersion match {
       case OAuthVersion.V1 =>
         oAuthClientWith(validConsumerKey, validConsumerSecret, validToken)
@@ -48,11 +48,11 @@ trait MockClientConfig {
     appName: String = "someApp",
     appVersion: Option[String] = Some("1.0"),
     appUrl: Option[String] = Some("app.git")
-  ): IOClient[OAuthEnabled] =
-    new IOClient[OAuthEnabled] {
+  ): IOClient[OAuthEnabled[V1.type]] =
+    new IOClient[OAuthEnabled[V1.type]] {
       UserAgent(appName, appVersion, appUrl)
 
-      override def appConfig: FsClientConfig[OAuthEnabled] = FsClientConfig(
+      override def appConfig: FsClientConfig[OAuthEnabled[OAuthVersion.V1.type]] = FsClientConfig(
         UserAgent(appName, appVersion, appUrl),
         OAuthEnabled(BasicSignature(Consumer(key, secret)))
       )
@@ -60,14 +60,14 @@ trait MockClientConfig {
       implicit override def ec: ExecutionContext = executionContext
     }
 
-  def oAuthClientWith[Version <: OAuthVersion](
+  def oAuthClientWith(
     key: String,
     secret: String,
     token: Token,
     appName: String = "someApp",
     appVersion: Option[String] = Some("1.0"),
     appUrl: Option[String] = Some("app.git")
-  ): IOAuthClient[Version] = {
+  ): IOAuthClient[OAuthVersion.V1.type] = {
     val userAgent: UserAgent = UserAgent(appName, appVersion, appUrl)
     val consumer: Consumer = Consumer(key, secret)
     new IOAuthClient(userAgent, V1.AccessToken(token, consumer))

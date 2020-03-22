@@ -10,7 +10,7 @@ import org.http4s.client.oauth1.{signRequest, Consumer, Token}
 
 sealed trait OAuthVersion
 
-sealed trait Signer {
+sealed trait Signer[+O <: OAuthVersion] {
   def consumer: Consumer
 }
 
@@ -19,10 +19,10 @@ object OAuthVersion {
   case object V1 extends OAuthVersion {
 
     // Sign with consumer key/secret, but without token (i.e. not a full OAuth request)
-    case class BasicSignature(consumer: Consumer) extends Signer
+    case class BasicSignature(consumer: Consumer) extends Signer[OAuthVersion.V1.type]
 
     // Full OAuth v1 request
-    sealed trait OAuthToken extends Signer {
+    sealed trait OAuthToken extends Signer[OAuthVersion.V1.type] {
       def token: Token
       private[fsclient] def tokenVerifier: Option[String]
     }
@@ -57,7 +57,7 @@ object OAuthVersion {
       implicit val decode: Decoder[AccessTokenResponse] = semiauto.deriveConfiguredDecoder
     }
 
-    sealed trait OAuthToken extends Signer
+    sealed trait OAuthToken extends Signer[OAuthVersion.V2.type]
 
     // FIXME: Does v2 has consumer? check Spotify
     case class AccessToken(value: String, consumer: Consumer) extends OAuthToken

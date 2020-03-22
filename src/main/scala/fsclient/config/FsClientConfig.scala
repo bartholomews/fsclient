@@ -11,22 +11,23 @@ object FsClientConfig {
 
   import pureconfig.generic.auto._
 
-  private def v1(consumerConfig: ConsumerConfig): FsClientConfig[OAuthEnabled] = {
-    val signer: Signer = V1.BasicSignature(Consumer(consumerConfig.key, consumerConfig.secret))
+  private def v1(consumerConfig: ConsumerConfig): FsClientConfig[OAuthEnabled[V1.type]] = {
+    val signer: Signer[V1.type] = V1.BasicSignature(Consumer(consumerConfig.key, consumerConfig.secret))
     new FsClientConfig(
       UserAgent(consumerConfig.appName, consumerConfig.appVersion, consumerConfig.appUrl),
       OAuthEnabled(signer)
     )
   }
 
-  def v1(userAgent: UserAgent, consumer: Consumer): FsClientConfig[OAuthEnabled] = {
-    val signer: Signer = V1.BasicSignature(consumer)
+  def v1(userAgent: UserAgent, consumer: Consumer): FsClientConfig[OAuthEnabled[V1.type]] = {
+    val signer: Signer[V1.type] = V1.BasicSignature(consumer)
     FsClientConfig(userAgent, OAuthEnabled(signer))
   }
 
-  def v1(): FsClientConfig[OAuthEnabled] = FsClientConfig.v1(ConfigSource.default.loadOrThrow[Config].consumer)
+  def v1(): FsClientConfig[OAuthEnabled[V1.type]] =
+    FsClientConfig.v1(ConfigSource.default.loadOrThrow[Config].consumer)
 
-  def v1(key: String): FsClientConfig[OAuthEnabled] = {
+  def v1(key: String): FsClientConfig[OAuthEnabled[V1.type]] = {
     implicit val customConfigReader: Derivation[ConfigReader[Config]] = Derivations.withCustomKey(key)
     FsClientConfig.v1(ConfigSource.default.loadOrThrow[Config].consumer)
   }
