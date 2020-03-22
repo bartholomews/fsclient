@@ -5,7 +5,8 @@ import fsclient.entities._
 
 import scala.concurrent.ExecutionContext
 
-class IOAuthClient(userAgent: UserAgent, signer: Signer)(implicit val ec: ExecutionContext) extends IOClient {
+class IOAuthClient[V <: OAuthVersion](userAgent: UserAgent, signer: Signer)(implicit val ec: ExecutionContext)
+    extends IOClient[OAuthEnabled] {
 
-  final override val appConfig: FsClientConfig[AuthInfo] = FsClientConfig(userAgent, AuthEnabled(signer))
+  final override val appConfig: FsClientConfig[OAuthEnabled] = FsClientConfig(userAgent, OAuthEnabled(signer))
 }

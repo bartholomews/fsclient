@@ -9,9 +9,9 @@ import fsclient.entities._
 import org.http4s._
 import org.http4s.client.Client
 
-trait HttpEffectClient[F[_]] extends RequestF {
+trait HttpEffectClient[F[_], OAuth <: OAuthInfo] extends RequestF {
 
-  def appConfig: FsClientConfig[AuthInfo]
+  def appConfig: FsClientConfig[OAuth]
 
   implicit def resource: Resource[F, Client[F]]
 
@@ -23,7 +23,7 @@ trait HttpEffectClient[F[_]] extends RequestF {
       )
     )
 
-  private[fsclient] def fetch[Raw, Res](request: Request[F], authInfo: AuthInfo)(
+  private[fsclient] def fetch[Raw, Res](request: Request[F], authInfo: OAuthInfo)(
     implicit
     f: Effect[F],
     rawDecoder: RawDecoder[Raw],

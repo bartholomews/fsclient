@@ -4,20 +4,20 @@ import cats.effect.Effect
 import fs2.Pipe
 import fsclient.client.effect.HttpEffectClient
 import fsclient.codecs.RawDecoder
-import fsclient.entities.{AuthEnabled, HttpResponse, Signer}
+import fsclient.entities.{HttpResponse, OAuthEnabled, OAuthInfo, Signer}
 import io.circe.Json
 import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s.{EntityEncoder, Method}
 
 sealed trait FsAuthRequest[Body, Raw, Res] extends FsClientRequest[Body] {
-  final def runWith[F[_]: Effect](client: HttpEffectClient[F])(
+  final def runWith[F[_]: Effect](client: HttpEffectClient[F, OAuthInfo])(
     implicit
     token: Signer,
     requestBodyEncoder: EntityEncoder[F, Body],
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
   ): F[HttpResponse[Res]] =
-    client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), AuthEnabled(token))
+    client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), OAuthEnabled(token))
 }
 
 object FsAuthRequest {

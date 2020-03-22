@@ -1,37 +1,37 @@
 package fsclient.config
 
-import fsclient.entities.AuthVersion.V1
+import fsclient.entities.OAuthVersion.V1
 import fsclient.entities._
 import org.http4s.client.oauth1.Consumer
 import pureconfig.{ConfigReader, ConfigSource, Derivation}
 
-case class FsClientConfig[A <: AuthInfo](userAgent: UserAgent, authInfo: A)
+case class FsClientConfig[A <: OAuthInfo](userAgent: UserAgent, authInfo: A)
 
 object FsClientConfig {
 
   import pureconfig.generic.auto._
 
-  private def v1(consumerConfig: ConsumerConfig): FsClientConfig[AuthEnabled] = {
+  private def v1(consumerConfig: ConsumerConfig): FsClientConfig[OAuthEnabled] = {
     val signer: Signer = V1.BasicSignature(Consumer(consumerConfig.key, consumerConfig.secret))
     new FsClientConfig(
       UserAgent(consumerConfig.appName, consumerConfig.appVersion, consumerConfig.appUrl),
-      AuthEnabled(signer)
+      OAuthEnabled(signer)
     )
   }
 
-  def v1(userAgent: UserAgent, consumer: Consumer): FsClientConfig[AuthEnabled] = {
+  def v1(userAgent: UserAgent, consumer: Consumer): FsClientConfig[OAuthEnabled] = {
     val signer: Signer = V1.BasicSignature(consumer)
-    FsClientConfig(userAgent, AuthEnabled(signer))
+    FsClientConfig(userAgent, OAuthEnabled(signer))
   }
 
-  def v1(): FsClientConfig[AuthEnabled] = FsClientConfig.v1(ConfigSource.default.loadOrThrow[Config].consumer)
+  def v1(): FsClientConfig[OAuthEnabled] = FsClientConfig.v1(ConfigSource.default.loadOrThrow[Config].consumer)
 
-  def v1(key: String): FsClientConfig[AuthEnabled] = {
+  def v1(key: String): FsClientConfig[OAuthEnabled] = {
     implicit val customConfigReader: Derivation[ConfigReader[Config]] = Derivations.withCustomKey(key)
     FsClientConfig.v1(ConfigSource.default.loadOrThrow[Config].consumer)
   }
 
-  def disabled(userAgent: UserAgent): FsClientConfig[AuthDisabled.type] = FsClientConfig(userAgent, AuthDisabled)
+  def disabled(userAgent: UserAgent): FsClientConfig[OAuthDisabled.type] = FsClientConfig(userAgent, OAuthDisabled)
 
   private[fsclient] case class Config(consumer: ConsumerConfig, logger: LoggerConfig)
 

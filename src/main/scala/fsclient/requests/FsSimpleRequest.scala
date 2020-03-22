@@ -4,13 +4,13 @@ import cats.effect.Effect
 import fs2.Pipe
 import fsclient.client.effect.HttpEffectClient
 import fsclient.codecs.RawDecoder
-import fsclient.entities.HttpResponse
+import fsclient.entities.{HttpResponse, OAuthInfo}
 import io.circe.Json
 import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s._
 
 sealed trait FsSimpleRequest[Body, Raw, Res] extends FsClientRequest[Body] {
-  final def runWith[F[_]: Effect](client: HttpEffectClient[F])(
+  final def runWith[F[_]: Effect, O <: OAuthInfo](client: HttpEffectClient[F, O])(
     implicit
     requestBodyEncoder: EntityEncoder[F, Body],
     rawDecoder: RawDecoder[Raw],

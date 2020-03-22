@@ -3,7 +3,7 @@ package fsclient.utils
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
-import fsclient.entities.AuthVersion.V2
+import fsclient.entities.OAuthVersion.V2
 import org.apache.http.entity.ContentType
 import org.http4s.Header
 

@@ -4,7 +4,7 @@ import cats.effect.Effect
 import fs2.{Pipe, Pure, Stream}
 import fsclient.client.effect.HttpPipes._
 import fsclient.codecs.RawDecoder
-import fsclient.entities.AuthVersion.{V1, V2}
+import fsclient.entities.OAuthVersion.{V1, V2}
 import fsclient.entities._
 import fsclient.utils.{FsHeaders, Logger}
 import org.http4s.client.Client
@@ -16,26 +16,26 @@ private[client] trait RequestF {
 
   def processHttpRequest[F[_]: Effect, Raw, Res](client: Client[F])(
     request: Request[F],
-    oAuthInfo: AuthInfo,
+    oAuthInfo: OAuthInfo,
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
   ): Stream[F, HttpResponse[Res]] = {
 
     val signed =
       oAuthInfo match {
-        case AuthDisabled =>
+        case OAuthDisabled =>
           logger.warn("No OAuth version selected, the request will not be signed.")
           Stream[Pure, Request[F]](request)
 
-        case _ @AuthEnabled(signer: V1.BasicSignature) =>
+        case _ @OAuthEnabled(signer: V1.BasicSignature) =>
           logger.debug("Signing request with OAuth 1.0 (Consumer info only)...")
           Stream.eval(V1.sign(signer)(request))
 
-        case _ @AuthEnabled(signer: V1.OAuthToken) =>
+        case _ @OAuthEnabled(signer: V1.OAuthToken) =>
           logger.debug("Signing request with OAuth 1.0...")
           Stream.eval(V1.sign(signer)(request))
 
-        case _ @AuthEnabled(v2: V2.OAuthToken) =>
+        case _ @OAuthEnabled(v2: V2.OAuthToken) =>
           logger.warn("OAuth 2.0 is currently not supported by `fsclient`, you have to implement it yourself.")
           v2 match {
             case accessToken: V2.AccessToken =>

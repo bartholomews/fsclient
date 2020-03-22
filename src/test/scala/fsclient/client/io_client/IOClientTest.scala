@@ -3,7 +3,7 @@ package fsclient.client.io_client
 import cats.effect.IO
 import fs2.Pipe
 import fsclient.codecs.FsJsonResponsePipe
-import fsclient.entities.{EmptyResponseException, HttpResponse, ResponseError}
+import fsclient.entities.{EmptyResponseException, HttpResponse, OAuthEnabled, ResponseError}
 import fsclient.implicits._
 import fsclient.mocks.server.{OAuthServer, WiremockServer}
 import fsclient.requests._
@@ -18,7 +18,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
 
   "A valid simple client with no OAuth" when {
 
-    val client: IOClient = validSimpleClient()
+    val client: IOClient[OAuthEnabled] = validSimpleClient()
 
     def validPlainTextResponseGetEndpoint[R]: FsSimpleRequest.Get[Nothing, String, R] =
       getPlainTextEndpoint[R](okPlainTextResponse)
@@ -63,7 +63,7 @@ class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer wi
           }
           assertRight(ValidEntity("this is a json response")) {
             val r: FsSimpleRequest.Get[Nothing, Json, ValidEntity] = validResponseGetEndpoint[ValidEntity]
-            r.runWith[IO](client)
+            r.runWith(client)
           }
         }
 

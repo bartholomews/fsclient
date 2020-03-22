@@ -2,12 +2,13 @@ package fsclient.client.io_client
 
 import cats.effect.{ContextShift, IO, Resource}
 import fsclient.client.effect.HttpEffectClient
+import fsclient.entities.OAuthInfo
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 
 import scala.concurrent.ExecutionContext
 
-trait IOClient extends HttpEffectClient[IO] {
+trait IOClient[OAuth <: OAuthInfo] extends HttpEffectClient[IO, OAuth] {
 
   implicit def ec: ExecutionContext
 

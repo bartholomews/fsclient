@@ -1,7 +1,7 @@
 package fsclient.config
 
-import fsclient.entities.AuthEnabled
-import fsclient.entities.AuthVersion.V1.BasicSignature
+import fsclient.entities.OAuthEnabled
+import fsclient.entities.OAuthVersion.V1.BasicSignature
 import org.http4s.client.oauth1.Consumer
 import org.scalatest.{FunSuite, Matchers}
 import pureconfig.error.ConfigReaderException
@@ -15,7 +15,7 @@ class FsClientConfigTest extends FunSuite with Matchers {
         appVersion = Some("0.0.1"),
         appUrl = None
       ),
-      authInfo = AuthEnabled(
+      authInfo = OAuthEnabled(
         BasicSignature(Consumer(key = "mock-consumer-key", secret = "mock-consumer-secret"))
       )
     )

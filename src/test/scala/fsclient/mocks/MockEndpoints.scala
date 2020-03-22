@@ -1,7 +1,5 @@
 package fsclient.mocks
 
-import fsclient.entities.AuthVersion.V1
-import fsclient.entities.Signer
 import fsclient.requests._
 import io.circe.Json
 import org.http4s.Uri
@@ -30,12 +28,6 @@ trait MockEndpoints {
   final val timeoutResponse = "timeout-response"
   final val ok = "timeout-response"
   final val okAccessTokenResponse = "valid-access-token-plaintext-response"
-
-  def validAccessTokenEndpointV1(implicit signer: Signer): AccessTokenRequestV1 =
-    AccessTokenRequestV1(
-      Uri.unsafeFromString(s"$wiremockBaseUri/$okAccessTokenResponse"),
-      V1.RequestToken(validToken, "")
-    )
 
   def postPlainTextEndpoint[B, R](endpoint: String, requestBody: B): FsSimpleRequest.Post[B, String, R] =
     new PlainTextRequest.Post[B, R] {

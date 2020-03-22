@@ -8,15 +8,15 @@ import io.circe.generic.extras._
 import org.http4s.Request
 import org.http4s.client.oauth1.{signRequest, Consumer, Token}
 
-sealed trait AuthVersion
+sealed trait OAuthVersion
 
 sealed trait Signer {
   def consumer: Consumer
 }
 
-object AuthVersion {
+object OAuthVersion {
   // https://tools.ietf.org/html/rfc5849 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  case object V1 extends AuthVersion {
+  case object V1 extends OAuthVersion {
 
     // Sign with consumer key/secret, but without token (i.e. not a full OAuth request)
     case class BasicSignature(consumer: Consumer) extends Signer
@@ -24,28 +24,26 @@ object AuthVersion {
     // Full OAuth v1 request
     sealed trait OAuthToken extends Signer {
       def token: Token
-      def verifier: Option[String]
+      private[fsclient] def tokenVerifier: Option[String]
     }
 
-    case class RequestToken private (token: Token, verifier: Option[String], consumer: Consumer) extends OAuthToken
-    object RequestToken {
-      def apply(token: Token, tokenVerifier: String)(implicit signer: Signer) =
-        new RequestToken(token, Some(tokenVerifier), signer.consumer)
+    case class RequestToken(token: Token, verifier: String, consumer: Consumer) extends OAuthToken {
+      final override private[fsclient] val tokenVerifier: Option[String] = Some(verifier)
     }
 
-    case class AccessToken private (token: Token, verifier: Option[String], consumer: Consumer) extends OAuthToken
+    case class AccessToken private (token: Token, tokenVerifier: Option[String], consumer: Consumer) extends OAuthToken
     object AccessToken {
-      def apply(token: Token)(implicit consumer: Consumer) = new AccessToken(token, verifier = None, consumer)
+      def apply(token: Token, consumer: Consumer) = new AccessToken(token, tokenVerifier = None, consumer)
     }
 
     private[fsclient] def sign[F[_]: Effect](v1: BasicSignature)(req: Request[F]): F[Request[F]] =
       signRequest(req, v1.consumer, callback = None, verifier = None, token = None)
 
     private[fsclient] def sign[F[_]: Effect](v1: OAuthToken)(req: Request[F]): F[Request[F]] =
-      signRequest(req, v1.consumer, callback = None, v1.verifier, Some(v1.token))
+      signRequest(req, v1.consumer, callback = None, v1.tokenVerifier, Some(v1.token))
   }
   // https://tools.ietf.org/html/rfc6749 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  case object V2 extends AuthVersion {
+  case object V2 extends OAuthVersion {
     // https://tools.ietf.org/html/rfc6749#section-4.2.2
     case class AccessTokenResponse(
       accessToken: String,
