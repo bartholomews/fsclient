@@ -10,7 +10,7 @@ import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s.{EntityEncoder, Method}
 
 sealed trait FsAuthRequest[Body, Raw, Res] extends FsClientRequest[Body] {
-  final def runWith[F[_]: Effect, V <: OAuthVersion, O <: OAuthInfo](client: HttpEffectClient[F, O])(
+  final def runWith[F[_]: Effect, V <: OAuthVersion](client: HttpEffectClient[F, _])(
     implicit
     signer: Signer[V],
     requestBodyEncoder: EntityEncoder[F, Body],
