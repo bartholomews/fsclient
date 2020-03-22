@@ -2,18 +2,18 @@ package fsclient.requests
 
 import cats.effect.Effect
 import fsclient.config.UserAgent
-import fsclient.utils.{FsHeaders, Logger}
+import fsclient.utils.FsHeaders
+import fsclient.utils.Logger._
 import org.http4s._
 import org.http4s.client.oauth1.Consumer
-import Logger._
 
 // FIXME: Find a good way to unify these combinations: `Simple/Auth`
 private[fsclient] trait FsClientRequest[Body] {
   def uri: Uri
 
-  def method: Method
-
   def headers: Headers = Headers.empty
+
+  private[fsclient] def method: Method
 
   private[fsclient] def body: Option[Body]
 
