@@ -24,9 +24,11 @@ import cats.effect.IO
 import fsclient.client.io_client.IOAuthClient
 import fsclient.codecs.FsJsonResponsePipe
 import fsclient.config.UserAgent
-import fsclient.entities.{AuthVersion, HttpResponse, ResponseError, Signer}
+import fsclient.entities.{HttpResponse, OAuthVersion, ResponseError, Signer}
 import fsclient.requests.{FsSimpleRequest, JsonRequest}
 import io.circe.{Decoder, Json}
+import org.http4s.Uri
+import org.http4s.client.oauth1.Consumer
 
 import scala.concurrent.ExecutionContext
 
@@ -48,7 +50,7 @@ object SimpleRequestExample {
 
   // Sign with consumer key/secret, but without token
   // Otherwise you can use `AuthVersion.V1.OAuthToken`
-  val signer: Signer = AuthVersion.V1.BasicSignature(consumer)
+  val signer: Signer = OAuthVersion.V1.BasicSignature(consumer)
 
   // Define your expected response entity
   case class Todo(userId: Long, id: Long, title: String, completed: Boolean)
