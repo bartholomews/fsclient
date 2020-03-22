@@ -12,12 +12,12 @@ import org.http4s.{EntityEncoder, Method}
 sealed trait FsAuthRequest[Body, Raw, Res] extends FsClientRequest[Body] {
   final def runWith[F[_]: Effect, V <: OAuthVersion, O <: OAuthInfo](client: HttpEffectClient[F, O])(
     implicit
-    token: Signer[V],
+    signer: Signer[V],
     requestBodyEncoder: EntityEncoder[F, Body],
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
   ): F[HttpResponse[Res]] =
-    client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), OAuthEnabled(token))
+    client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), OAuthEnabled(signer))
 }
 
 object FsAuthRequest {

@@ -30,17 +30,7 @@ private[fsclient] trait FsClientRequest[Body] {
 
 import fsclient.entities.OAuthVersion._
 
-trait AccessTokenRequestV1 extends FsAuthRequest.Post[Nothing, String, V1.AccessToken] {
-  def token: V1.OAuthToken
-}
-
 // FIXME: If this is not a standard oAuth request, should be constructed client-side: double check RFC
-object AccessTokenRequestV1 {
-  def apply(requestUri: Uri, requestToken: V1.RequestToken): AccessTokenRequestV1 =
-    new AccessTokenRequestV1 {
-      final override val token: V1.OAuthToken =
-        V1.RequestToken(requestToken.token, requestToken.verifier, requestToken.consumer)
-      final override val uri: Uri = requestUri
-      final override val body: Option[Nothing] = None
-    }
+case class AccessTokenRequestV1(uri: Uri) extends FsAuthRequest.Post[Nothing, String, V1.AccessToken] {
+  final override val body: Option[Nothing] = None
 }
