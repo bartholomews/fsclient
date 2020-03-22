@@ -1,10 +1,10 @@
 package fsclient.mocks
 
 import fsclient.entities.AuthVersion.V1
+import fsclient.entities.Signer
 import fsclient.requests._
 import io.circe.Json
 import org.http4s.Uri
-import org.http4s.client.oauth1.Consumer
 
 trait MockEndpoints {
 
@@ -31,7 +31,7 @@ trait MockEndpoints {
   final val ok = "timeout-response"
   final val okAccessTokenResponse = "valid-access-token-plaintext-response"
 
-  def validAccessTokenEndpointV1(implicit consumer: Consumer): AccessTokenRequestV1 =
+  def validAccessTokenEndpointV1(implicit signer: Signer): AccessTokenRequestV1 =
     AccessTokenRequestV1(
       Uri.unsafeFromString(s"$wiremockBaseUri/$okAccessTokenResponse"),
       V1.RequestToken(validToken, "")

@@ -29,8 +29,8 @@ object AuthVersion {
 
     case class RequestToken private (token: Token, verifier: Option[String], consumer: Consumer) extends OAuthToken
     object RequestToken {
-      def apply(token: Token, tokenVerifier: String)(implicit consumer: Consumer) =
-        new RequestToken(token, Some(tokenVerifier), consumer)
+      def apply(token: Token, tokenVerifier: String)(implicit signer: Signer) =
+        new RequestToken(token, Some(tokenVerifier), signer.consumer)
     }
 
     case class AccessToken private (token: Token, verifier: Option[String], consumer: Consumer) extends OAuthToken

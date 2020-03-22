@@ -2,10 +2,10 @@ package fsclient.requests
 
 import cats.effect.Effect
 import fsclient.config.UserAgent
+import fsclient.entities.Signer
 import fsclient.utils.FsHeaders
 import fsclient.utils.Logger._
 import org.http4s._
-import org.http4s.client.oauth1.Consumer
 
 // FIXME: Find a good way to unify these combinations: `Simple/Auth`
 private[fsclient] trait FsClientRequest[Body] {
@@ -37,9 +37,10 @@ trait AccessTokenRequestV1 extends FsAuthRequest.Post[Nothing, String, V1.Access
 
 // FIXME: If this is not a standard oAuth request, should be constructed client-side: double check RFC
 object AccessTokenRequestV1 {
-  def apply(requestUri: Uri, requestToken: V1.RequestToken)(implicit consumer: Consumer): AccessTokenRequestV1 =
+  def apply(requestUri: Uri, requestToken: V1.RequestToken)(implicit signer: Signer): AccessTokenRequestV1 =
     new AccessTokenRequestV1 {
-      final override val token: V1.OAuthToken = V1.RequestToken(requestToken.token, requestToken.verifier, consumer)
+      final override val token: V1.OAuthToken =
+        V1.RequestToken(requestToken.token, requestToken.verifier, signer.consumer)
       final override val uri: Uri = requestUri
       final override val body: Option[Nothing] = None
     }
