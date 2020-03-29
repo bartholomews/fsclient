@@ -4,7 +4,7 @@ import fsclient.entities.OAuthVersion.V1.BasicSignature
 import fsclient.entities.{OAuthDisabled, OAuthEnabled}
 import org.http4s.client.oauth1.Consumer
 import org.scalatest.{FunSuite, Inside, Matchers}
-import pureconfig.error.{ConfigReaderException, ConfigReaderFailures}
+import pureconfig.error.ConfigReaderException
 
 class FsClientConfigTest extends FunSuite with Matchers with Inside {
 
@@ -37,14 +37,8 @@ class FsClientConfigTest extends FunSuite with Matchers with Inside {
   }
 
   test("v1.basic(key: String) with invalid config") {
-    intercept[ConfigReaderException[FsClientConfig.AppConfig]] {
+    intercept[ConfigReaderException[FsClientConfig.BasicAppConfig]] {
       FsClientConfig.v1.basic("unknown-key").orThrow
-    }
-  }
-
-  test("v1.token() with missing token config") {
-    inside(FsClientConfig.v1.token()) {
-      case Left(ConfigReaderFailures(failure, Nil)) => failure.description shouldBe "Key not found: 'access-token'."
     }
   }
 }

@@ -5,7 +5,7 @@ import fsclient.entities.OAuthVersion.V1
 import fsclient.entities._
 import org.http4s.client.oauth1.{Consumer, Token}
 import pureconfig.ConfigSource
-import pureconfig.error.{ConfigReaderException, ConfigReaderFailure, ConfigReaderFailures, ConfigValueLocation}
+import pureconfig.error.{ConfigReaderException, ConfigReaderFailures}
 
 import scala.reflect.ClassTag
 
@@ -60,9 +60,6 @@ object FsClientConfig {
     private def basic(consumerConfig: ConsumerConfig) =
       new FsClientConfig(consumerConfig.userAgent, OAuthEnabled(V1.BasicSignature(consumerConfig.consumer)))
 
-    private def token(consumerConfig: ConsumerConfig, token: Token): FsClientConfig[OAuthV1] =
-      new FsClientConfig(consumerConfig.userAgent, OAuthEnabled(V1.AccessToken(token, consumerConfig.consumer)))
-
     def basic(userAgent: UserAgent, consumer: Consumer): FsClientConfig[OAuthV1] = {
       val signer: Signer[V1.type] = V1.BasicSignature(consumer)
       FsClientConfig(userAgent, OAuthEnabled(signer))
@@ -70,33 +67,21 @@ object FsClientConfig {
 
     def basic(key: String): Either[ConfigReaderFailures, FsClientConfig[OAuthV1]] =
       ConfigSource.default
-        .load[AppConfig](Derivations.withCustomKey(key))
+        .load[BasicAppConfig](Derivations.withCustomKey(key))
         .map(_.consumer)
         .map(v1.basic)
 
     def basic(): Either[ConfigReaderFailures, FsClientConfig[OAuthV1]] =
       ConfigSource.default
-        .load[AppConfig]
+        .load[BasicAppConfig]
         .map(_.consumer)
         .map(v1.basic)
-
-    def token(): Either[ConfigReaderFailures, FsClientConfig[OAuthV1]] =
-      for {
-        appConfig <- ConfigSource.default.load[AppConfig]
-        token <- appConfig.accessToken.toRight(
-          ConfigReaderFailures(
-            new ConfigReaderFailure {
-              override def description: String = "Key not found: 'access-token'."
-              override def location: Option[ConfigValueLocation] = None
-            }
-          )
-        )
-      } yield v1.token(appConfig.consumer, token)
   }
 
   def disabled(userAgent: UserAgent): FsClientConfig[OAuthDisabled.type] = FsClientConfig(userAgent, OAuthDisabled)
 
-  case class AppConfig(consumer: ConsumerConfig, accessToken: Option[Token])
+  case class BasicAppConfig(consumer: ConsumerConfig)
+  case class TokenAppConfig(consumer: ConsumerConfig, accessToken: Token)
 
   case class ConsumerConfig(
     appName: String,
