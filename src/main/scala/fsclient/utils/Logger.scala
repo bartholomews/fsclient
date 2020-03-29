@@ -3,7 +3,7 @@ package fsclient.utils
 import cats.effect.Effect
 import cats.implicits._
 import fs2.Pipe
-import fsclient.config.FsClientConfig
+import fsclient.config.{Derivations, FsClientConfig}
 import fsclient.utils.HttpTypes.ErrorOr
 import io.circe.Json
 import org.http4s.{Request, Response}
@@ -15,8 +15,8 @@ object Logger {
   import pureconfig.generic.auto._
 
   private val loggerName: String = ConfigSource.default
-    .load[FsClientConfig.LoggerConfig]
-    .map(_.logger.name)
+    .load[FsClientConfig.LoggerConfig](Derivations.withCustomKey("logger"))
+    .map(_.name)
     .getOrElse("fsclient-logger")
 
   private[fsclient] val logger = getLogger(loggerName).logger

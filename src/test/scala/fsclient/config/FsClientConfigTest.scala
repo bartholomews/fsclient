@@ -1,9 +1,8 @@
 package fsclient.config
 
-import fsclient.entities.OAuthVersion.V1
 import fsclient.entities.OAuthVersion.V1.BasicSignature
 import fsclient.entities.{OAuthDisabled, OAuthEnabled}
-import org.http4s.client.oauth1.{Consumer, Token}
+import org.http4s.client.oauth1.Consumer
 import org.scalatest.{FunSuite, Inside, Matchers}
 import pureconfig.error.{ConfigReaderException, ConfigReaderFailures}
 
@@ -38,7 +37,7 @@ class FsClientConfigTest extends FunSuite with Matchers with Inside {
   }
 
   test("v1.basic(key: String) with invalid config") {
-    intercept[ConfigReaderException[FsClientConfig.ConsumerConfig]] {
+    intercept[ConfigReaderException[FsClientConfig.ConsumerConfigOb]] {
       FsClientConfig.v1.basic("unknown-key").orThrow
     }
   }
@@ -46,23 +45,6 @@ class FsClientConfigTest extends FunSuite with Matchers with Inside {
   test("v1.token() with missing token config") {
     inside(FsClientConfig.v1.token()) {
       case Left(ConfigReaderFailures(failure, Nil)) => failure.description shouldBe "Key not found: 'access-token'."
-    }
-  }
-
-  test("v1.token(key: String) with valid config") {
-    FsClientConfig.v1.token("mock-app") shouldBe Right(
-      FsClientConfig(
-        userAgent = UserAgent(appName = "mock-app", appVersion = Some("0.0.1"), appUrl = None),
-        authInfo = OAuthEnabled(
-          V1.AccessToken(Token("TOKENVALUE", "TOKENSECRET"), Consumer("mock-consumer-key", "mock-consumer-secret"))
-        )
-      )
-    )
-  }
-
-  test("v1.token(key: String) with invalid config") {
-    intercept[ConfigReaderException[FsClientConfig.ConsumerConfig]] {
-      FsClientConfig.v1.token("unknown-key").orThrow
     }
   }
 }

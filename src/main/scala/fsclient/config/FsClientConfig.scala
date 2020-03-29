@@ -57,10 +57,10 @@ object FsClientConfig {
 
   object v1 {
 
-    private def basic(consumerConfig: ConsumerConfigObj) =
+    private def basic(consumerConfig: ConsumerConfig) =
       new FsClientConfig(consumerConfig.userAgent, OAuthEnabled(V1.BasicSignature(consumerConfig.consumer)))
 
-    private def token(consumerConfig: ConsumerConfigObj, token: Token): FsClientConfig[OAuthV1] =
+    private def token(consumerConfig: ConsumerConfig, token: Token): FsClientConfig[OAuthV1] =
       new FsClientConfig(consumerConfig.userAgent, OAuthEnabled(V1.AccessToken(token, consumerConfig.consumer)))
 
     def basic(userAgent: UserAgent, consumer: Consumer): FsClientConfig[OAuthV1] = {
@@ -70,33 +70,28 @@ object FsClientConfig {
 
     def basic(key: String): Either[ConfigReaderFailures, FsClientConfig[OAuthV1]] =
       ConfigSource.default
-        .load[ConsumerConfig](Derivations.withCustomKey(key))
+        .load[ConsumerConfigOb](Derivations.withCustomKey(key))
         .map(_.consumer)
         .map(v1.basic)
 
     def basic(): Either[ConfigReaderFailures, FsClientConfig[OAuthV1]] =
       ConfigSource.default
-        .load[ConsumerConfig]
+        .load[ConsumerConfigOb]
         .map(_.consumer)
         .map(v1.basic)
 
-    def token(key: String): Either[ConfigReaderFailures, FsClientConfig[OAuthEnabled[OAuthVersion.V1.type]]] =
+    def token(): Either[ConfigReaderFailures, FsClientConfig[OAuthV1]] =
       for {
-        consumerConfig <- ConfigSource.default.load[ConsumerConfig](Derivations.withCustomKey(key))
-        token <- ConfigSource.default.load[AccessTokenConfig](Derivations.withCustomKey(key))
-      } yield v1.token(consumerConfig.consumer, token.accessToken)
-
-    def token(): Either[ConfigReaderFailures, FsClientConfig[OAuthEnabled[OAuthVersion.V1.type]]] =
-      for {
-        consumerConfig <- ConfigSource.default.load[ConsumerConfig]
-        token <- ConfigSource.default.load[AccessTokenConfig]
-      } yield v1.token(consumerConfig.consumer, token.accessToken)
+        consumerConfig <- ConfigSource.default.load[ConsumerConfigOb]
+        token <- ConfigSource.default.load[Token](Derivations.withCustomKey("access-token"))
+      } yield v1.token(consumerConfig.consumer, token)
   }
 
   def disabled(userAgent: UserAgent): FsClientConfig[OAuthDisabled.type] = FsClientConfig(userAgent, OAuthDisabled)
 
-  private[fsclient] case class ConsumerConfig(consumer: ConsumerConfigObj)
-  private[fsclient] case class ConsumerConfigObj(
+  private[fsclient] case class ConsumerConfigOb(consumer: ConsumerConfig)
+
+  case class ConsumerConfig(
     appName: String,
     appVersion: Option[String],
     appUrl: Option[String],
@@ -107,8 +102,5 @@ object FsClientConfig {
     def consumer: Consumer = Consumer(key, secret)
   }
 
-  private[fsclient] case class AccessTokenConfig(accessToken: Token)
-
-  private[fsclient] case class LoggerConfig(logger: LoggerConfigObj)
-  private[fsclient] case class LoggerConfigObj(name: String)
+  private[fsclient] case class LoggerConfig(name: String)
 }
