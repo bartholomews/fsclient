@@ -4,13 +4,44 @@ import fsclient.entities.OAuthInfo.OAuthV1
 import fsclient.entities.OAuthVersion.V1
 import fsclient.entities._
 import org.http4s.client.oauth1.{Consumer, Token}
+import pureconfig.ConfigSource
 import pureconfig.error.{ConfigReaderException, ConfigReaderFailures}
-import pureconfig.{ConfigReader, ConfigSource, Derivation}
 
 import scala.reflect.ClassTag
 
 case class FsClientConfig[A <: OAuthInfo](userAgent: UserAgent, authInfo: A)
 
+/**
+ * Helpers to load consumer info and signer from application config.
+ *
+ * OAuth V1 Basic signature
+ *
+ * consumer {
+ *   app-name: "<consumer-app-name>",
+ *   app-version: "<consumer-app-version>",
+ *   app-url: "<consumer-app-url>", // OPTIONAL
+ * key: "<consumer-key>",
+ *   secret: "<consumer-secret>"
+ * }
+ *
+ * logger {
+ *   name = "<app-logger-name>" // OPTIONAL, DEFAULT WITH `fsclient` LOGGER
+ * }
+ *
+ * OAuth V1 Token needs additional token information:
+ *
+ * access-token {
+ *   value = "<token-value>"
+ *   secret = "<token-secret>"
+ * }
+ *
+ * There are constructors with string `key` parameter allow to easily have the config under an object key:
+ *
+ * my-app {
+ *   consumer...
+ * }
+ *
+ */
 object FsClientConfig {
 
   implicit class LoadConfigOrThrow[A <: OAuthInfo: ClassTag](
@@ -26,68 +57,58 @@ object FsClientConfig {
 
   object v1 {
 
-    private def apply(consumerConfig: ConsumerConfig, signer: Signer[V1.type]) = new FsClientConfig(
-      UserAgent(consumerConfig.appName, consumerConfig.appVersion, consumerConfig.appUrl),
-      OAuthEnabled(signer)
-    )
+    private def basic(consumerConfig: ConsumerConfigObj) =
+      new FsClientConfig(consumerConfig.userAgent, OAuthEnabled(V1.BasicSignature(consumerConfig.consumer)))
 
-    private def basic(consumerConfig: ConsumerConfig) =
-      apply(consumerConfig, V1.BasicSignature(consumerConfig.consumer))
+    private def token(consumerConfig: ConsumerConfigObj, token: Token): FsClientConfig[OAuthV1] =
+      new FsClientConfig(consumerConfig.userAgent, OAuthEnabled(V1.AccessToken(token, consumerConfig.consumer)))
 
     def basic(userAgent: UserAgent, consumer: Consumer): FsClientConfig[OAuthV1] = {
       val signer: Signer[V1.type] = V1.BasicSignature(consumer)
       FsClientConfig(userAgent, OAuthEnabled(signer))
     }
 
-    def basic(key: String): Either[ConfigReaderFailures, FsClientConfig[OAuthEnabled[OAuthVersion.V1.type]]] = {
-      implicit val customConfigReader: Derivation[ConfigReader[Config]] = Derivations.withCustomKey(key)
+    def basic(key: String): Either[ConfigReaderFailures, FsClientConfig[OAuthV1]] =
       ConfigSource.default
-        .load[Config]
-        .map(_.consumer)
-        .map(v1.basic)
-    }
-
-    def basic(): Either[ConfigReaderFailures, FsClientConfig[OAuthEnabled[OAuthVersion.V1.type]]] =
-      ConfigSource.default
-        .load[Config]
+        .load[ConsumerConfig](Derivations.withCustomKey(key))
         .map(_.consumer)
         .map(v1.basic)
 
-    private def token(consumerConfig: ConsumerConfig, token: Token) =
-      apply(consumerConfig, V1.AccessToken(token, consumerConfig.consumer))
-
-    def token(userAgent: UserAgent, accessToken: V1.AccessToken): FsClientConfig[OAuthV1] =
-      FsClientConfig(userAgent, OAuthEnabled(accessToken))
+    def basic(): Either[ConfigReaderFailures, FsClientConfig[OAuthV1]] =
+      ConfigSource.default
+        .load[ConsumerConfig]
+        .map(_.consumer)
+        .map(v1.basic)
 
     def token(key: String): Either[ConfigReaderFailures, FsClientConfig[OAuthEnabled[OAuthVersion.V1.type]]] =
       for {
-        config <- ConfigSource.default.load[Config](Derivations.withCustomKey(key))
+        consumerConfig <- ConfigSource.default.load[ConsumerConfig](Derivations.withCustomKey(key))
         token <- ConfigSource.default.load[AccessTokenConfig](Derivations.withCustomKey(key))
-      } yield v1.token(config.consumer, token.accessToken)
+      } yield v1.token(consumerConfig.consumer, token.accessToken)
 
     def token(): Either[ConfigReaderFailures, FsClientConfig[OAuthEnabled[OAuthVersion.V1.type]]] =
       for {
-        config <- ConfigSource.default.load[Config]
+        consumerConfig <- ConfigSource.default.load[ConsumerConfig]
         token <- ConfigSource.default.load[AccessTokenConfig]
-      } yield v1.token(config.consumer, token.accessToken)
+      } yield v1.token(consumerConfig.consumer, token.accessToken)
   }
 
   def disabled(userAgent: UserAgent): FsClientConfig[OAuthDisabled.type] = FsClientConfig(userAgent, OAuthDisabled)
 
-  private[fsclient] case class Config(consumer: ConsumerConfig, logger: LoggerConfig)
-
-  private[fsclient] case class ConsumerConfig(
+  private[fsclient] case class ConsumerConfig(consumer: ConsumerConfigObj)
+  private[fsclient] case class ConsumerConfigObj(
     appName: String,
     appVersion: Option[String],
     appUrl: Option[String],
     key: String,
     secret: String
   ) {
-
+    def userAgent: UserAgent = UserAgent(appName, appVersion, appUrl)
     def consumer: Consumer = Consumer(key, secret)
   }
 
   private[fsclient] case class AccessTokenConfig(accessToken: Token)
 
-  private[fsclient] case class LoggerConfig(name: String)
+  private[fsclient] case class LoggerConfig(logger: LoggerConfigObj)
+  private[fsclient] case class LoggerConfigObj(name: String)
 }

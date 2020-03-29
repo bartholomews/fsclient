@@ -15,7 +15,7 @@ object Logger {
   import pureconfig.generic.auto._
 
   private val loggerName: String = ConfigSource.default
-    .load[FsClientConfig.Config]
+    .load[FsClientConfig.LoggerConfig]
     .map(_.logger.name)
     .getOrElse("fsclient-logger")
 

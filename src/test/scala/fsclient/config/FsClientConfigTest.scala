@@ -1,7 +1,7 @@
 package fsclient.config
 
 import fsclient.entities.OAuthVersion.V1
-import fsclient.entities.OAuthVersion.V1.{AccessToken, BasicSignature}
+import fsclient.entities.OAuthVersion.V1.BasicSignature
 import fsclient.entities.{OAuthDisabled, OAuthEnabled}
 import org.http4s.client.oauth1.{Consumer, Token}
 import org.scalatest.{FunSuite, Inside, Matchers}
@@ -13,11 +13,6 @@ class FsClientConfigTest extends FunSuite with Matchers with Inside {
     appName = "mock-app",
     appVersion = None,
     appUrl = Some("url")
-  )
-
-  private val sampleAccessToken = AccessToken(
-    Token("TOKEN_KEY", "TOKEN_SECRET"),
-    Consumer("CONSUMER_KEY", "CONSUMER_SECRET")
   )
 
   test("disabled") {
@@ -43,7 +38,7 @@ class FsClientConfigTest extends FunSuite with Matchers with Inside {
   }
 
   test("v1.basic(key: String) with invalid config") {
-    intercept[ConfigReaderException[FsClientConfig.Config]] {
+    intercept[ConfigReaderException[FsClientConfig.ConsumerConfig]] {
       FsClientConfig.v1.basic("unknown-key").orThrow
     }
   }
@@ -52,13 +47,6 @@ class FsClientConfigTest extends FunSuite with Matchers with Inside {
     inside(FsClientConfig.v1.token()) {
       case Left(ConfigReaderFailures(failure, Nil)) => failure.description shouldBe "Key not found: 'access-token'."
     }
-  }
-
-  test("v1.token(consumerConfig: ConsumerConfig, token: Token)") {
-    FsClientConfig.v1.token(sampleUserAgent, sampleAccessToken) shouldBe FsClientConfig(
-      userAgent = sampleUserAgent,
-      authInfo = OAuthEnabled(sampleAccessToken)
-    )
   }
 
   test("v1.token(key: String) with valid config") {
@@ -73,7 +61,7 @@ class FsClientConfigTest extends FunSuite with Matchers with Inside {
   }
 
   test("v1.token(key: String) with invalid config") {
-    intercept[ConfigReaderException[FsClientConfig.Config]] {
+    intercept[ConfigReaderException[FsClientConfig.ConsumerConfig]] {
       FsClientConfig.v1.token("unknown-key").orThrow
     }
   }
