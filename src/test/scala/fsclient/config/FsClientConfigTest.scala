@@ -37,7 +37,7 @@ class FsClientConfigTest extends FunSuite with Matchers with Inside {
   }
 
   test("v1.basic(key: String) with invalid config") {
-    intercept[ConfigReaderException[FsClientConfig.ConsumerConfigOb]] {
+    intercept[ConfigReaderException[FsClientConfig.AppConfig]] {
       FsClientConfig.v1.basic("unknown-key").orThrow
     }
   }

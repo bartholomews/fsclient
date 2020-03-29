@@ -5,7 +5,7 @@ import fsclient.entities.OAuthVersion.V1
 import fsclient.entities._
 import org.http4s.client.oauth1.{Consumer, Token}
 import pureconfig.ConfigSource
-import pureconfig.error.{ConfigReaderException, ConfigReaderFailures}
+import pureconfig.error.{ConfigReaderException, ConfigReaderFailure, ConfigReaderFailures, ConfigValueLocation}
 
 import scala.reflect.ClassTag
 
@@ -70,26 +70,33 @@ object FsClientConfig {
 
     def basic(key: String): Either[ConfigReaderFailures, FsClientConfig[OAuthV1]] =
       ConfigSource.default
-        .load[ConsumerConfigOb](Derivations.withCustomKey(key))
+        .load[AppConfig](Derivations.withCustomKey(key))
         .map(_.consumer)
         .map(v1.basic)
 
     def basic(): Either[ConfigReaderFailures, FsClientConfig[OAuthV1]] =
       ConfigSource.default
-        .load[ConsumerConfigOb]
+        .load[AppConfig]
         .map(_.consumer)
         .map(v1.basic)
 
     def token(): Either[ConfigReaderFailures, FsClientConfig[OAuthV1]] =
       for {
-        consumerConfig <- ConfigSource.default.load[ConsumerConfigOb]
-        token <- ConfigSource.default.load[Token](Derivations.withCustomKey("access-token"))
-      } yield v1.token(consumerConfig.consumer, token)
+        appConfig <- ConfigSource.default.load[AppConfig]
+        token <- appConfig.accessToken.toRight(
+          ConfigReaderFailures(
+            new ConfigReaderFailure {
+              override def description: String = "Key not found: 'access-token'."
+              override def location: Option[ConfigValueLocation] = None
+            }
+          )
+        )
+      } yield v1.token(appConfig.consumer, token)
   }
 
   def disabled(userAgent: UserAgent): FsClientConfig[OAuthDisabled.type] = FsClientConfig(userAgent, OAuthDisabled)
 
-  private[fsclient] case class ConsumerConfigOb(consumer: ConsumerConfig)
+  case class AppConfig(consumer: ConsumerConfig, accessToken: Option[Token])
 
   case class ConsumerConfig(
     appName: String,
