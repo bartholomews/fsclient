@@ -4,8 +4,9 @@ import fsclient.entities.OAuthInfo.OAuthV1
 import fsclient.entities.OAuthVersion.V1
 import fsclient.entities._
 import org.http4s.client.oauth1.{Consumer, Token}
+import pureconfig.ConfigReader.Result
 import pureconfig.ConfigSource
-import pureconfig.error.{ConfigReaderException, ConfigReaderFailures}
+import pureconfig.error.ConfigReaderException
 
 import scala.reflect.ClassTag
 
@@ -44,10 +45,8 @@ case class FsClientConfig[A <: OAuthInfo](userAgent: UserAgent, authInfo: A)
  */
 object FsClientConfig {
 
-  implicit class LoadConfigOrThrow[A <: OAuthInfo: ClassTag](
-    maybeConfig: Either[ConfigReaderFailures, FsClientConfig[A]]
-  ) {
-    def orThrow: FsClientConfig[A] = {
+  implicit class LoadConfigOrThrow[A: ClassTag](maybeConfig: Result[A]) {
+    def orThrow: A = {
       import cats.syntax.either._
       maybeConfig.valueOr(failures => throw new ConfigReaderException[A](failures))
     }
@@ -65,13 +64,13 @@ object FsClientConfig {
       FsClientConfig(userAgent, OAuthEnabled(signer))
     }
 
-    def basic(key: String): Either[ConfigReaderFailures, FsClientConfig[OAuthV1]] =
+    def basic(key: String): Result[FsClientConfig[OAuthV1]] =
       ConfigSource.default
         .load[BasicAppConfig](Derivations.withCustomKey(key))
         .map(_.consumer)
         .map(v1.basic)
 
-    def basic(): Either[ConfigReaderFailures, FsClientConfig[OAuthV1]] =
+    def basic(): Result[FsClientConfig[OAuthV1]] =
       ConfigSource.default
         .load[BasicAppConfig]
         .map(_.consumer)
@@ -80,8 +79,9 @@ object FsClientConfig {
 
   def disabled(userAgent: UserAgent): FsClientConfig[OAuthDisabled.type] = FsClientConfig(userAgent, OAuthDisabled)
 
-  case class BasicAppConfig(consumer: ConsumerConfig)
-  case class TokenAppConfig(consumer: ConsumerConfig, accessToken: Token)
+  sealed trait AppConfig
+  case class BasicAppConfig(consumer: ConsumerConfig) extends AppConfig
+  case class TokenAppConfig(consumer: ConsumerConfig, accessToken: Token) extends AppConfig
 
   case class ConsumerConfig(
     appName: String,

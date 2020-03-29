@@ -16,7 +16,7 @@ sealed trait Signer[+O <: OAuthVersion] {
 
 object OAuthVersion {
   // https://tools.ietf.org/html/rfc5849 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  sealed case object V1 extends OAuthVersion {
+  case object V1 extends OAuthVersion {
 
     // Sign with consumer key/secret, but without token (i.e. not a full OAuth request)
     case class BasicSignature(consumer: Consumer) extends Signer[OAuthVersion.V1.type]
@@ -43,7 +43,7 @@ object OAuthVersion {
       signRequest(req, v1.consumer, callback = None, v1.tokenVerifier, Some(v1.token))
   }
   // https://tools.ietf.org/html/rfc6749 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  sealed case object V2 extends OAuthVersion {
+  case object V2 extends OAuthVersion {
     // https://tools.ietf.org/html/rfc6749#section-4.2.2
     case class AccessTokenResponse(
       accessToken: String,
