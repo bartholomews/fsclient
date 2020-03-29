@@ -31,11 +31,11 @@ private[client] trait RequestF {
           logger.debug("Signing request with OAuth 1.0 (Consumer info only)...")
           Stream.eval(V1.sign(signer)(request))
 
-        case _ @OAuthEnabled(signer: V1.OAuthToken) =>
+        case _ @OAuthEnabled(signer: V1.SignerV1) =>
           logger.debug("Signing request with OAuth 1.0...")
           Stream.eval(V1.sign(signer)(request))
 
-        case _ @OAuthEnabled(v2: V2.OAuthToken) =>
+        case _ @OAuthEnabled(v2: V2.SignerV2) =>
           logger.warn("OAuth 2.0 is currently not supported by `fsclient`, you have to implement it yourself.")
           v2 match {
             case accessToken: V2.AccessToken =>
