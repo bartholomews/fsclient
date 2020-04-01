@@ -7,7 +7,7 @@ import org.apache.http.entity.ContentType
 import org.http4s.{Header, Headers}
 
 // https://tools.ietf.org/html/rfc6749#section-4.4.2
-trait AccessTokenRequestClientCredentials extends PlainTextRequest.Post[String, Version2.AccessTokenResponse] {
+trait AccessTokenRequestClientCredentials extends JsonRequest.Post[String, Version2.AccessTokenResponse] {
   def clientId: ClientId
   def clientSecret: ClientSecret
 
