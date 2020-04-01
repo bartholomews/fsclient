@@ -55,9 +55,9 @@ object OAuthVersion {
       // https://tools.ietf.org/html/rfc6749#section-7.1
       tokenType: String,
       expiresIn: Option[Long],
+      refreshToken: Option[String],
       // https://tools.ietf.org/html/rfc6749#section-3.3
-      scope: Option[String],
-      state: Option[String]
+      scope: Option[String]
     )
 
     // https://tools.ietf.org/html/rfc6749#section-4.2.2

@@ -6,14 +6,16 @@ import fsclient.utils.Logger.{rawJsonResponseLogPipe, rawPlainTextResponseLogPip
 import io.circe.fs2.byteStreamParser
 import io.circe.{Decoder, Encoder, Json}
 import org.http4s.circe.jsonEncoderOf
-import org.http4s.{EntityEncoder, Response}
+import org.http4s.{EntityEncoder, Response, UrlForm}
 
 trait CodecSyntax extends PlainTextDecodingSyntax {
 
-  implicit def emptyEntityEncoder[F[_]: Effect]: EntityEncoder[F, Nothing] = EntityEncoder.emptyEncoder[F, Nothing]
+  implicit def emptyEntityEncoder[F[_]]: EntityEncoder[F, Nothing] = EntityEncoder.emptyEncoder[F, Nothing]
 
   implicit def deriveJsonBodyEncoder[F[_]: Effect, Body](implicit encode: Encoder[Body]): EntityEncoder[F, Body] =
     jsonEncoderOf[F, Body]
+
+  implicit def urlFormEntityEncoder[F[_]]: EntityEncoder[F, UrlForm] = UrlForm.entityEncoder
 
   implicit val rawPlainTextPipe: RawDecoder[String] = new RawDecoder[String] {
     override def decode[F[_]: Effect]: Pipe[F, Response[F], String] =
@@ -33,8 +35,8 @@ trait CodecSyntax extends PlainTextDecodingSyntax {
       )
   }
 
-  // implicit def decodeIdentity[F[_]: Effect, A]: Pipe[F, A, A] = _.map(identity)
-  implicit def stringDecoderPipe[F[_]: Effect]: Pipe[F, String, String] = _.map(identity)
+  // implicit def decodeIdentity[F[_], A]: Pipe[F, A, A] = _.map(identity)
+  implicit def stringDecoderPipe[F[_]]: Pipe[F, String, String] = _.map(identity)
 
   implicit def decodeJsonAsString[F[_]: Effect]: Pipe[F, Json, String] =
     deriveJsonPipe[F, String](implicitly[Effect[F]], Decoder.decodeString)
