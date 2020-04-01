@@ -3,7 +3,7 @@ package fsclient.utils
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
-import fsclient.entities.OAuthVersion.V2
+import fsclient.entities.OAuthVersion.Version2
 import org.apache.http.entity.ContentType
 import org.http4s.Header
 
@@ -16,6 +16,6 @@ object FsHeaders {
     Header("Authorization", s"Basic $base64Secret")
   }
   // https://tools.ietf.org/html/rfc6750
-  def authorizationBearer(token: V2.AccessToken): Header =
+  def authorizationBearer(token: Version2.AccessToken): Header =
     Header("Authorization", s"Bearer ${token.value}")
 }

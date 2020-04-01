@@ -4,7 +4,7 @@ import cats.effect.Effect
 import fs2.{Pipe, Pure, Stream}
 import fsclient.client.effect.HttpPipes._
 import fsclient.codecs.RawDecoder
-import fsclient.entities.OAuthVersion.{V1, V2}
+import fsclient.entities.OAuthVersion.{Version1, Version2}
 import fsclient.entities._
 import fsclient.utils.{FsHeaders, Logger}
 import org.http4s.client.Client
@@ -27,19 +27,19 @@ private[client] trait RequestF {
           logger.warn("No OAuth version selected, the request will not be signed.")
           Stream[Pure, Request[F]](request)
 
-        case _ @OAuthEnabled(signer: V1.BasicSignature) =>
+        case _ @OAuthEnabled(signer: Version1.BasicSignature) =>
           logger.debug("Signing request with OAuth 1.0 (Consumer info only)...")
-          Stream.eval(V1.sign(signer)(request))
+          Stream.eval(Version1.sign(signer)(request))
 
-        case _ @OAuthEnabled(signer: V1.SignerV1) =>
+        case _ @OAuthEnabled(signer: Version1.SignerV1) =>
           logger.debug("Signing request with OAuth 1.0...")
-          Stream.eval(V1.sign(signer)(request))
+          Stream.eval(Version1.sign(signer)(request))
 
-        case _ @OAuthEnabled(v2: V2.SignerV2) =>
-          logger.warn("OAuth 2.0 is currently not supported by `fsclient`, you have to implement it yourself.")
+        case _ @OAuthEnabled(v2: Version2.SignerV2) =>
+          logger.warn("OAuth 2.0 is not fully supported by `fsclient`, you might have to implement it yourself.")
           v2 match {
-            case accessToken: V2.AccessToken =>
-              logger.warn("Adding `Authorization: Bearer` header for now, but need to double check RFC...")
+            case accessToken: Version2.AccessToken =>
+              logger.warn("Adding `Authorization: Bearer` header...")
               Stream[Pure, Request[F]](request.putHeaders(FsHeaders.authorizationBearer(accessToken)))
             // TODO: Double check other non-`AccessTokenV2` calls like refresh etc, Request token...")
           }

@@ -1,7 +1,7 @@
 package fsclient.config
 
 import fsclient.entities.OAuthInfo.OAuthV1
-import fsclient.entities.OAuthVersion.V1
+import fsclient.entities.OAuthVersion.Version1
 import fsclient.entities._
 import org.http4s.client.oauth1.{Consumer, Token}
 import pureconfig.ConfigReader.Result
@@ -57,10 +57,10 @@ object FsClientConfig {
   object v1 {
 
     private def basic(consumerConfig: ConsumerConfig) =
-      new FsClientConfig(consumerConfig.userAgent, OAuthEnabled(V1.BasicSignature(consumerConfig.consumer)))
+      new FsClientConfig(consumerConfig.userAgent, OAuthEnabled(Version1.BasicSignature(consumerConfig.consumer)))
 
     def basic(userAgent: UserAgent, consumer: Consumer): FsClientConfig[OAuthV1] = {
-      val signer: Signer[V1.type] = V1.BasicSignature(consumer)
+      val signer: Signer[Version1.type] = Version1.BasicSignature(consumer)
       FsClientConfig(userAgent, OAuthEnabled(signer))
     }
 

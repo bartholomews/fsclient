@@ -15,14 +15,18 @@ sealed trait Signer[+O <: OAuthVersion] {
 }
 
 object OAuthVersion {
+
+  type V1 = OAuthVersion.Version1.type
+  type V2 = OAuthVersion.Version2.type
+
   // https://tools.ietf.org/html/rfc5849 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  case object V1 extends OAuthVersion {
+  case object Version1 extends OAuthVersion {
 
     // Sign with consumer key/secret, but without token (i.e. not a full OAuth request)
-    case class BasicSignature(consumer: Consumer) extends Signer[OAuthVersion.V1.type]
+    case class BasicSignature(consumer: Consumer) extends Signer[V1]
 
     // Full OAuth v1 request
-    sealed trait SignerV1 extends Signer[OAuthVersion.V1.type] {
+    sealed trait SignerV1 extends Signer[V1] {
       def token: Token
       private[fsclient] def tokenVerifier: Option[String]
     }
@@ -43,21 +47,27 @@ object OAuthVersion {
       signRequest(req, v1.consumer, callback = None, v1.tokenVerifier, Some(v1.token))
   }
   // https://tools.ietf.org/html/rfc6749 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  case object V2 extends OAuthVersion {
-    // https://tools.ietf.org/html/rfc6749#section-4.2.2
+  case object Version2 extends OAuthVersion {
+
+    // https://tools.ietf.org/html/rfc6749#section-5.1
     case class AccessTokenResponse(
       accessToken: String,
+      // https://tools.ietf.org/html/rfc6749#section-7.1
       tokenType: String,
       expiresIn: Option[Long],
+      // https://tools.ietf.org/html/rfc6749#section-3.3
       scope: Option[String],
       state: Option[String]
     )
+
+    // https://tools.ietf.org/html/rfc6749#section-4.2.2
+    case object ImplicitGrantAccessTokenResponse
 
     object AccessTokenResponse extends FsJsonResponsePipe[AccessTokenResponse] {
       implicit val decode: Decoder[AccessTokenResponse] = semiauto.deriveConfiguredDecoder
     }
 
-    sealed trait SignerV2 extends Signer[OAuthVersion.V2.type]
+    sealed trait SignerV2 extends Signer[OAuthVersion.Version2.type]
 
     // FIXME: Does v2 has consumer? check Spotify
     case class AccessToken(value: String, consumer: Consumer) extends SignerV2

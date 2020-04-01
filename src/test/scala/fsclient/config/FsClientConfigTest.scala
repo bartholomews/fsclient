@@ -1,6 +1,6 @@
 package fsclient.config
 
-import fsclient.entities.OAuthVersion.V1.BasicSignature
+import fsclient.entities.OAuthVersion.Version1.BasicSignature
 import fsclient.entities.{OAuthDisabled, OAuthEnabled}
 import org.http4s.client.oauth1.Consumer
 import org.scalatest.{FunSuite, Inside, Matchers}
