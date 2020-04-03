@@ -3,6 +3,8 @@ package fsclient.requests
 import cats.data.Chain
 import fsclient.entities.OAuthVersion.Version2
 import fsclient.utils.FsHeaders
+import io.circe.Decoder
+import io.circe.generic.extras.semiauto.deriveUnwrappedDecoder
 import org.http4s.{Header, Headers, Uri, UrlForm}
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -21,6 +23,12 @@ object OAuthV2AuthorizationFramework {
   // https://tools.ietf.org/html/rfc6749#section-3.1.2
   case class RedirectUri(value: Uri)
 
+  case class AccessToken(value: String) extends AnyVal
+  object AccessToken { implicit val decoder: Decoder[AccessToken] = deriveUnwrappedDecoder }
+
+  case class RefreshToken(value: String) extends AnyVal
+  object RefreshToken { implicit val decoder: Decoder[RefreshToken] = deriveUnwrappedDecoder }
+
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   //  Authorization Code Grant
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -36,7 +44,7 @@ object OAuthV2AuthorizationFramework {
         .withQueryParam("response_type", "code")
         .withQueryParam("redirect_uri", redirectUri.renderString)
         .withOptionQueryParam("state", state)
-        .withOptionQueryParam("scopes", if (scopes.isEmpty) None else Some(scopes.mkString(" ")))
+        .withOptionQueryParam("scope", if (scopes.isEmpty) None else Some(scopes.mkString(" ")))
 
     // https://tools.ietf.org/html/rfc6749#section-4.1.3
     trait AccessTokenRequest extends JsonRequest.Post[UrlForm, Version2.AccessTokenResponse] {
@@ -49,6 +57,21 @@ object OAuthV2AuthorizationFramework {
           "grant_type" -> Chain("authorization_code"),
           "code" -> Chain(code),
           "redirect_uri" -> redirectUri.fold(Chain.empty[String])(uri => Chain.one(uri.value.renderString))
+        )
+      )
+    }
+
+    // https://tools.ietf.org/html/rfc6749#section-6
+    trait RefreshTokenRequest extends JsonRequest.Post[UrlForm, Version2.AccessTokenResponse] {
+      def refreshToken: RefreshToken
+      def scopes: List[String]
+      final override val entityBody = UrlForm(
+        Map(
+          "grant_type" -> Chain("refresh_token"),
+          "refresh_token" -> Chain(refreshToken.value),
+          // TODO: test behaviour of Chain.seq, make sure it doesn't discard the tail,
+          //  otherwise you need to mkString first
+          "scope" -> Chain.fromSeq(scopes)
         )
       )
     }

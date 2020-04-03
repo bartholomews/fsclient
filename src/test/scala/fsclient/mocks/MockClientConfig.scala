@@ -70,6 +70,6 @@ trait MockClientConfig {
   ): IOAuthClient[OAuthVersion.Version1.type] = {
     val userAgent: UserAgent = UserAgent(appName, appVersion, appUrl)
     val consumer: Consumer = Consumer(key, secret)
-    new IOAuthClient(userAgent, Version1.AccessToken(token, consumer))
+    new IOAuthClient(userAgent, Version1.AccessTokenResponse(token, consumer))
   }
 }

@@ -27,10 +27,3 @@ private[fsclient] trait FsClientRequest[Body] {
         .withHeaders(headers.++(Headers.of(FsHeaders.userAgent(userAgent.value))))
     }
 }
-
-import fsclient.entities.OAuthVersion._
-
-// FIXME: If this is not a standard oAuth request, should be constructed client-side: double check RFC
-case class AccessTokenRequestV1(uri: Uri) extends FsAuthRequest.Post[Nothing, String, Version1.AccessToken] {
-  final override val body: Option[Nothing] = None
-}
