@@ -1,7 +1,7 @@
 package fsclient.requests
 
 import cats.data.Chain
-import fsclient.entities.OAuthVersion.Version2
+import fsclient.entities.OAuthVersion.Version2.AccessTokenV2
 import fsclient.utils.FsHeaders
 import io.circe.Decoder
 import io.circe.generic.extras.semiauto.deriveUnwrappedDecoder
@@ -50,7 +50,7 @@ object OAuthV2AuthorizationFramework {
         .withOptionQueryParam("scope", if (scopes.isEmpty) None else Some(scopes.mkString(" ")))
 
     // https://tools.ietf.org/html/rfc6749#section-4.1.3
-    trait AccessTokenRequest extends JsonRequest.Post[UrlForm, Version2.AccessTokenResponse] {
+    trait AccessTokenRequest extends JsonRequest.Post[UrlForm, AccessTokenV2] {
       def code: String
       def clientPassword: ClientPassword
       def redirectUri: Option[RedirectUri]
@@ -65,7 +65,7 @@ object OAuthV2AuthorizationFramework {
     }
 
     // https://tools.ietf.org/html/rfc6749#section-6
-    trait RefreshTokenRequest extends JsonRequest.Post[UrlForm, Version2.AccessTokenResponse] {
+    trait RefreshTokenRequest extends JsonRequest.Post[UrlForm, AccessTokenV2] {
       def refreshToken: RefreshToken
       def scopes: List[String]
       final override val entityBody = UrlForm(
@@ -86,7 +86,7 @@ object OAuthV2AuthorizationFramework {
   // https://tools.ietf.org/html/rfc6749#section-4.4
   case object ClientCredentialsGrant extends SignerType {
     // https://tools.ietf.org/html/rfc6749#section-4.4.2
-    trait AccessTokenRequest extends JsonRequest.Post[UrlForm, Version2.AccessTokenResponse] {
+    trait AccessTokenRequest extends JsonRequest.Post[UrlForm, AccessTokenV2] {
       def clientPassword: ClientPassword
       final override val entityBody = UrlForm(("grant_type", "client_credentials"))
       // TODO: Test that the content-type urlencoded working is added automatically by `entityEncoder[UrlForm]`

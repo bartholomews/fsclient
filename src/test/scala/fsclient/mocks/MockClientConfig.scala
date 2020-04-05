@@ -2,8 +2,9 @@ package fsclient.mocks
 
 import fsclient.client.io_client.{IOAuthClient, IOClient}
 import fsclient.config.{FsClientConfig, UserAgent}
+import fsclient.entities.OAuthInfo.OAuthV1
 import fsclient.entities.OAuthVersion.Version1
-import fsclient.entities.OAuthVersion.Version1.BasicSignature
+import fsclient.entities.OAuthVersion.Version1.{AccessTokenV1, BasicSignature}
 import fsclient.entities.{OAuthEnabled, OAuthVersion}
 import org.http4s.client.oauth1.{Consumer, Token}
 import org.scalatest.Assertions._
@@ -48,11 +49,11 @@ trait MockClientConfig {
     appName: String = "someApp",
     appVersion: Option[String] = Some("1.0"),
     appUrl: Option[String] = Some("app.git")
-  ): IOClient[OAuthEnabled[Version1.type]] =
-    new IOClient[OAuthEnabled[Version1.type]] {
+  ): IOClient[OAuthV1] =
+    new IOClient[OAuthV1] {
       UserAgent(appName, appVersion, appUrl)
 
-      override def appConfig: FsClientConfig[OAuthEnabled[OAuthVersion.Version1.type]] = FsClientConfig(
+      override def appConfig: FsClientConfig[OAuthV1] = FsClientConfig(
         UserAgent(appName, appVersion, appUrl),
         OAuthEnabled(BasicSignature(Consumer(key, secret)))
       )
@@ -67,9 +68,9 @@ trait MockClientConfig {
     appName: String = "someApp",
     appVersion: Option[String] = Some("1.0"),
     appUrl: Option[String] = Some("app.git")
-  ): IOAuthClient[OAuthVersion.Version1.type] = {
+  ): IOAuthClient[OAuthVersion.V1] = {
     val userAgent: UserAgent = UserAgent(appName, appVersion, appUrl)
     val consumer: Consumer = Consumer(key, secret)
-    new IOAuthClient(userAgent, Version1.AccessTokenResponse(token, consumer))
+    new IOAuthClient(userAgent, AccessTokenV1(token, consumer))
   }
 }
