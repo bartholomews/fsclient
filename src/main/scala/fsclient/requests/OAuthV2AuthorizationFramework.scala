@@ -14,6 +14,9 @@ import org.http4s.{Header, Headers, Uri, UrlForm}
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // https://tools.ietf.org/html/rfc6749
 object OAuthV2AuthorizationFramework {
+
+  sealed trait SignerType
+
   // https://tools.ietf.org/html/rfc6749#section-2.3.1
   case class ClientPassword(clientId: ClientId, clientSecret: ClientSecret) {
     lazy val authorizationBasic: Header = FsHeaders.authorizationBasic(s"${clientId.value}:${clientSecret.value}")
@@ -33,7 +36,7 @@ object OAuthV2AuthorizationFramework {
   //  Authorization Code Grant
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // https://tools.ietf.org/html/rfc6749#section-4.1
-  object AuthorizationCodeGrant {
+  case object AuthorizationCodeGrant extends SignerType {
 
     // https://tools.ietf.org/html/rfc6749#section-4.1.1
     def authorizeUri(clientId: ClientId, redirectUri: Uri, state: Option[String], scopes: List[String])(
@@ -81,7 +84,7 @@ object OAuthV2AuthorizationFramework {
   // Client Credentials Grant
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // https://tools.ietf.org/html/rfc6749#section-4.4
-  object ClientCredentialsGrant {
+  case object ClientCredentialsGrant extends SignerType {
     // https://tools.ietf.org/html/rfc6749#section-4.4.2
     trait AccessTokenRequest extends JsonRequest.Post[UrlForm, Version2.AccessTokenResponse] {
       def clientPassword: ClientPassword
