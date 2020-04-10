@@ -12,10 +12,10 @@ import io.circe.generic.extras.Configuration
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json}
 import org.http4s.Status
-import org.scalatest.WordSpec
+import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.tagobjects.Slow
 
-class IOClientTest extends WordSpec with IOClientMatchers with WiremockServer with OAuthServer {
+class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer with OAuthServer {
 
   "A valid simple client with no OAuth" when {
 

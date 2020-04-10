@@ -9,7 +9,7 @@ object OAuthV1AuthorizationFramework {
   case object OAuthV1BasicSignature extends SignerType
   case object OAuthV1AccessToken extends SignerType
 
-  // FIXME: If this is not a standard oAuth request, should be constructed client-side: double check RFC
+  // https://tools.ietf.org/html/rfc5849#section-2.2
   case class AccessTokenRequest(uri: Uri) extends FsAuthRequest.Post[Nothing, String, AccessTokenV1] {
     final override val body: Option[Nothing] = None
   }

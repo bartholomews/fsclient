@@ -3,10 +3,12 @@ package fsclient.config
 import fsclient.entities.OAuthVersion.Version1.BasicSignature
 import fsclient.entities.{OAuthDisabled, OAuthEnabled}
 import org.http4s.client.oauth1.Consumer
-import org.scalatest.{FunSuite, Inside, Matchers}
+import org.scalatest.Inside
+import org.scalatest.funsuite.AsyncFunSuite
+import org.scalatest.matchers.should.Matchers
 import pureconfig.error.ConfigReaderException
 
-class FsClientConfigTest extends FunSuite with Matchers with Inside {
+class FsClientConfigTest extends AsyncFunSuite with Matchers with Inside {
 
   private val sampleUserAgent = UserAgent(
     appName = "mock-app",
@@ -40,5 +42,6 @@ class FsClientConfigTest extends FunSuite with Matchers with Inside {
     intercept[ConfigReaderException[FsClientConfig.BasicAppConfig]] {
       FsClientConfig.v1.basic("unknown-key").orThrow
     }
+    succeed
   }
 }

@@ -4,7 +4,8 @@ import fsclient.entities.HttpResponse
 import fsclient.utils.HttpTypes.IOResponse
 import io.circe.syntax._
 import org.http4s.Status
-import org.scalatest.{Assertion, Inside, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{Assertion, Inside}
 
 trait IOClientMatchers extends Matchers with Inside {
 

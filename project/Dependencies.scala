@@ -2,27 +2,27 @@ import sbt._
 
 object Versions {
   // https://github.com/typelevel/cats/releases
-  val cats = "2.0.0"
+  val cats = "2.1.1"
   // https://github.com/typelevel/cats-effect/releases
-  val cats_effect = "2.0.0"
+  val cats_effect = "2.1.2"
   // https://github.com/circe/circe/releases
-  val circe = "0.12.1"
+  val circe = "0.13.0"
   // https://github.com/circe/circe-fs2/releases
-  val circe_fs2 = "0.12.0"
+  val circe_fs2 = "0.13.0"
   // https://github.com/circe/circe-magnolia/releases
-  val circe_magnolia = "0.4.0"
+  val circe_magnolia = "0.6.1"
   // https://github.com/http4s/http4s/releases
-  val http4s = "0.21.0-M5"
+  val http4s = "0.21.3"
   // https://github.com/lightbend/config/releases
-  val lightbendConfig = "1.3.4"
+  val lightbendConfig = "1.4.0"
   // https://github.com/qos-ch/logback/releases
   val logback = "1.2.3"
   // https://github.com/pureconfig/pureconfig/releases
-  val pureConfig = "0.12.1"
+  val pureConfig = "0.12.3"
   // https://github.com/scalatest/scalatest/releases
-  val scalaTest = "3.0.8"
+  val scalaTest = "3.1.1"
   // https://github.com/tomakehurst/wiremock/releases
-  val wiremock = "2.25.0"
+  val wiremock = "2.26.3"
 }
 
 object Dependencies {
@@ -50,7 +50,7 @@ object Dependencies {
 
   lazy val apache: Seq[ModuleID] = Seq(
     // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpcore
-    "org.apache.httpcomponents" % "httpcore" % "4.4.12"
+    "org.apache.httpcomponents" % "httpcore" % "4.4.13"
   )
 
   val dependencies: Seq[ModuleID] =

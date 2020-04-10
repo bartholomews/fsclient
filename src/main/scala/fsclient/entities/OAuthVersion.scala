@@ -36,10 +36,12 @@ object OAuthVersion {
       private[fsclient] def tokenVerifier: Option[String]
     }
 
+    // https://tools.ietf.org/html/rfc5849#section-2.2
     case class RequestTokenV1(token: Token, verifier: String, consumer: Consumer) extends TokenV1 {
       final override private[fsclient] val tokenVerifier: Option[String] = Some(verifier)
     }
 
+    // https://tools.ietf.org/html/rfc5849#section-2.3
     case class AccessTokenV1 private (token: Token, tokenVerifier: Option[String], consumer: Consumer) extends TokenV1
 
     object AccessTokenV1 {
