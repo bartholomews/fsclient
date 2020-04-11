@@ -2,16 +2,22 @@ package fsclient.entities
 
 import fsclient.utils.HttpTypes.ErrorOr
 import io.circe.Json
+import cats.implicits._
 import org.http4s.{Headers, Response, Status}
 
 sealed trait FsResponse[+E <: HttpError, +A] {
   def headers: Headers
   def status: Status
-  protected def entity: Either[E#BodyType, A]
+  def entity: Either[E#BodyType, A]
+  def fold[C](fa: FsResponseError[_] => C, fb: A => C): C = leftMap(fa).fold(identity, fb)
+  def leftMap[EE](f: FsResponseError[_] => EE): Either[EE, A] = this match {
+    case FsResponseSuccess(_, _, body) => body.asRight[EE]
+    case err: FsResponseError[_] => f(err).asLeft[A]
+  }
 }
 
 case class FsResponseSuccess[E <: HttpError, A](headers: Headers, status: Status, body: A) extends FsResponse[E, A] {
-  protected final override val entity = Right(body)
+  final override val entity = Right(body)
 }
 
 sealed trait FsResponseError[E <: HttpError] extends FsResponse[E, Nothing] {
@@ -19,11 +25,11 @@ sealed trait FsResponseError[E <: HttpError] extends FsResponse[E, Nothing] {
 }
 
 case class FsResponseErrorJson(headers: Headers, status: Status, error: Json) extends FsResponseError[HttpErrorJson] {
-  protected final override val entity = Left(error)
+  final override val entity = Left(error)
 }
 
 case class FsResponseErrorString(headers: Headers, status: Status, error: String) extends FsResponseError[HttpErrorString] {
-  protected final override val entity = Left(error)
+  final override val entity = Left(error)
 }
 
 object FsResponse {
