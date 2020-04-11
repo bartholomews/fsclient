@@ -11,7 +11,7 @@ sealed trait FsResponse[+E <: HttpError, +A] {
 }
 
 case class FsResponseSuccess[E <: HttpError, A](headers: Headers, status: Status, body: A) extends FsResponse[E, A] {
-  final override val entity = Right(body)
+  protected final override val entity = Right(body)
 }
 
 sealed trait FsResponseError[E <: HttpError] extends FsResponse[E, Nothing] {
@@ -19,11 +19,11 @@ sealed trait FsResponseError[E <: HttpError] extends FsResponse[E, Nothing] {
 }
 
 case class FsResponseErrorJson(headers: Headers, status: Status, error: Json) extends FsResponseError[HttpErrorJson] {
-  final override val entity = Left(error)
+  protected final override val entity = Left(error)
 }
 
 case class FsResponseErrorString(headers: Headers, status: Status, error: String) extends FsResponseError[HttpErrorString] {
-  final override val entity = Left(error)
+  protected final override val entity = Left(error)
 }
 
 object FsResponse {

@@ -20,15 +20,14 @@ Motivation for this project is to
 ```
 package fsclient
 
-import cats.effect.IO
 import fsclient.client.io_client.IOAuthClient
 import fsclient.codecs.FsJsonResponsePipe
 import fsclient.config.UserAgent
-import fsclient.entities.{HttpResponse, OAuthVersion, ResponseError, Signer}
+import fsclient.entities.{FsResponseError, FsResponseSuccess, OAuthVersion}
 import fsclient.requests.{FsSimpleRequest, JsonRequest}
+import fsclient.utils.HttpTypes.IOResponse
 import io.circe.{Decoder, Json}
 import org.http4s.Uri
-import org.http4s.client.oauth1.Consumer
 
 import scala.concurrent.ExecutionContext
 
@@ -37,20 +36,20 @@ object SimpleRequestExample {
   implicit val ec: ExecutionContext = ExecutionContext.global
 
   // will add header `User-Agent: myapp/0.0.1-SNAPSHOT (+com.github.bartholomews)` to all requests
-  val userAgent = UserAgent(
+  private val userAgent = UserAgent(
     appName = "myapp",
     appVersion = Some("0.0.1-SNAPSHOT"),
     appUrl = Some("com.github.bartholomews")
   )
 
-  val consumer = org.http4s.client.oauth1.Consumer(
+  private val consumer = org.http4s.client.oauth1.Consumer(
     key = "kasldklSAJSALKDKAsd",
     secret = "asjdoASIDJASOdjasojdoasijd"
   )
 
-  // Sign with consumer key/secret, but without token
-  // Otherwise you can use `AuthVersion.V1.OAuthToken`
-  val signer: Signer = OAuthVersion.V1.BasicSignature(consumer)
+  // OAuth V1 Signer with consumer key/secret, without using an access token
+  // Other signature methods are supported as per OAuth V1 and V2 standards
+  private val signer = OAuthVersion.Version1.BasicSignature(consumer)
 
   // Define your expected response entity
   case class Todo(userId: Long, id: Long, title: String, completed: Boolean)
@@ -71,18 +70,17 @@ object SimpleRequestExample {
     and have the right implicits in scope for the codecs
    */
   val req: FsSimpleRequest[Nothing, Json, Todo] = new JsonRequest.Get[Todo] {
-    override val uri = org.http4s.Uri.unsafeFromString("http://jsonplaceholder.typicode.com/todos/1")
+    override val uri: Uri = org.http4s.Uri.unsafeFromString("http://jsonplaceholder.typicode.com/todos/1")
   }
 
   // Run your `FsSimpleRequest` with the client for your effect
-  val res: IO[HttpResponse[Todo]] = req.runWith(new IOAuthClient(userAgent, signer))
+  val res: IOResponse[Todo] = req.runWith(new IOAuthClient(userAgent, signer))
 
   def main(args: Array[String]): Unit =
     res
-      .unsafeRunSync()
-      .entity match {
-      case Left(responseError: ResponseError) => println(s"x--(ツ)--x => ${responseError.status}")
-      case Right(todo: Todo)                  => println(todo.title)
+      .unsafeRunSync() match {
+      case FsResponseSuccess(_, _, todo) => println(todo.title)
+      case error: FsResponseError[_]     => println(s"x--(ツ)--x => ${error.status}")
     }
 }
 ```
