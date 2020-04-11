@@ -3,8 +3,8 @@ package fsclient.client.io_client
 import cats.effect.IO
 import fs2.Pipe
 import fsclient.codecs.FsJsonResponsePipe
+import fsclient.entities.OAuthEnabled
 import fsclient.entities.OAuthVersion.Version1
-import fsclient.entities.{EmptyResponseException, HttpResponse, OAuthEnabled, ResponseError}
 import fsclient.implicits._
 import fsclient.mocks.server.{OAuthServer, WiremockServer}
 import fsclient.requests._
@@ -12,8 +12,8 @@ import io.circe.generic.extras.Configuration
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json}
 import org.http4s.Status
-import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.tagobjects.Slow
+import org.scalatest.wordspec.AnyWordSpec
 
 class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer with OAuthServer {
 
@@ -91,8 +91,8 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
       }
 
       "response is 404" should {
-        "retrieve the json response with Status NotFound and entity prettified with spaces2" in {
-          assertLeft(Status.NotFound, ExpectedErrorMessage.notFoundJson) {
+        "retrieve the json response with Status NotFound and json error response" in {
+          assertErrorJson(Status.NotFound, ExpectedErrorMessage.notFoundJson) {
             getJsonEndpoint[Json](notFoundJsonResponse).runWith(client)
           }
         }
@@ -110,7 +110,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
         }
 
         "return error with response status and default message" in {
-          assertLeft(Status.NotFound, ExpectedErrorMessage.emptyResponse) {
+          assertErrorString(Status.NotFound, ExpectedErrorMessage.emptyResponse) {
             notFoundEmptyJsonResponseGetEndpoint[Json].runWith(client)
           }
         }
@@ -118,7 +118,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
 
       "response has no `Content-Type`" should {
         "return the error status with the right message" in {
-          assertLeft(Status.BadRequest, expectedErrorMessage = "") { // FIXME: expectedErrorMessage
+          assertErrorString(Status.BadRequest, expectedError = "") {
             getJsonEndpoint[Json](badRequestNoContentTypeNorBodyJsonResponse).runWith(client)
           }
         }
@@ -126,7 +126,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
 
       "response has an unexpected `Content-Type`" should {
         "return the error status with the right message" in {
-          assertLeft(Status.BadRequest, expectedErrorMessage = "response=true&urlencoded=example") {
+          assertErrorString(Status.BadRequest, expectedError = "response=true&urlencoded=example") {
             getJsonEndpoint[Json](badRequestMultipartJsonResponse).runWith(client)
           }
         }
@@ -156,10 +156,8 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
         }
 
         "respond with `EmptyResponseException` if the response body is empty" in {
-          assertResponse(getJsonEndpoint[String](okEmptyPlainTextResponse).runWith(client)) {
-            case response @ HttpResponse(_, Left(error: ResponseError)) =>
-              response.status shouldBe Status.UnprocessableEntity
-              error shouldBe ResponseError(EmptyResponseException, Status.UnprocessableEntity)
+          assertEmptyResponseError {
+            getJsonEndpoint[String](okEmptyPlainTextResponse).runWith(client)
           }
         }
       }
@@ -167,7 +165,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
       "response is 404" should {
 
         "retrieve the string response with Status NotFound" in {
-          assertLeft(Status.NotFound, ExpectedErrorMessage.notFoundString) {
+          assertErrorString(Status.NotFound, ExpectedErrorMessage.notFoundString) {
             getJsonEndpoint[Json](notFoundPlainTextResponse).runWith(client)
           }
         }
@@ -182,7 +180,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
         }
 
         "return error with response status and empty message" in {
-          assertLeft(Status.NotFound, expectedErrorMessage = "") {
+          assertErrorString(Status.NotFound, expectedError = "") {
             getJsonEndpoint[Json](notFoundEmptyPlainTextBodyResponse).runWith(client)
           }
         }
@@ -191,7 +189,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
       "response has an unexpected `Content-Type`" should {
         "return the error status with the right message" in {
           import fsclient.implicits._
-          assertLeft(Status.BadRequest, expectedErrorMessage = "") {
+          assertErrorString(Status.BadRequest, expectedError = "") {
             getJsonEndpoint[String](badRequestNoContentTypeNorBodyJsonResponse).runWith(client)
           }
         }
@@ -248,8 +246,8 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
         def notFoundJsonResponsePostEndpoint[R]: FsSimpleRequest[MyRequestBody, Json, R] =
           postJsonEndpoint(notFoundJsonResponse, requestBody)
 
-        "retrieve the json response with Status NotFound and entity prettified with spaces2" in {
-          assertLeft(Status.NotFound, ExpectedErrorMessage.notFoundJson) {
+        "retrieve the json response with Status NotFound and json error response" in {
+          assertErrorJson(Status.NotFound, ExpectedErrorMessage.notFoundJson) {
             notFoundJsonResponsePostEndpoint[Json].runWith(client)
           }
         }
@@ -266,7 +264,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
         }
 
         "return error with response status and default message" in {
-          assertLeft(Status.NotFound, ExpectedErrorMessage.emptyResponse) {
+          assertErrorString(Status.NotFound, ExpectedErrorMessage.emptyResponse) {
             notFoundEmptyJsonResponsePostEndpoint[Json].runWith(client)
           }
         }
@@ -274,7 +272,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
 
       "response has no `Content-Type`" should {
         "return error status with the right message" in {
-          assertLeft(Status.BadRequest, expectedErrorMessage = "") { // FIXME: expectedErrorMessage
+          assertErrorString(Status.BadRequest, expectedError = "") {
             postJsonEndpoint[MyRequestBody, Json](badRequestNoContentTypeNorBodyJsonResponse, requestBody)
               .runWith(client)
           }
@@ -315,7 +313,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
       "response is 404" should {
 
         "retrieve the string response with Status NotFound" in {
-          assertLeft(Status.NotFound, ExpectedErrorMessage.notFoundString) {
+          assertErrorString(Status.NotFound, ExpectedErrorMessage.notFoundString) {
             postJsonEndpoint[MyRequestBody, Json](notFoundPlainTextResponse, requestBody).runWith(client)
           }
         }
@@ -330,7 +328,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
         }
 
         "return error with response status and empty message" in {
-          assertLeft(Status.NotFound, expectedErrorMessage = "") {
+          assertErrorString(Status.NotFound, expectedError = "") {
             postJsonEndpoint[MyRequestBody, Json](notFoundEmptyPlainTextBodyResponse, requestBody).runWith(client)
           }
         }
@@ -339,7 +337,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
       "response has no `Content-Type`" should {
         "return the error status with the right message" in {
           import fsclient.implicits._
-          assertLeft(Status.BadRequest, expectedErrorMessage = "") { // FIXME expectedErrorMessage
+          assertErrorString(Status.BadRequest, expectedError = "") {
             postJsonEndpoint[MyRequestBody, String](badRequestNoContentTypeNorBodyJsonResponse, requestBody)
               .runWith(client)
           }
@@ -348,7 +346,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
 
       "response has an unexpected `Content-Type`" should {
         "return the error status with the right message" in {
-          assertLeft(Status.BadRequest, expectedErrorMessage = "response=true&urlencoded=example") {
+          assertErrorString(Status.BadRequest, expectedError = "response=true&urlencoded=example") {
             import fsclient.implicits._
             postJsonEndpoint[MyRequestBody, String](badRequestMultipartJsonResponse, requestBody).runWith(client)
           }

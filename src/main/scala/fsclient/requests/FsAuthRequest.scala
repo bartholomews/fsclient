@@ -16,7 +16,7 @@ sealed trait FsAuthRequest[Body, Raw, Res] extends FsClientRequest[Body] {
     requestBodyEncoder: EntityEncoder[F, Body],
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
-  ): F[HttpResponse[Res]] =
+  ): F[FsResponse.Of[Res]] =
     client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), OAuthEnabled(signer))
 }
 

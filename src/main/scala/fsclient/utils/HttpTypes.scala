@@ -1,9 +1,9 @@
 package fsclient.utils
 
 import cats.effect.IO
-import fsclient.entities.{HttpResponse, ResponseError}
+import fsclient.entities.{FsResponse, HttpError}
 
 object HttpTypes {
-  type IOResponse[T] = IO[HttpResponse[T]]
-  type ErrorOr[T] = Either[ResponseError, T]
+  type IOResponse[A] = IO[FsResponse[HttpError, A]]
+  type ErrorOr[A] = Either[HttpError, A]
 }

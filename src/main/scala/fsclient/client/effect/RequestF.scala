@@ -21,7 +21,7 @@ private[client] trait RequestF {
     oAuthInfo: OAuthInfo,
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
-  ): Stream[F, HttpResponse[Res]] = {
+  ): Stream[F, FsResponse.Of[Res]] = {
 
     val signed = oAuthInfo match {
       case OAuthDisabled =>
@@ -79,10 +79,9 @@ private[client] trait RequestF {
           Stream
             .emit(response)
             .through(errorHandler)
-            //            .through(decodeLeft) // FIXME: Does a Pipe[F, ErrorOr[Nothing], ErrorOr[Res]] make sense? Probably not
             .through(responseLogPipe)
 
-      }).map(HttpResponse(response.headers, _))
+      }).map(entity => FsResponse(response, entity))
 
     } yield httpRes
   }

@@ -4,7 +4,7 @@ import cats.effect.Effect
 import cats.implicits._
 import fs2.{Pipe, Stream}
 import fsclient.codecs.RawDecoder
-import fsclient.entities.{EmptyResponseException, ResponseError}
+import fsclient.entities.{EmptyResponseException, HttpError, HttpErrorJson, HttpErrorString}
 import fsclient.utils.HttpTypes._
 import fsclient.utils.Logger
 import io.circe.Json
@@ -34,7 +34,7 @@ private[client] object HttpPipes {
       .through(resDecoder)
       .attempt
       .through(errorLogPipe)
-      .map(_.leftMap(ResponseError(_, Status.UnprocessableEntity)))
+      .map(_.leftMap(HttpErrorString(Status.UnprocessableEntity)))
 
   /**
    *
@@ -46,15 +46,15 @@ private[client] object HttpPipes {
    * @tparam A the type of expected response entity, which will be folded to the left
    * @return a Pipe transformed in an `Either.left[ResponseError, Nothing]`
    */
-  def foldToResponseError[F[_]: Effect, A](
+  def foldToResponseError[F[_]: Effect, A, E <: HttpError](
     response: Response[F],
-    f: A => String
+    f: A => HttpError
   ): Pipe[F, Either[Throwable, A], ErrorOr[Nothing]] =
     _.through(errorLogPipe)
       .map(
         _.fold(
-          err => ResponseError(err, response.status).asLeft,
-          res => ResponseError(new Exception(f(res)), response.status).asLeft
+          err => HttpErrorString(response.status)(err).asLeft,
+          res => f(res).asLeft
         )
       )
 
@@ -72,16 +72,25 @@ private[client] object HttpPipes {
           response.body
             .through(byteStreamParser)
             .last
-            .flatMap(_.fold[Stream[F, Json]](Stream.raiseError[F](EmptyResponseException))(Stream.emit))
+            .flatMap(_.fold[Stream[F, Json]](Stream.raiseError[F](EmptyResponseException()))(Stream.emit))
             .attempt
-            // FIXME: could try to parse a { "message": "[value]" } instead of _.spaces2
-            .through(foldToResponseError(response, _.spaces2))
+            .through(
+              foldToResponseError(
+                response,
+                json => HttpErrorJson(response.status, body = json)
+              )
+            )
 
         case _ =>
           Stream
             .eval(response.as[String])
             .attempt
-            .through(foldToResponseError(response, res => res))
+            .through(
+              foldToResponseError(
+                response,
+                errorString => HttpErrorString(response.status, body = errorString)
+              )
+            )
       }
     }
 

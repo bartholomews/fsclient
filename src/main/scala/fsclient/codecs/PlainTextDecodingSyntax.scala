@@ -11,7 +11,7 @@ trait PlainTextDecodingSyntax {
     fs2.Stream.raiseError[F] {
       either match {
         case Right(response) => new Exception(s"Unexpected response: $response")
-        case Left(error)     => if (error.isEmpty) EmptyResponseException else new Exception(error)
+        case Left(error)     => if (error.isEmpty) EmptyResponseException() else new Exception(error)
       }
     }
 
