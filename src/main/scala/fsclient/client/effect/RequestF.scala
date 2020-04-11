@@ -8,6 +8,7 @@ import fsclient.entities.OAuthVersion.Version1
 import fsclient.entities.OAuthVersion.Version1.{BasicSignature, TokenV1}
 import fsclient.entities.OAuthVersion.Version2.AccessTokenV2
 import fsclient.entities._
+import fsclient.utils.HttpTypes.HttpResponse
 import fsclient.utils.{FsHeaders, Logger}
 import org.http4s.client.Client
 import org.http4s.{Request, Status}
@@ -21,7 +22,7 @@ private[client] trait RequestF {
     oAuthInfo: OAuthInfo,
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
-  ): Stream[F, FsResponse.Of[Res]] = {
+  ): Stream[F, HttpResponse[Res]] = {
 
     val signed = oAuthInfo match {
       case OAuthDisabled =>

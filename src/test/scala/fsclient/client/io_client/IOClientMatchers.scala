@@ -1,7 +1,7 @@
 package fsclient.client.io_client
 
-import fsclient.entities.{FsResponse, FsResponseErrorJson, FsResponseErrorString, FsResponseSuccess}
-import fsclient.utils.HttpTypes.IOResponse
+import fsclient.entities.{FsResponseErrorJson, FsResponseErrorString, FsResponseSuccess}
+import fsclient.utils.HttpTypes.{HttpResponse, IOResponse}
 import io.circe.Json
 import io.circe.syntax._
 import org.http4s.Status
@@ -10,7 +10,7 @@ import org.scalatest.{Assertion, Inside}
 
 trait IOClientMatchers extends Matchers with Inside {
 
-  def assertResponse[R](ioResponse: IOResponse[R])(pf: PartialFunction[FsResponse.Of[R], Assertion]): Assertion =
+  def assertResponse[R](ioResponse: IOResponse[R])(pf: PartialFunction[HttpResponse[R], Assertion]): Assertion =
     inside(ioResponse.unsafeRunSync())(pf)
 
   def assertRight[R](expectedEntity: R)(ioResponse: IOResponse[R]): Assertion =

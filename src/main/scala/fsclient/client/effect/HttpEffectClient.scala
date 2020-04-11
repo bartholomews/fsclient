@@ -6,6 +6,7 @@ import fs2.Pipe
 import fsclient.codecs.RawDecoder
 import fsclient.config.FsClientConfig
 import fsclient.entities._
+import fsclient.utils.HttpTypes.HttpResponse
 import org.http4s._
 import org.http4s.client.Client
 
@@ -15,7 +16,7 @@ trait HttpEffectClient[F[_], OAuth <: OAuthInfo] extends RequestF {
 
   implicit def resource: Resource[F, Client[F]]
 
-  private def execute[A](implicit f: Effect[F]): fs2.Stream[F, FsResponse.Of[A]] => F[FsResponse.Of[A]] =
+  private def execute[A](implicit f: Effect[F]): fs2.Stream[F, HttpResponse[A]] => F[HttpResponse[A]] =
     _.compile.last.flatMap(maybeResponse => f.pure(maybeResponse.getOrElse(FsResponse(EmptyResponseException()))))
 
   private[fsclient] def fetch[Raw, Res](request: Request[F], authInfo: OAuthInfo)(

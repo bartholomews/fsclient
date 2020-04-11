@@ -27,9 +27,6 @@ case class FsResponseErrorString(headers: Headers, status: Status, error: String
 }
 
 object FsResponse {
-
-  type Of[A] = FsResponse[HttpError, A]
-
   def apply[F[_], A](response: Response[F], entity: ErrorOr[A]): FsResponse[HttpError, A] =
     entity.fold(
       (err: HttpError) => err match {

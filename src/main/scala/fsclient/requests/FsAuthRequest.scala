@@ -5,6 +5,7 @@ import fs2.Pipe
 import fsclient.client.effect.HttpEffectClient
 import fsclient.codecs.RawDecoder
 import fsclient.entities._
+import fsclient.utils.HttpTypes.HttpResponse
 import io.circe.Json
 import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s.{EntityEncoder, Method}
@@ -16,7 +17,7 @@ sealed trait FsAuthRequest[Body, Raw, Res] extends FsClientRequest[Body] {
     requestBodyEncoder: EntityEncoder[F, Body],
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
-  ): F[FsResponse.Of[Res]] =
+  ): F[HttpResponse[Res]] =
     client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), OAuthEnabled(signer))
 }
 
