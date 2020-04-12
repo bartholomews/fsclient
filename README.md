@@ -18,14 +18,12 @@ Motivation for this project is to
 - set up oAuth handling, logging, codecs patterns for api clients
 
 ```
-package fsclient
-
-import fsclient.client.io_client.IOAuthClient
-import fsclient.codecs.FsJsonResponsePipe
-import fsclient.config.UserAgent
-import fsclient.entities.{FsResponseError, FsResponseSuccess, OAuthVersion}
-import fsclient.requests.{FsSimpleRequest, JsonRequest}
-import fsclient.utils.HttpTypes.IOResponse
+import io.bartholomews.fsclient.client.io_client.IOAuthClient
+import io.bartholomews.fsclient.codecs.FsJsonResponsePipe
+import io.bartholomews.fsclient.config.UserAgent
+import io.bartholomews.fsclient.entities.{FsResponseError, FsResponseSuccess, OAuthVersion}
+import io.bartholomews.fsclient.requests.{FsSimpleRequest, JsonRequest}
+import io.bartholomews.fsclient.utils.HttpTypes.IOResponse
 import io.circe.{Decoder, Json}
 import org.http4s.Uri
 
@@ -59,7 +57,7 @@ object SimpleRequestExample {
   }
 
   // You also need this for common codecs like empty body encoder and raw json decoder
-  import fsclient.implicits._
+  import io.bartholomews.fsclient.implicits._
 
   /*
     `FsSimpleRequest` has three type parameters:
