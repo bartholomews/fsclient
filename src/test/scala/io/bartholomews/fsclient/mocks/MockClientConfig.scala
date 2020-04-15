@@ -2,10 +2,8 @@ package io.bartholomews.fsclient.mocks
 
 import io.bartholomews.fsclient.client.io_client.{IOAuthClient, IOClient}
 import io.bartholomews.fsclient.config.{FsClientConfig, UserAgent}
-import io.bartholomews.fsclient.entities.OAuthInfo.OAuthV1
-import io.bartholomews.fsclient.entities.OAuthVersion.Version1
-import io.bartholomews.fsclient.entities.OAuthVersion.Version1.{AccessTokenV1, BasicSignature}
-import io.bartholomews.fsclient.entities.{OAuthEnabled, OAuthVersion}
+import io.bartholomews.fsclient.entities.OAuthVersion.OAuthV1
+import io.bartholomews.fsclient.entities.{AccessTokenV1, BasicSignature, OAuthVersion}
 import org.http4s.client.oauth1.{Consumer, Token}
 import org.scalatest.Assertions._
 
@@ -31,15 +29,15 @@ trait MockClientConfig {
 
   // override val verifier: Option[String] = Some(validOAuthVerifier)
 
-  def validSimpleClient(): IOClient[OAuthEnabled[Version1.type]] =
+  def validSimpleClient(): IOClient[OAuthV1] =
     simpleClientWith(validConsumerKey, validConsumerSecret)
 
-  def validOAuthClient[V <: OAuthVersion](authVersion: V): IOAuthClient[OAuthVersion.Version1.type] =
+  def validOAuthClient[V <: OAuthVersion](authVersion: V): IOAuthClient[OAuthV1] =
     authVersion match {
-      case OAuthVersion.Version1 =>
+      case OAuthVersion.V1 =>
         oAuthClientWith(validConsumerKey, validConsumerSecret, validToken)
 
-      case OAuthVersion.Version2 =>
+      case OAuthVersion.V2 =>
         fail("OAuthV2 client: test setup not implemented")
     }
 
@@ -55,7 +53,7 @@ trait MockClientConfig {
 
       override def appConfig: FsClientConfig[OAuthV1] = FsClientConfig(
         UserAgent(appName, appVersion, appUrl),
-        OAuthEnabled(BasicSignature(Consumer(key, secret)))
+        BasicSignature(Consumer(key, secret))
       )
 
       implicit override def ec: ExecutionContext = executionContext
@@ -68,7 +66,7 @@ trait MockClientConfig {
     appName: String = "someApp",
     appVersion: Option[String] = Some("1.0"),
     appUrl: Option[String] = Some("app.git")
-  ): IOAuthClient[OAuthVersion.V1] = {
+  ): IOAuthClient[OAuthV1] = {
     val userAgent: UserAgent = UserAgent(appName, appVersion, appUrl)
     val consumer: Consumer = Consumer(key, secret)
     new IOAuthClient(userAgent, AccessTokenV1(token, consumer))

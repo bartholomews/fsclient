@@ -1,6 +1,6 @@
 package io.bartholomews.fsclient.requests
 
-import io.bartholomews.fsclient.entities.OAuthVersion.Version1.AccessTokenV1
+import io.bartholomews.fsclient.entities.AccessTokenV1
 import org.http4s.Uri
 
 object OAuthV1AuthorizationFramework {

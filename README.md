@@ -18,12 +18,14 @@ Motivation for this project is to
 - set up oAuth handling, logging, codecs patterns for api clients
 
 ```
+import cats.effect.IO
 import io.bartholomews.fsclient.client.io_client.IOAuthClient
 import io.bartholomews.fsclient.codecs.FsJsonResponsePipe
 import io.bartholomews.fsclient.config.UserAgent
-import io.bartholomews.fsclient.entities.{FsResponseError, FsResponseSuccess, OAuthVersion}
+import io.bartholomews.fsclient.entities.OAuthVersion.OAuthV1
+import io.bartholomews.fsclient.entities.{BasicSignature, FsResponseError, FsResponseSuccess}
 import io.bartholomews.fsclient.requests.{FsSimpleRequest, JsonRequest}
-import io.bartholomews.fsclient.utils.HttpTypes.IOResponse
+import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.circe.{Decoder, Json}
 import org.http4s.Uri
 
@@ -47,7 +49,7 @@ object SimpleRequestExample {
 
   // OAuth V1 Signer with consumer key/secret, without using an access token
   // Other signature methods are supported as per OAuth V1 and V2 standards
-  private val signer = OAuthVersion.Version1.BasicSignature(consumer)
+  private val signer: BasicSignature = BasicSignature(consumer)
 
   // Define your expected response entity
   case class Todo(userId: Long, id: Long, title: String, completed: Boolean)
@@ -72,13 +74,13 @@ object SimpleRequestExample {
   }
 
   // Run your `FsSimpleRequest` with the client for your effect
-  val res: IOResponse[Todo] = req.runWith(new IOAuthClient(userAgent, signer))
+  val res: IO[HttpResponse[OAuthV1, Todo]] = req.runWith(new IOAuthClient(userAgent, signer))
 
   def main(args: Array[String]): Unit =
     res
       .unsafeRunSync() match {
-      case FsResponseSuccess(_, _, todo) => println(todo.title)
-      case error: FsResponseError[_]     => println(s"x--(ツ)--x => ${error.status}")
+      case FsResponseSuccess(_, _, _, todo) => println(todo.title)
+      case error: FsResponseError[_, _]     => println(s"x--(ツ)--x => ${error.status}")
     }
 }
 ```

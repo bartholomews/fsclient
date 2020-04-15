@@ -3,10 +3,7 @@ package io.bartholomews.fsclient.client.effect
 import cats.Applicative
 import cats.effect.Effect
 import fs2.{Pipe, Pure, Stream}
-import io.bartholomews.fsclient.client.effect.HttpPipes._
 import io.bartholomews.fsclient.codecs.RawDecoder
-import io.bartholomews.fsclient.entities.OAuthVersion.Version1
-import io.bartholomews.fsclient.entities.OAuthVersion.Version1.{BasicSignature, TokenV1}
 import io.bartholomews.fsclient.entities._
 import io.bartholomews.fsclient.requests.OAuthV2AuthorizationFramework.AuthorizationCodeGrant.RefreshTokenRequest
 import io.bartholomews.fsclient.requests.OAuthV2AuthorizationFramework.{ClientPassword, RefreshToken}
@@ -17,41 +14,48 @@ import org.http4s.{Headers, Request, Status, Uri}
 
 private[client] trait RequestF {
 
+  import HttpPipes._
   import Logger._
   import io.bartholomews.fsclient.implicits.rawJsonPipe
 
-  def signAndProcessRequest[F[_]: Effect, Raw, Res](effectClient: HttpEffectClient[F, _], client: Client[F])(
-    implicit request: Request[F],
-    oAuthInfo: OAuthInfo,
-    rawDecoder: RawDecoder[Raw],
+  def signAndProcessRequest[F[_]: Effect, V <: OAuthVersion, Raw, Res](
+    request: Request[F],
+    effectClient: HttpEffectClient[F, _],
+    client: Client[F],
+    signer: Signer[V]
+  )(
+    implicit rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
-  ): Stream[F, HttpResponse[Res]] =
-    signRequest[F, Raw, Res](effectClient).flatMap({
-      case (request, signer) => processRequest[F, Raw, Res](client, request, signer)
+  ): Stream[F, HttpResponse[V, Res]] =
+    signRequest[F, V, Raw, Res](request, effectClient, signer).flatMap({
+      case (request, signer) => processRequest[F, V, Raw, Res](client, request, signer)
     })
 
-  private def signRequest[F[_]: Effect: Applicative, Raw, Res](
-    effectClient: HttpEffectClient[F, _]
-  )(implicit request: Request[F], oAuthInfo: OAuthInfo): Stream[F, (Request[F], OAuthInfo)] =
-    oAuthInfo match {
-      case OAuthDisabled =>
+  private def signRequest[F[_]: Effect: Applicative, V <: OAuthVersion, Raw, Res](
+    request: Request[F],
+    effectClient: HttpEffectClient[F, _],
+    signer: Signer[V]
+  ): Stream[F, (Request[F], Signer[V])] =
+    signer match {
+
+      case AuthDisabled =>
         logger.warn("No OAuth version selected, the request will not be signed.")
-        Stream[Pure, Request[F]](request).map(Tuple2(_, oAuthInfo))
+        Stream[Pure, Request[F]](request).map(Tuple2(_, signer))
 
-      case _ @OAuthEnabled(signer: BasicSignature) =>
+      case basicSignature: BasicSignature =>
         logger.debug("Signing request with OAuth 1.0 (Consumer info only)...")
-        Stream.eval(Version1.sign(signer)(request)).map(Tuple2(_, oAuthInfo))
+        Stream.eval(basicSignature.sign(request)).map(Tuple2(_, signer))
 
-      case _ @OAuthEnabled(signer: TokenV1) =>
+      case token1: TokenV1 =>
         logger.debug("Signing request with OAuth v1...")
-        Stream.eval(Version1.sign(signer)(request)).map(Tuple2(_, oAuthInfo))
+        Stream.eval(token1.sign(request)).map(Tuple2(_, signer))
 
-      case _ @OAuthEnabled(signer2: SignerV2) =>
+      case v2: SignerV2 =>
         logger.debug("Signing request with OAuth v2...")
-        val accessTokenResponse = signer2.accessTokenResponse
+        val accessTokenResponse = v2.accessTokenResponse
         val signWithAccessToken =
           Stream[F, Request[F]](request.putHeaders(FsHeaders.authorizationBearer(accessTokenResponse.accessToken)))
-            .map(Tuple2(_, oAuthInfo))
+            .map(Tuple2(_, signer))
 
         if (accessTokenResponse.isExpired.getOrElse(false)) {
           logger.debug("Refreshing token...")
@@ -60,15 +64,15 @@ private[client] trait RequestF {
             signWithAccessToken
           }) { token =>
             implicit val signerNoRefresh: SignerV2 =
-              signer2.copy(accessTokenResponse = signer2.accessTokenResponse.copy(expiresIn = None))
+              v2.copy(accessTokenResponse = v2.accessTokenResponse.copy(expiresIn = None))
 
             Stream
               .eval(
                 new RefreshTokenRequest {
                   override val refreshToken: RefreshToken = token
-                  override val clientPassword: ClientPassword = signer2.clientPassword
+                  override val clientPassword: ClientPassword = v2.clientPassword
                   override val scopes: List[String] = List.empty
-                  override val uri: Uri = signer2.tokenEndpoint
+                  override val uri: Uri = v2.tokenEndpoint
                 }.runWith(effectClient)
               )
               .flatMap {
@@ -78,27 +82,26 @@ private[client] trait RequestF {
                   ).map(
                     Tuple2(
                       _,
-                      OAuthEnabled(SignerV2(signer2.tokenEndpoint, signer2.clientPassword, refreshedAccessToken))
+                      v2.copy(accessTokenResponse = refreshedAccessToken)
+                        .asInstanceOf[Signer[V]] // FIXME
                     )
                   )
 
-                // FIXME: Need to give also this new `accessTokenV2` to the response
-
-                case error: FsResponseError[_] =>
+                case error: FsResponseError[_, _] =>
                   Stream
                     .raiseError[F](error)
                     .covaryOutput[Request[F]]
-                    .map(Tuple2(_, oAuthInfo))
+                    .map(Tuple2(_, signer))
               }
           }
         } else signWithAccessToken
     }
 
-  private def processRequest[F[_]: Effect, Raw, Res](
+  private def processRequest[F[_]: Effect, V <: OAuthVersion, Raw, Res](
     client: Client[F],
     request: Request[F],
-    signer: OAuthInfo
-  )(implicit rawDecoder: RawDecoder[Raw], resDecoder: Pipe[F, Raw, Res]): Stream[F, HttpResponse[Res]] =
+    signer: Signer[V]
+  )(implicit rawDecoder: RawDecoder[Raw], resDecoder: Pipe[F, Raw, Res]): Stream[F, HttpResponse[V, Res]] =
     client
       .stream(request)
       .through(responseHeadersLogPipe)
@@ -124,8 +127,8 @@ private[client] trait RequestF {
         case Left(throwable) =>
           logger.error(throwable.getMessage)
           throwable match {
-            case err: FsResponseError[_] =>
-              Stream.emit(err)
+            case _ @ FsResponseErrorString(_, headers, status, error) =>
+              Stream.emit(FsResponseErrorString(signer, headers, status, error))
             case err =>
               Stream.emit(FsResponseErrorString(signer, Headers.empty, Status.InternalServerError, err.getMessage))
           }

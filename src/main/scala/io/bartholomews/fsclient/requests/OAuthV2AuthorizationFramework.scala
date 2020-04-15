@@ -1,7 +1,7 @@
 package io.bartholomews.fsclient.requests
 
 import cats.data.Chain
-import io.bartholomews.fsclient.entities.OAuthVersion.Version2.AccessTokenV2
+import io.bartholomews.fsclient.entities.v2.AccessTokenV2
 import io.bartholomews.fsclient.utils.FsHeaders
 import io.circe.Decoder
 import io.circe.generic.extras.semiauto.deriveUnwrappedDecoder

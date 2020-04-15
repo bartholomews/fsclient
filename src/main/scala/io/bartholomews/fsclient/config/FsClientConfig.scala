@@ -1,10 +1,7 @@
 package io.bartholomews.fsclient.config
 
-import io.bartholomews.fsclient.entities.OAuthInfo.OAuthV1
-import io.bartholomews.fsclient.entities.OAuthVersion.Version1
-import io.bartholomews.fsclient.entities._
-import io.bartholomews.fsclient.entities.OAuthVersion.Version1
-import io.bartholomews.fsclient.entities.{OAuthDisabled, Signer}
+import io.bartholomews.fsclient.entities.OAuthVersion.OAuthV1
+import io.bartholomews.fsclient.entities.{AuthDisabled, BasicSignature, OAuthVersion, Signer}
 import org.http4s.client.oauth1.{Consumer, Token}
 import pureconfig.ConfigReader.Result
 import pureconfig.ConfigSource
@@ -12,7 +9,7 @@ import pureconfig.error.ConfigReaderException
 
 import scala.reflect.ClassTag
 
-case class FsClientConfig[A <: OAuthInfo](userAgent: UserAgent, authInfo: A)
+case class FsClientConfig[+V <: OAuthVersion](userAgent: UserAgent, signer: Signer[V])
 
 /**
  * Helpers to load consumer info and signer from application config.
@@ -59,11 +56,11 @@ object FsClientConfig {
   object v1 {
 
     private def basic(consumerConfig: ConsumerConfig) =
-      new FsClientConfig(consumerConfig.userAgent, OAuthEnabled(Version1.BasicSignature(consumerConfig.consumer)))
+      new FsClientConfig(consumerConfig.userAgent, BasicSignature(consumerConfig.consumer))
 
     def basic(userAgent: UserAgent, consumer: Consumer): FsClientConfig[OAuthV1] = {
-      val signer: Signer[Version1.type] = Version1.BasicSignature(consumer)
-      FsClientConfig(userAgent, OAuthEnabled(signer))
+      val signer: Signer[OAuthV1] = BasicSignature(consumer)
+      FsClientConfig(userAgent, signer)
     }
 
     def basic(key: String): Result[FsClientConfig[OAuthV1]] =
@@ -79,7 +76,7 @@ object FsClientConfig {
         .map(v1.basic)
   }
 
-  def disabled(userAgent: UserAgent): FsClientConfig[OAuthDisabled.type] = FsClientConfig(userAgent, OAuthDisabled)
+  def disabled(userAgent: UserAgent): FsClientConfig[Nothing] = FsClientConfig(userAgent, AuthDisabled)
 
   sealed trait AppConfig
   case class BasicAppConfig(consumer: ConsumerConfig) extends AppConfig

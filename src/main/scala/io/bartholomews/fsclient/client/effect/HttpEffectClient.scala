@@ -10,28 +10,28 @@ import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import org.http4s._
 import org.http4s.client.Client
 
-trait HttpEffectClient[F[_], OAuth <: OAuthInfo] extends RequestF {
+trait HttpEffectClient[F[_], OAuth <: OAuthVersion] extends RequestF {
 
   def appConfig: FsClientConfig[OAuth]
 
   implicit def resource: Resource[F, Client[F]]
 
-  private def execute[A](
-    authInfo: OAuthInfo
-  )(implicit f: Effect[F]): fs2.Stream[F, HttpResponse[A]] => F[HttpResponse[A]] =
+  private def execute[V <: OAuthVersion, A](
+    signer: Signer[V]
+  )(implicit f: Effect[F]): fs2.Stream[F, HttpResponse[V, A]] => F[HttpResponse[V, A]] =
     _.compile.last.flatMap(maybeResponse =>
-      f.pure(maybeResponse.getOrElse(FsResponse(authInfo, EmptyResponseException())))
+      f.pure(maybeResponse.getOrElse(FsResponse(signer, EmptyResponseException())))
     )
 
-  private[fsclient] def fetch[Raw, Res](
+  private[fsclient] def fetch[V <: OAuthVersion, Raw, Res](
     implicit
     f: Effect[F],
     request: Request[F],
-    authInfo: OAuthInfo,
+    signer: Signer[V],
     rawDecoder: RawDecoder[Raw],
     decode: Pipe[F, Raw, Res]
-  ): F[FsResponse[HttpError, Res]] =
+  ): F[FsResponse[V, HttpError, Res]] =
     resource.use { client =>
-      execute(authInfo)(f)(signAndProcessRequest[F, Raw, Res](this, client))
+      execute(signer)(f)(signAndProcessRequest[F, V, Raw, Res](request, effectClient = this, client, signer))
     }
 }
