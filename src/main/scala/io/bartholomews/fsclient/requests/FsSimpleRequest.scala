@@ -11,13 +11,20 @@ import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s._
 
 sealed trait FsSimpleRequest[Body, Raw, Res] extends FsClientRequest[Body] {
+  // TODO: Consider passing `O` from here all the way to have an `HttpResponse[O, Res]`
   final def runWith[F[_]: Effect, O <: OAuthInfo](client: HttpEffectClient[F, O])(
     implicit
     requestBodyEncoder: EntityEncoder[F, Body],
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
   ): F[HttpResponse[Res]] =
-    client.fetch[Raw, Res](this.toHttpRequest[F](client.appConfig.userAgent), client.appConfig.authInfo)
+    client.fetch(
+      implicitly,
+      this.toHttpRequest[F](client.appConfig.userAgent),
+      client.appConfig.authInfo,
+      rawDecoder,
+      resDecoder
+    )
 }
 
 object FsSimpleRequest {

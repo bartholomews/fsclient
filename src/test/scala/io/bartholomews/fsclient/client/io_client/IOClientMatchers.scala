@@ -15,21 +15,21 @@ trait IOClientMatchers extends Matchers with Inside {
 
   def assertRight[R](expectedEntity: R)(ioResponse: IOResponse[R]): Assertion =
     assertResponse(ioResponse) {
-      case FsResponseSuccess(_, status, entity) =>
+      case FsResponseSuccess(_, _, status, entity) =>
         status shouldBe Status.Ok
         entity shouldBe expectedEntity
     }
 
   def assertErrorString[R](expectedStatus: Status, expectedError: String)(ioResponse: IOResponse[R]): Assertion =
     assertResponse(ioResponse) {
-      case FsResponseErrorString(_, status, error) =>
+      case FsResponseErrorString(_, _, status, error) =>
         status shouldBe expectedStatus
         error shouldBe expectedError
     }
 
   def assertErrorJson[R](expectedStatus: Status, expectedError: Json)(ioResponse: IOResponse[R]): Assertion =
     assertResponse(ioResponse) {
-      case FsResponseErrorJson(_, status, error) =>
+      case FsResponseErrorJson(_, _, status, error) =>
         status shouldBe expectedStatus
         error shouldBe expectedError
     }

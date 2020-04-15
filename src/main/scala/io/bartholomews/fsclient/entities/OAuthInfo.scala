@@ -1,5 +1,6 @@
 package io.bartholomews.fsclient.entities
 
+// FIXME: If you make Signer covariant, why you need this? You can have Signer[Nothing] no?
 sealed trait OAuthInfo
 
 case object OAuthDisabled extends OAuthInfo

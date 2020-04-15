@@ -65,9 +65,11 @@ object OAuthV2AuthorizationFramework {
     }
 
     // https://tools.ietf.org/html/rfc6749#section-6
-    trait RefreshTokenRequest extends JsonRequest.Post[UrlForm, AccessTokenV2] {
+    trait RefreshTokenRequest extends AuthJsonRequest.Post[UrlForm, AccessTokenV2] {
       def refreshToken: RefreshToken
+      def clientPassword: ClientPassword
       def scopes: List[String]
+      override val headers: Headers = Headers.of(clientPassword.authorizationBasic)
       final override val entityBody = UrlForm(
         Map(
           "grant_type" -> Chain("refresh_token"),

@@ -1,7 +1,7 @@
-package io.bartholomews
+package io.bartholomews.fsclient
 
 import io.circe.generic.extras.Configuration
 
-package object fsclient {
+package object entities {
   implicit val defaultConfig: Configuration = Configuration.default.withSnakeCaseMemberNames
 }

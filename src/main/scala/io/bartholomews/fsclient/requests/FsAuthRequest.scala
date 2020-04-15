@@ -4,23 +4,28 @@ import cats.effect.Effect
 import fs2.Pipe
 import io.bartholomews.fsclient.client.effect.HttpEffectClient
 import io.bartholomews.fsclient.codecs.RawDecoder
-import io.bartholomews.fsclient.entities._
+import io.bartholomews.fsclient.entities.{OAuthVersion, Signer, _}
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
-import io.bartholomews.fsclient.client.effect.HttpEffectClient
-import io.bartholomews.fsclient.entities.{OAuthVersion, Signer}
 import io.circe.Json
 import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s.{EntityEncoder, Method}
 
 sealed trait FsAuthRequest[Body, Raw, Res] extends FsClientRequest[Body] {
   final def runWith[F[_]: Effect, V <: OAuthVersion](client: HttpEffectClient[F, _])(
+    // TODO: Consider passing `V` from here all the way to have an `HttpResponse[Signer[V], Res]`
     implicit
     signer: Signer[V],
     requestBodyEncoder: EntityEncoder[F, Body],
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
   ): F[HttpResponse[Res]] =
-    client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), OAuthEnabled(signer))
+    client.fetch(
+      implicitly,
+      this.toHttpRequest[F](client.appConfig.userAgent),
+      OAuthEnabled(signer),
+      rawDecoder,
+      resDecoder
+    )
 }
 
 object FsAuthRequest {

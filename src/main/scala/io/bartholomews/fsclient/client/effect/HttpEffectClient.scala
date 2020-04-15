@@ -16,16 +16,22 @@ trait HttpEffectClient[F[_], OAuth <: OAuthInfo] extends RequestF {
 
   implicit def resource: Resource[F, Client[F]]
 
-  private def execute[A](implicit f: Effect[F]): fs2.Stream[F, HttpResponse[A]] => F[HttpResponse[A]] =
-    _.compile.last.flatMap(maybeResponse => f.pure(maybeResponse.getOrElse(FsResponse(EmptyResponseException()))))
+  private def execute[A](
+    authInfo: OAuthInfo
+  )(implicit f: Effect[F]): fs2.Stream[F, HttpResponse[A]] => F[HttpResponse[A]] =
+    _.compile.last.flatMap(maybeResponse =>
+      f.pure(maybeResponse.getOrElse(FsResponse(authInfo, EmptyResponseException())))
+    )
 
-  private[fsclient] def fetch[Raw, Res](request: Request[F], authInfo: OAuthInfo)(
+  private[fsclient] def fetch[Raw, Res](
     implicit
     f: Effect[F],
+    request: Request[F],
+    authInfo: OAuthInfo,
     rawDecoder: RawDecoder[Raw],
     decode: Pipe[F, Raw, Res]
   ): F[FsResponse[HttpError, Res]] =
     resource.use { client =>
-      execute(f)(processHttpRequest[F, Raw, Res](client)(request, authInfo, rawDecoder, decode))
+      execute(authInfo)(f)(signAndProcessRequest[F, Raw, Res](this, client))
     }
 }
