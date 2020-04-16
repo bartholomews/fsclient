@@ -1,6 +1,6 @@
 package io.bartholomews.fsclient.client.effect
 
-import cats.effect.{Effect, Resource}
+import cats.effect.{ConcurrentEffect, Resource}
 import cats.implicits._
 import fs2.Pipe
 import io.bartholomews.fsclient.codecs.RawDecoder
@@ -10,7 +10,7 @@ import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import org.http4s._
 import org.http4s.client.Client
 
-trait HttpEffectClient[F[_], OAuth <: OAuthVersion] extends RequestF {
+private[fsclient] trait HttpEffectClient[F[_], OAuth <: OAuthVersion] extends RequestF {
 
   def appConfig: FsClientConfig[OAuth]
 
@@ -18,16 +18,14 @@ trait HttpEffectClient[F[_], OAuth <: OAuthVersion] extends RequestF {
 
   private def execute[V <: OAuthVersion, A](
     signer: Signer[V]
-  )(implicit f: Effect[F]): fs2.Stream[F, HttpResponse[V, A]] => F[HttpResponse[V, A]] =
+  )(implicit f: ConcurrentEffect[F]): fs2.Stream[F, HttpResponse[V, A]] => F[HttpResponse[V, A]] =
     _.compile.last.flatMap(maybeResponse =>
       f.pure(maybeResponse.getOrElse(FsResponse(signer, EmptyResponseException())))
     )
 
-  private[fsclient] def fetch[V <: OAuthVersion, Raw, Res](
+  private[fsclient] def fetch[V <: OAuthVersion, Raw, Res](request: Request[F], signer: Signer[V])(
     implicit
-    f: Effect[F],
-    request: Request[F],
-    signer: Signer[V],
+    f: ConcurrentEffect[F],
     rawDecoder: RawDecoder[Raw],
     decode: Pipe[F, Raw, Res]
   ): F[FsResponse[V, HttpError, Res]] =

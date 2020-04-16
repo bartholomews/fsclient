@@ -18,8 +18,8 @@ Motivation for this project is to
 - set up oAuth handling, logging, codecs patterns for api clients
 
 ```
-import cats.effect.IO
-import io.bartholomews.fsclient.client.io_client.IOAuthClient
+import cats.effect.{ContextShift, IO}
+import io.bartholomews.fsclient.client.FsClientV1
 import io.bartholomews.fsclient.codecs.FsJsonResponsePipe
 import io.bartholomews.fsclient.config.UserAgent
 import io.bartholomews.fsclient.entities.OAuthVersion.OAuthV1
@@ -34,6 +34,7 @@ import scala.concurrent.ExecutionContext
 object SimpleRequestExample {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
+  implicit val ioContextShift: ContextShift[IO] = IO.contextShift(ec)
 
   // will add header `User-Agent: myapp/0.0.1-SNAPSHOT (+com.github.bartholomews)` to all requests
   private val userAgent = UserAgent(
@@ -74,7 +75,7 @@ object SimpleRequestExample {
   }
 
   // Run your `FsSimpleRequest` with the client for your effect
-  val res: IO[HttpResponse[OAuthV1, Todo]] = req.runWith(new IOAuthClient(userAgent, signer))
+  val res: IO[HttpResponse[OAuthV1, Todo]] = req.runWith(FsClientV1[IO, OAuthV1](userAgent, signer))
 
   def main(args: Array[String]): Unit =
     res

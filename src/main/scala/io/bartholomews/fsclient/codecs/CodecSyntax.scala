@@ -1,6 +1,6 @@
 package io.bartholomews.fsclient.codecs
 
-import cats.effect.Effect
+import cats.effect.{ConcurrentEffect, Effect}
 import fs2.Pipe
 import io.bartholomews.fsclient.utils.Logger.{rawJsonResponseLogPipe, rawPlainTextResponseLogPipe}
 import io.circe.fs2.byteStreamParser
@@ -12,7 +12,7 @@ trait CodecSyntax extends PlainTextDecodingSyntax {
 
   implicit def emptyEntityEncoder[F[_]]: EntityEncoder[F, Nothing] = EntityEncoder.emptyEncoder[F, Nothing]
 
-  implicit def deriveJsonBodyEncoder[F[_]: Effect, Body](implicit encode: Encoder[Body]): EntityEncoder[F, Body] =
+  implicit def deriveJsonBodyEncoder[F[_]: ConcurrentEffect, Body](implicit encode: Encoder[Body]): EntityEncoder[F, Body] =
     jsonEncoderOf[F, Body]
 
   implicit def urlFormEntityEncoder[F[_]]: EntityEncoder[F, UrlForm] = UrlForm.entityEncoder

@@ -1,9 +1,10 @@
 package io.bartholomews.fsclient.mocks
 
-import io.bartholomews.fsclient.client.io_client.{IOAuthClient, IOClient}
-import io.bartholomews.fsclient.config.{FsClientConfig, UserAgent}
+import cats.effect.{ContextShift, IO}
+import io.bartholomews.fsclient.client.{FsClient, FsClientV1}
+import io.bartholomews.fsclient.config.UserAgent
 import io.bartholomews.fsclient.entities.OAuthVersion.OAuthV1
-import io.bartholomews.fsclient.entities.{AccessTokenV1, BasicSignature, OAuthVersion}
+import io.bartholomews.fsclient.entities.{AccessTokenV1, OAuthVersion}
 import org.http4s.client.oauth1.{Consumer, Token}
 import org.scalatest.Assertions._
 
@@ -12,6 +13,7 @@ import scala.concurrent.ExecutionContext
 trait MockClientConfig {
 
   implicit val executionContext: ExecutionContext = ExecutionContext.global
+  implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
 
   final val validConsumerKey = "VALID_CONSUMER_KEY"
   final val validConsumerSecret = "VALID_CONSUMER_SECRET"
@@ -29,10 +31,10 @@ trait MockClientConfig {
 
   // override val verifier: Option[String] = Some(validOAuthVerifier)
 
-  def validSimpleClient(): IOClient[OAuthV1] =
+  def validSimpleClient(): FsClient[IO, OAuthV1] =
     simpleClientWith(validConsumerKey, validConsumerSecret)
 
-  def validOAuthClient[V <: OAuthVersion](authVersion: V): IOAuthClient[OAuthV1] =
+  def validOAuthClient[V <: OAuthVersion](authVersion: V): FsClient[IO, OAuthV1] =
     authVersion match {
       case OAuthVersion.V1 =>
         oAuthClientWith(validConsumerKey, validConsumerSecret, validToken)
@@ -47,17 +49,11 @@ trait MockClientConfig {
     appName: String = "someApp",
     appVersion: Option[String] = Some("1.0"),
     appUrl: Option[String] = Some("app.git")
-  ): IOClient[OAuthV1] =
-    new IOClient[OAuthV1] {
-      UserAgent(appName, appVersion, appUrl)
-
-      override def appConfig: FsClientConfig[OAuthV1] = FsClientConfig(
-        UserAgent(appName, appVersion, appUrl),
-        BasicSignature(Consumer(key, secret))
-      )
-
-      implicit override def ec: ExecutionContext = executionContext
-    }
+  ): FsClient[IO, OAuthV1] =
+    FsClientV1.basic(
+      UserAgent(appName, appVersion, appUrl),
+      Consumer(key, secret)
+    )
 
   def oAuthClientWith(
     key: String,
@@ -66,9 +62,9 @@ trait MockClientConfig {
     appName: String = "someApp",
     appVersion: Option[String] = Some("1.0"),
     appUrl: Option[String] = Some("app.git")
-  ): IOAuthClient[OAuthV1] = {
+  ): FsClient[IO, OAuthV1] = {
     val userAgent: UserAgent = UserAgent(appName, appVersion, appUrl)
     val consumer: Consumer = Consumer(key, secret)
-    new IOAuthClient(userAgent, AccessTokenV1(token, consumer))
+    FsClientV1(userAgent, AccessTokenV1(token, consumer))
   }
 }

@@ -1,7 +1,7 @@
 package io.bartholomews.fsclient.client.effect
 
 import cats.Applicative
-import cats.effect.Effect
+import cats.effect.{ConcurrentEffect, Effect}
 import fs2.{Pipe, Pure, Stream}
 import io.bartholomews.fsclient.codecs.RawDecoder
 import io.bartholomews.fsclient.entities._
@@ -18,20 +18,17 @@ private[client] trait RequestF {
   import Logger._
   import io.bartholomews.fsclient.implicits.rawJsonPipe
 
-  def signAndProcessRequest[F[_]: Effect, V <: OAuthVersion, Raw, Res](
+  def signAndProcessRequest[F[_]: ConcurrentEffect, V <: OAuthVersion, Raw, Res](
     request: Request[F],
     effectClient: HttpEffectClient[F, _],
     client: Client[F],
     signer: Signer[V]
-  )(
-    implicit rawDecoder: RawDecoder[Raw],
-    resDecoder: Pipe[F, Raw, Res]
-  ): Stream[F, HttpResponse[V, Res]] =
+  )(implicit rawDecoder: RawDecoder[Raw], resDecoder: Pipe[F, Raw, Res]): Stream[F, HttpResponse[V, Res]] =
     signRequest[F, V, Raw, Res](request, effectClient, signer).flatMap({
       case (request, signer) => processRequest[F, V, Raw, Res](client, request, signer)
     })
 
-  private def signRequest[F[_]: Effect: Applicative, V <: OAuthVersion, Raw, Res](
+  private def signRequest[F[_]: ConcurrentEffect: Applicative, V <: OAuthVersion, Raw, Res](
     request: Request[F],
     effectClient: HttpEffectClient[F, _],
     signer: Signer[V]
@@ -127,7 +124,7 @@ private[client] trait RequestF {
         case Left(throwable) =>
           logger.error(throwable.getMessage)
           throwable match {
-            case _ @ FsResponseErrorString(_, headers, status, error) =>
+            case _ @FsResponseErrorString(_, headers, status, error) =>
               Stream.emit(FsResponseErrorString(signer, headers, status, error))
             case err =>
               Stream.emit(FsResponseErrorString(signer, Headers.empty, Status.InternalServerError, err.getMessage))

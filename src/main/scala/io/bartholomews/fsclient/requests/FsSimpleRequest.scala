@@ -1,6 +1,6 @@
 package io.bartholomews.fsclient.requests
 
-import cats.effect.Effect
+import cats.effect.ConcurrentEffect
 import fs2.Pipe
 import io.bartholomews.fsclient.client.effect.HttpEffectClient
 import io.bartholomews.fsclient.codecs.RawDecoder
@@ -11,20 +11,13 @@ import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s._
 
 sealed trait FsSimpleRequest[Body, Raw, Res] extends FsClientRequest[Body] {
-  // TODO: Consider passing `O` from here all the way to have an `HttpResponse[O, Res]`
-  final def runWith[F[_]: Effect, V <: OAuthVersion, S <: Signer[V]](client: HttpEffectClient[F, V])(
+  final def runWith[F[_]: ConcurrentEffect, V <: OAuthVersion, S <: Signer[V]](client: HttpEffectClient[F, V])(
     implicit
     requestBodyEncoder: EntityEncoder[F, Body],
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
   ): F[HttpResponse[V, Res]] =
-    client.fetch(
-      implicitly,
-      this.toHttpRequest[F](client.appConfig.userAgent),
-      client.appConfig.signer,
-      rawDecoder,
-      resDecoder
-    )
+    client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), client.appConfig.signer)
 }
 
 object FsSimpleRequest {

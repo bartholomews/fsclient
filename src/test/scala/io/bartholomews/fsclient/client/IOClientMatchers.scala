@@ -1,4 +1,4 @@
-package io.bartholomews.fsclient.client.io_client
+package io.bartholomews.fsclient.client
 
 import io.bartholomews.fsclient.entities.{FsResponseErrorJson, FsResponseErrorString, FsResponseSuccess, OAuthVersion}
 import io.bartholomews.fsclient.utils.HttpTypes.{HttpResponse, IOResponse}

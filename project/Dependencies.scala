@@ -57,6 +57,7 @@ object Dependencies {
     apache ++ logback ++ pureConfig ++ typelevel
 
   lazy val testDependencies: Seq[ModuleID] = Seq(
+    "io.bartholomews" %% "scalatestudo" % "0.0.1-SNAPSHOT",
     "org.scalactic" %% "scalactic" % Versions.scalaTest,
     // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
     "org.scalatest" %% "scalatest" % Versions.scalaTest,

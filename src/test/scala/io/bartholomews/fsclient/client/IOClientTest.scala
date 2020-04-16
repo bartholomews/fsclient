@@ -1,10 +1,9 @@
-package io.bartholomews.fsclient.client.io_client
+package io.bartholomews.fsclient.client
 
 import cats.effect.IO
 import fs2.Pipe
 import io.bartholomews.fsclient.codecs.FsJsonResponsePipe
 import io.bartholomews.fsclient.entities.OAuthVersion.OAuthV1
-import io.bartholomews.fsclient.implicits._
 import io.bartholomews.fsclient.mocks.server.{OAuthServer, WiremockServer}
 import io.bartholomews.fsclient.requests._
 import io.circe.generic.extras.Configuration
@@ -16,9 +15,11 @@ import org.scalatest.wordspec.AnyWordSpec
 
 class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer with OAuthServer {
 
+  import io.bartholomews.fsclient.implicits._
+
   "A valid simple client with no OAuth" when {
 
-    val client: IOClient[OAuthV1] = validSimpleClient()
+    val client: FsClient[IO, OAuthV1] = validSimpleClient()
 
     def validPlainTextResponseGetEndpoint[R]: FsSimpleRequest.Get[Nothing, String, R] =
       getPlainTextEndpoint[R](okPlainTextResponse)
