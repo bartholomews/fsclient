@@ -1,7 +1,7 @@
 package io.bartholomews.fsclient.requests
 
 import cats.data.Chain
-import io.bartholomews.fsclient.entities.v2.AccessTokenV2
+import io.bartholomews.fsclient.entities.v2.{AuthorizationCode, NonRefreshableToken}
 import io.bartholomews.fsclient.utils.FsHeaders
 import io.circe.Decoder
 import io.circe.generic.extras.semiauto.deriveUnwrappedDecoder
@@ -32,6 +32,20 @@ object OAuthV2AuthorizationFramework {
   case class RefreshToken(value: String) extends AnyVal
   object RefreshToken { implicit val decoder: Decoder[RefreshToken] = deriveUnwrappedDecoder }
 
+  private def authorizationUri(
+    responseType: String,
+    clientId: ClientId,
+    redirectUri: Uri,
+    state: Option[String],
+    scopes: List[String]
+  )(serverUri: Uri): Uri =
+    serverUri
+      .withQueryParam("client_id", clientId.value)
+      .withQueryParam("response_type", responseType)
+      .withQueryParam("redirect_uri", redirectUri.renderString)
+      .withOptionQueryParam("state", state)
+      .withOptionQueryParam("scope", if (scopes.isEmpty) None else Some(scopes.mkString(" ")))
+
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   //  Authorization Code Grant
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,18 +53,12 @@ object OAuthV2AuthorizationFramework {
   case object AuthorizationCodeGrant extends SignerType {
 
     // https://tools.ietf.org/html/rfc6749#section-4.1.1
-    def authorizeUri(clientId: ClientId, redirectUri: Uri, state: Option[String], scopes: List[String])(
+    def authorizationCodeUri(clientId: ClientId, redirectUri: Uri, state: Option[String], scopes: List[String])(
       serverUri: Uri
-    ): Uri =
-      serverUri
-        .withQueryParam("client_id", clientId.value)
-        .withQueryParam("response_type", "code")
-        .withQueryParam("redirect_uri", redirectUri.renderString)
-        .withOptionQueryParam("state", state)
-        .withOptionQueryParam("scope", if (scopes.isEmpty) None else Some(scopes.mkString(" ")))
+    ): Uri = authorizationUri(responseType = "code", clientId, redirectUri, state, scopes)(serverUri)
 
     // https://tools.ietf.org/html/rfc6749#section-4.1.3
-    trait AccessTokenRequest extends JsonRequest.Post[UrlForm, AccessTokenV2] {
+    trait AccessTokenRequest extends JsonRequest.Post[UrlForm, AuthorizationCode] {
       def code: String
       def clientPassword: ClientPassword
       def redirectUri: Option[RedirectUri]
@@ -65,7 +73,7 @@ object OAuthV2AuthorizationFramework {
     }
 
     // https://tools.ietf.org/html/rfc6749#section-6
-    trait RefreshTokenRequest extends AuthJsonRequest.Post[UrlForm, AccessTokenV2] {
+    trait RefreshTokenRequest extends AuthJsonRequest.Post[UrlForm, AuthorizationCode] {
       def refreshToken: RefreshToken
       def clientPassword: ClientPassword
       def scopes: List[String]
@@ -83,17 +91,27 @@ object OAuthV2AuthorizationFramework {
   }
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // Implicit Grant
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // https://tools.ietf.org/html/rfc6749#section-4.2
+  case object ImplicitGrant extends SignerType {
+    // https://tools.ietf.org/html/rfc6749#section-4.2.1
+    def authorizationTokenUri(clientId: ClientId, redirectUri: Uri, state: Option[String], scopes: List[String])(
+      serverUri: Uri
+    ): Uri = authorizationUri(responseType = "token", clientId, redirectUri, state, scopes)(serverUri)
+  }
+
+  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Client Credentials Grant
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // https://tools.ietf.org/html/rfc6749#section-4.4
   case object ClientCredentialsGrant extends SignerType {
     // https://tools.ietf.org/html/rfc6749#section-4.4.2
-    trait AccessTokenRequest extends JsonRequest.Post[UrlForm, AccessTokenV2] {
+    trait AccessTokenRequest extends JsonRequest.Post[UrlForm, NonRefreshableToken] {
       def clientPassword: ClientPassword
       final override val entityBody = UrlForm(("grant_type", "client_credentials"))
       // TODO: Test that the content-type urlencoded working is added automatically by `entityEncoder[UrlForm]`
       override val headers: Headers = Headers.of(clientPassword.authorizationBasic)
     }
   }
-  // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 }

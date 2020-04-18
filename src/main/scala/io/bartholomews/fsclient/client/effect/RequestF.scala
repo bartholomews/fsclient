@@ -5,32 +5,27 @@ import cats.effect.{ConcurrentEffect, Effect}
 import fs2.{Pipe, Pure, Stream}
 import io.bartholomews.fsclient.codecs.RawDecoder
 import io.bartholomews.fsclient.entities._
-import io.bartholomews.fsclient.requests.OAuthV2AuthorizationFramework.AuthorizationCodeGrant.RefreshTokenRequest
-import io.bartholomews.fsclient.requests.OAuthV2AuthorizationFramework.{ClientPassword, RefreshToken}
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.bartholomews.fsclient.utils.{FsHeaders, Logger}
 import org.http4s.client.Client
-import org.http4s.{Headers, Request, Status, Uri}
+import org.http4s.{Headers, Request, Status}
 
 private[client] trait RequestF {
 
   import HttpPipes._
   import Logger._
-  import io.bartholomews.fsclient.implicits.rawJsonPipe
 
   def signAndProcessRequest[F[_]: ConcurrentEffect, V <: OAuthVersion, Raw, Res](
     request: Request[F],
-    effectClient: HttpEffectClient[F, _],
     client: Client[F],
     signer: Signer[V]
   )(implicit rawDecoder: RawDecoder[Raw], resDecoder: Pipe[F, Raw, Res]): Stream[F, HttpResponse[V, Res]] =
-    signRequest[F, V, Raw, Res](request, effectClient, signer).flatMap({
+    signRequest[F, V, Raw, Res](request, signer).flatMap({
       case (request, signer) => processRequest[F, V, Raw, Res](client, request, signer)
     })
 
   private def signRequest[F[_]: ConcurrentEffect: Applicative, V <: OAuthVersion, Raw, Res](
     request: Request[F],
-    effectClient: HttpEffectClient[F, _],
     signer: Signer[V]
   ): Stream[F, (Request[F], Signer[V])] =
     signer match {
@@ -49,49 +44,8 @@ private[client] trait RequestF {
 
       case v2: SignerV2 =>
         logger.debug("Signing request with OAuth v2...")
-        val accessTokenResponse = v2.accessTokenResponse
-        val signWithAccessToken =
-          Stream[F, Request[F]](request.putHeaders(FsHeaders.authorizationBearer(accessTokenResponse.accessToken)))
-            .map(Tuple2(_, signer))
-
-        if (accessTokenResponse.isExpired.getOrElse(false)) {
-          logger.debug("Refreshing token...")
-          accessTokenResponse.refreshToken.fold({
-            logger.warn("Refresh token not present in access token response, it won't be refreshed...")
-            signWithAccessToken
-          }) { token =>
-            implicit val signerNoRefresh: SignerV2 =
-              v2.copy(accessTokenResponse = v2.accessTokenResponse.copy(expiresIn = None))
-
-            Stream
-              .eval(
-                new RefreshTokenRequest {
-                  override val refreshToken: RefreshToken = token
-                  override val clientPassword: ClientPassword = v2.clientPassword
-                  override val scopes: List[String] = List.empty
-                  override val uri: Uri = v2.tokenEndpoint
-                }.runWith(effectClient)
-              )
-              .flatMap {
-                case FsResponseSuccess(_, _, _, refreshedAccessToken) =>
-                  Stream[F, Request[F]](
-                    request.putHeaders(FsHeaders.authorizationBearer(refreshedAccessToken.accessToken))
-                  ).map(
-                    Tuple2(
-                      _,
-                      v2.copy(accessTokenResponse = refreshedAccessToken)
-                        .asInstanceOf[Signer[V]] // FIXME
-                    )
-                  )
-
-                case error: FsResponseError[_, _] =>
-                  Stream
-                    .raiseError[F](error)
-                    .covaryOutput[Request[F]]
-                    .map(Tuple2(_, signer))
-              }
-          }
-        } else signWithAccessToken
+        Stream[F, Request[F]](request.putHeaders(FsHeaders.authorizationBearer(v2.accessTokenResponse.accessToken)))
+          .map(Tuple2(_, signer))
     }
 
   private def processRequest[F[_]: Effect, V <: OAuthVersion, Raw, Res](

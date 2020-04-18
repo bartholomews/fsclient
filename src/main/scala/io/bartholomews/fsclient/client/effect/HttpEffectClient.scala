@@ -30,6 +30,6 @@ private[fsclient] trait HttpEffectClient[F[_], OAuth <: OAuthVersion] extends Re
     decode: Pipe[F, Raw, Res]
   ): F[FsResponse[V, HttpError, Res]] =
     resource.use { client =>
-      execute(signer)(f)(signAndProcessRequest[F, V, Raw, Res](request, effectClient = this, client, signer))
+      execute(signer)(f)(signAndProcessRequest[F, V, Raw, Res](request, client, signer))
     }
 }

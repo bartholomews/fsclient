@@ -45,7 +45,10 @@ object Dependencies {
     "org.http4s" %% "http4s-circe" % Versions.http4s,
     "io.circe" %% "circe-fs2" % Versions.circe_fs2,
     "io.circe" %% "circe-generic-extras" % Versions.circe,
-    "io.circe" %% "circe-literal" % Versions.circe // string interpolation to JSON model
+    // string interpolation to JSON model
+    "io.circe" %% "circe-literal" % Versions.circe,
+    // https://github.com/lloydmeta/enumeratum/releases
+    "com.beachape" %% "enumeratum-circe" % "1.5.22"
   )
 
   lazy val apache: Seq[ModuleID] = Seq(

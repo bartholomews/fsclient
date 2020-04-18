@@ -1,7 +1,7 @@
 package io.bartholomews.fsclient.entities
 
 import cats.effect.Effect
-import io.bartholomews.fsclient.entities.OAuthVersion.{OAUthV2, OAuthV1}
+import io.bartholomews.fsclient.entities.OAuthVersion.{OAuthV2, OAuthV1}
 import io.bartholomews.fsclient.entities.v2.AccessTokenV2
 import io.bartholomews.fsclient.requests.OAuthV2AuthorizationFramework.ClientPassword
 import org.http4s.client.oauth1.{signRequest, Consumer, Token}
@@ -42,4 +42,4 @@ object AccessTokenV1 {
 }
 
 final case class SignerV2(tokenEndpoint: Uri, clientPassword: ClientPassword, accessTokenResponse: AccessTokenV2)
-    extends Signer[OAUthV2]
+    extends Signer[OAuthV2]

@@ -4,7 +4,7 @@ sealed trait OAuthVersion
 
 object OAuthVersion {
   type OAuthV1 = OAuthVersion.V1.type
-  type OAUthV2 = OAuthVersion.V2.type
+  type OAuthV2 = OAuthVersion.V2.type
 
   // https://tools.ietf.org/html/rfc5849 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   case object V1 extends OAuthVersion
