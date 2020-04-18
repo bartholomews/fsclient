@@ -5,6 +5,7 @@ import cats.effect.{ConcurrentEffect, Effect}
 import fs2.{Pipe, Pure, Stream}
 import io.bartholomews.fsclient.codecs.RawDecoder
 import io.bartholomews.fsclient.entities._
+import io.bartholomews.fsclient.entities.oauth._
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.bartholomews.fsclient.utils.{FsHeaders, Logger}
 import org.http4s.client.Client
@@ -19,40 +20,42 @@ private[client] trait RequestF {
     request: Request[F],
     client: Client[F],
     signer: Signer[V]
-  )(implicit rawDecoder: RawDecoder[Raw], resDecoder: Pipe[F, Raw, Res]): Stream[F, HttpResponse[V, Res]] =
-    signRequest[F, V, Raw, Res](request, signer).flatMap({
-      case (request, signer) => processRequest[F, V, Raw, Res](client, request, signer)
-    })
+  )(implicit rawDecoder: RawDecoder[Raw], resDecoder: Pipe[F, Raw, Res]): Stream[F, HttpResponse[Res]] =
+    signRequest[F, V, Raw, Res](request, signer).flatMap(processRequest[F, V, Raw, Res](client))
 
   private def signRequest[F[_]: ConcurrentEffect: Applicative, V <: OAuthVersion, Raw, Res](
     request: Request[F],
     signer: Signer[V]
-  ): Stream[F, (Request[F], Signer[V])] =
+  ): Stream[F, Request[F]] =
     signer match {
 
       case AuthDisabled =>
         logger.warn("No OAuth version selected, the request will not be signed.")
-        Stream[Pure, Request[F]](request).map(Tuple2(_, signer))
+        Stream[Pure, Request[F]](request)
 
-      case basicSignature: BasicSignature =>
+      case basicSignature: ClientCredentials =>
         logger.debug("Signing request with OAuth 1.0 (Consumer info only)...")
-        Stream.eval(basicSignature.sign(request)).map(Tuple2(_, signer))
+        Stream.eval(basicSignature.sign(request))
 
-      case token1: TokenV1 =>
+      case tokenCredentials: TokenCredentials =>
         logger.debug("Signing request with OAuth v1...")
-        Stream.eval(token1.sign(request)).map(Tuple2(_, signer))
+        Stream.eval(tokenCredentials.sign(request))
 
       case v2: SignerV2 =>
         logger.debug("Signing request with OAuth v2...")
-        Stream[F, Request[F]](request.putHeaders(FsHeaders.authorizationBearer(v2.accessTokenResponse.accessToken)))
-          .map(Tuple2(_, signer))
+        Stream[F, Request[F]](
+          v2.tokenType.toUpperCase match {
+            case "BEARER" => request.putHeaders(FsHeaders.authorizationBearer(v2.accessToken))
+            case other =>
+              logger.warn(s"Unknown token type [$other]: The request will not be signed")
+              request
+          }
+        )
     }
 
-  private def processRequest[F[_]: Effect, V <: OAuthVersion, Raw, Res](
-    client: Client[F],
-    request: Request[F],
-    signer: Signer[V]
-  )(implicit rawDecoder: RawDecoder[Raw], resDecoder: Pipe[F, Raw, Res]): Stream[F, HttpResponse[V, Res]] =
+  private def processRequest[F[_]: Effect, V <: OAuthVersion, Raw, Res](client: Client[F])(
+    request: Request[F]
+  )(implicit rawDecoder: RawDecoder[Raw], resDecoder: Pipe[F, Raw, Res]): Stream[F, HttpResponse[Res]] =
     client
       .stream(request)
       .through(responseHeadersLogPipe)
@@ -73,15 +76,15 @@ private[client] trait RequestF {
                 .through(errorHandler)
                 .through(responseLogPipe)
 
-          }).map(entity => FsResponse(signer, response, entity))
+          }).map(entity => FsResponse(response, entity))
 
         case Left(throwable) =>
           logger.error(throwable.getMessage)
           throwable match {
-            case _ @FsResponseErrorString(_, headers, status, error) =>
-              Stream.emit(FsResponseErrorString(signer, headers, status, error))
+            case _ @FsResponseErrorString(headers, status, error) =>
+              Stream.emit(FsResponseErrorString(headers, status, error))
             case err =>
-              Stream.emit(FsResponseErrorString(signer, Headers.empty, Status.InternalServerError, err.getMessage))
+              Stream.emit(FsResponseErrorString(Headers.empty, Status.InternalServerError, err.getMessage))
           }
       }
 }

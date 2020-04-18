@@ -3,8 +3,8 @@ package io.bartholomews.fsclient.client
 import cats.effect.{ConcurrentEffect, ContextShift, Resource}
 import io.bartholomews.fsclient.client.effect.HttpEffectClient
 import io.bartholomews.fsclient.config.{FsClientConfig, UserAgent}
-import io.bartholomews.fsclient.entities.OAuthVersion.OAuthV1
-import io.bartholomews.fsclient.entities.{OAuthVersion, Signer}
+import io.bartholomews.fsclient.entities.oauth.OAuthVersion.{OAuthV1, OAuthV2}
+import io.bartholomews.fsclient.entities.oauth.{NonRefreshableToken, OAuthVersion, Signer}
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.client.oauth1.Consumer
@@ -31,12 +31,10 @@ case class FsClientV1[F[_]: ConcurrentEffect](appConfig: FsClientConfig[OAuthV1]
   implicit override def resource: Resource[F, Client[F]] = BlazeClientBuilder[F](ec).resource
 }
 object FsClientV1 {
-
-  def apply[F[_]: ConcurrentEffect, V <: OAuthV1](userAgent: UserAgent, signer: Signer[V])(
+  def apply[F[_]: ConcurrentEffect, V <: OAuthV1](userAgent: UserAgent, signer: Signer[OAuthV1])(
     implicit ec: ExecutionContext,
     contextShift: ContextShift[F]
-  ): FsClientV1[F] =
-    FsClientV1(FsClientConfig(userAgent, signer))
+  ): FsClientV1[F] = FsClientV1(FsClientConfig(userAgent, signer))
 
   def unsafeFromConfigBasic[F[_]: ConcurrentEffect](
     implicit ec: ExecutionContext,
@@ -47,4 +45,18 @@ object FsClientV1 {
     implicit ec: ExecutionContext,
     contextShift: ContextShift[F]
   ): FsClientV1[F] = FsClientV1(FsClientConfig.v1.basic(userAgent, consumer))
+}
+
+case class FsClientV2[F[_]: ConcurrentEffect](appConfig: FsClientConfig[OAuthV2])(
+  implicit ec: ExecutionContext,
+  val contextShift: ContextShift[F]
+) extends FsClient[F, OAuthV2] {
+  implicit override def resource: Resource[F, Client[F]] = BlazeClientBuilder[F](ec).resource
+}
+
+object FsClientV2 {
+  def apply[F[_]: ConcurrentEffect](userAgent: UserAgent, signer: NonRefreshableToken)(
+    implicit ec: ExecutionContext,
+    contextShift: ContextShift[F]
+  ): FsClientV2[F] = FsClientV2(FsClientConfig(userAgent, signer))
 }

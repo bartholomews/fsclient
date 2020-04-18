@@ -1,7 +1,7 @@
 package io.bartholomews.fsclient.client
 
 import cats.effect.{ContextShift, IO}
-import io.bartholomews.fsclient.entities.OAuthVersion.OAuthV1
+import io.bartholomews.fsclient.entities.oauth.OAuthVersion.OAuthV1
 import io.bartholomews.testudo.data.TestudoClientData
 
 import scala.concurrent.ExecutionContext

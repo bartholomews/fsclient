@@ -1,4 +1,4 @@
-package io.bartholomews.fsclient.entities
+package io.bartholomews.fsclient.entities.oauth
 
 sealed trait OAuthVersion
 

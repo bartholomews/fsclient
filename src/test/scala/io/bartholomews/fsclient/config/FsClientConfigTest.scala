@@ -1,6 +1,6 @@
 package io.bartholomews.fsclient.config
 
-import io.bartholomews.fsclient.entities.{AuthDisabled, BasicSignature}
+import io.bartholomews.fsclient.entities.oauth.{AuthDisabled, ClientCredentials}
 import org.http4s.client.oauth1.Consumer
 import org.scalatest.Inside
 import org.scalatest.funsuite.AsyncFunSuite
@@ -22,14 +22,14 @@ class FsClientConfigTest extends AsyncFunSuite with Matchers with Inside {
   test("v1.basic() with valid config") {
     FsClientConfig.v1.basic().orThrow shouldBe FsClientConfig(
       userAgent = UserAgent(appName = "mock-app-outer", appVersion = Some("2.2.1"), appUrl = None),
-      signer = BasicSignature(Consumer(key = "mock-consumer-key-outer", secret = "mock-consumer-secret-outer"))
+      signer = ClientCredentials(Consumer(key = "mock-consumer-key-outer", secret = "mock-consumer-secret-outer"))
     )
   }
 
   test("v1.basic(key: String) with valid config") {
     FsClientConfig.v1.basic("mock-app").orThrow shouldBe FsClientConfig(
       userAgent = UserAgent(appName = "mock-app", appVersion = Some("0.0.1"), appUrl = None),
-      signer = BasicSignature(Consumer(key = "mock-consumer-key", secret = "mock-consumer-secret"))
+      signer = ClientCredentials(Consumer(key = "mock-consumer-key", secret = "mock-consumer-secret"))
     )
   }
 

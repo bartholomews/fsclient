@@ -1,6 +1,7 @@
 package io.bartholomews.fsclient.client
 
-import io.bartholomews.fsclient.entities.{FsResponseErrorJson, FsResponseErrorString, FsResponseSuccess, OAuthVersion}
+import io.bartholomews.fsclient.entities.oauth.OAuthVersion
+import io.bartholomews.fsclient.entities.{FsResponseErrorJson, FsResponseErrorString, FsResponseSuccess}
 import io.bartholomews.fsclient.utils.HttpTypes.{HttpResponse, IOResponse}
 import io.circe.Json
 import io.circe.syntax._
@@ -10,40 +11,40 @@ import org.scalatest.{Assertion, Inside}
 
 trait IOClientMatchers extends Matchers with Inside {
 
-  def assertResponse[V <: OAuthVersion, R](
-    ioResponse: IOResponse[V, R]
-  )(pf: PartialFunction[HttpResponse[V, R], Assertion]): Assertion =
+  def assertResponse[R](
+    ioResponse: IOResponse[R]
+  )(pf: PartialFunction[HttpResponse[R], Assertion]): Assertion =
     inside(ioResponse.unsafeRunSync())(pf)
 
-  def assertRight[V <: OAuthVersion, R](expectedEntity: R)(ioResponse: IOResponse[V, R]): Assertion =
+  def assertRight[V <: OAuthVersion, R](expectedEntity: R)(ioResponse: IOResponse[R]): Assertion =
     assertResponse(ioResponse) {
-      case FsResponseSuccess(_, _, status, entity) =>
+      case FsResponseSuccess(_, status, entity) =>
         status shouldBe Status.Ok
         entity shouldBe expectedEntity
     }
 
-  def assertErrorString[V <: OAuthVersion, R](expectedStatus: Status, expectedError: String)(
-    ioResponse: IOResponse[V, R]
+  def assertErrorString[R](expectedStatus: Status, expectedError: String)(
+    ioResponse: IOResponse[R]
   ): Assertion =
     assertResponse(ioResponse) {
-      case FsResponseErrorString(_, _, status, error) =>
+      case FsResponseErrorString(_, status, error) =>
         status shouldBe expectedStatus
         error shouldBe expectedError
     }
 
-  def assertErrorJson[V <: OAuthVersion, R](expectedStatus: Status, expectedError: Json)(
-    ioResponse: IOResponse[V, R]
+  def assertErrorJson[R](expectedStatus: Status, expectedError: Json)(
+    ioResponse: IOResponse[R]
   ): Assertion =
     assertResponse(ioResponse) {
-      case FsResponseErrorJson(_, _, status, error) =>
+      case FsResponseErrorJson(_, status, error) =>
         status shouldBe expectedStatus
         error shouldBe expectedError
     }
 
-  def assertEmptyResponseError[V <: OAuthVersion, R](ioResponse: IOResponse[V, R]): Assertion =
+  def assertEmptyResponseError[R](ioResponse: IOResponse[R]): Assertion =
     assertErrorString(Status.NoContent, ExpectedErrorMessage.emptyResponse)(ioResponse)
 
-  def assertDecodingFailure[V <: OAuthVersion, R](ioResponse: IOResponse[V, R]): Assertion =
+  def assertDecodingFailure[R](ioResponse: IOResponse[R]): Assertion =
     assertErrorString(Status.UnprocessableEntity, ExpectedErrorMessage.decodingError)(ioResponse)
 }
 

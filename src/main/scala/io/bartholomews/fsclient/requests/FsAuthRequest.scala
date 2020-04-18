@@ -4,7 +4,7 @@ import cats.effect.ConcurrentEffect
 import fs2.Pipe
 import io.bartholomews.fsclient.client.effect.HttpEffectClient
 import io.bartholomews.fsclient.codecs.RawDecoder
-import io.bartholomews.fsclient.entities.{OAuthVersion, Signer}
+import io.bartholomews.fsclient.entities.oauth.{OAuthVersion, Signer}
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.circe.Json
 import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
@@ -17,7 +17,7 @@ sealed trait FsAuthRequest[Body, Raw, Res] extends FsClientRequest[Body] {
     requestBodyEncoder: EntityEncoder[F, Body],
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]
-  ): F[HttpResponse[V, Res]] =
+  ): F[HttpResponse[Res]] =
     client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), signer)
 }
 

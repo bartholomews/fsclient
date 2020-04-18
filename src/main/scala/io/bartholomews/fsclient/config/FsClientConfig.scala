@@ -1,7 +1,7 @@
 package io.bartholomews.fsclient.config
 
-import io.bartholomews.fsclient.entities.OAuthVersion.OAuthV1
-import io.bartholomews.fsclient.entities.{AuthDisabled, BasicSignature, OAuthVersion, Signer}
+import io.bartholomews.fsclient.entities.oauth.OAuthVersion.OAuthV1
+import io.bartholomews.fsclient.entities.oauth.{AuthDisabled, ClientCredentials, OAuthVersion, Signer}
 import org.http4s.client.oauth1.{Consumer, Token}
 import pureconfig.ConfigReader.Result
 import pureconfig.ConfigSource
@@ -56,11 +56,14 @@ object FsClientConfig {
   object v1 {
 
     private def basic(consumerConfig: ConsumerConfig) =
-      new FsClientConfig(consumerConfig.userAgent, BasicSignature(consumerConfig.consumer))
+      new FsClientConfig(
+        consumerConfig.userAgent,
+        ClientCredentials(consumerConfig.consumer)
+      )
 
     def basic(userAgent: UserAgent, consumer: Consumer): FsClientConfig[OAuthV1] = {
-      val signer: Signer[OAuthV1] = BasicSignature(consumer)
-      FsClientConfig(userAgent, signer)
+      val signer: Signer[OAuthV1] = ClientCredentials(consumer)
+      FsClientConfig[OAuthV1](userAgent, signer)
     }
 
     def basic(key: String): Result[FsClientConfig[OAuthV1]] =

@@ -22,8 +22,9 @@ import cats.effect.{ContextShift, IO}
 import io.bartholomews.fsclient.client.FsClientV1
 import io.bartholomews.fsclient.codecs.FsJsonResponsePipe
 import io.bartholomews.fsclient.config.UserAgent
-import io.bartholomews.fsclient.entities.OAuthVersion.OAuthV1
-import io.bartholomews.fsclient.entities.{BasicSignature, FsResponseError, FsResponseSuccess}
+import io.bartholomews.fsclient.entities._
+import io.bartholomews.fsclient.entities.oauth.OAuthVersion.OAuthV1
+import io.bartholomews.fsclient.entities.oauth.{ClientCredentials, Signer}
 import io.bartholomews.fsclient.requests.{FsSimpleRequest, JsonRequest}
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.circe.{Decoder, Json}
@@ -31,26 +32,26 @@ import org.http4s.Uri
 
 import scala.concurrent.ExecutionContext
 
-object SimpleRequestExample {
+object ReadmeTest extends App {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
-  implicit val ioContextShift: ContextShift[IO] = IO.contextShift(ec)
+  implicit val cs: ContextShift[IO] = IO.contextShift(ec)
 
   // will add header `User-Agent: myapp/0.0.1-SNAPSHOT (+com.github.bartholomews)` to all requests
-  private val userAgent = UserAgent(
+  val userAgent = UserAgent(
     appName = "myapp",
     appVersion = Some("0.0.1-SNAPSHOT"),
     appUrl = Some("com.github.bartholomews")
   )
 
-  private val consumer = org.http4s.client.oauth1.Consumer(
+  val consumer = org.http4s.client.oauth1.Consumer(
     key = "kasldklSAJSALKDKAsd",
     secret = "asjdoASIDJASOdjasojdoasijd"
   )
 
-  // OAuth V1 Signer with consumer key/secret, without using an access token
-  // Other signature methods are supported as per OAuth V1 and V2 standards
-  private val signer: BasicSignature = BasicSignature(consumer)
+  // Sign with consumer key/secret, but without token
+  // Otherwise you can use `AuthVersion.V1.OAuthToken`
+  val signer: Signer[OAuthV1] = ClientCredentials(consumer)
 
   // Define your expected response entity
   case class Todo(userId: Long, id: Long, title: String, completed: Boolean)
@@ -75,14 +76,12 @@ object SimpleRequestExample {
   }
 
   // Run your `FsSimpleRequest` with the client for your effect
-  val res: IO[HttpResponse[OAuthV1, Todo]] = req.runWith(FsClientV1[IO, OAuthV1](userAgent, signer))
+  val res: IO[HttpResponse[Todo]] = req.runWith(FsClientV1[IO, OAuthV1](userAgent, signer))
 
-  def main(args: Array[String]): Unit =
-    res
-      .unsafeRunSync() match {
-      case FsResponseSuccess(_, _, _, todo) => println(todo.title)
-      case error: FsResponseError[_, _]     => println(s"x--(ツ)--x => ${error.status}")
-    }
+  res.unsafeRunSync() match {
+    case FsResponseSuccess(_, _, todo) => println(todo.title)
+    case res: FsResponseError[_]       => println(s"x--(ツ)--x => ${res.error}")
+  }
 }
 ```
 

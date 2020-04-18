@@ -3,7 +3,7 @@ package io.bartholomews.fsclient.utils
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
-import io.bartholomews.fsclient.requests.OAuthV2AuthorizationFramework
+import io.bartholomews.fsclient.entities.oauth.v2.OAuthV2AuthorizationFramework
 import org.apache.http.entity.ContentType
 import org.http4s.Header
 

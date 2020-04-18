@@ -1,7 +1,8 @@
-package io.bartholomews.fsclient.requests
+package io.bartholomews.fsclient.entities.oauth.v2
 
 import cats.data.Chain
-import io.bartholomews.fsclient.entities.v2.{AuthorizationCode, NonRefreshableToken}
+import io.bartholomews.fsclient.entities.oauth.{AuthorizationCode, NonRefreshableToken}
+import io.bartholomews.fsclient.requests.{AuthJsonRequest, JsonRequest}
 import io.bartholomews.fsclient.utils.FsHeaders
 import io.circe.Decoder
 import io.circe.generic.extras.semiauto.deriveUnwrappedDecoder

@@ -3,8 +3,8 @@ package io.bartholomews.fsclient.mocks
 import cats.effect.{ContextShift, IO}
 import io.bartholomews.fsclient.client.{FsClient, FsClientV1}
 import io.bartholomews.fsclient.config.UserAgent
-import io.bartholomews.fsclient.entities.OAuthVersion.OAuthV1
-import io.bartholomews.fsclient.entities.{AccessTokenV1, OAuthVersion}
+import io.bartholomews.fsclient.entities.oauth.OAuthVersion.OAuthV1
+import io.bartholomews.fsclient.entities.oauth.{AccessTokenCredentials, OAuthVersion}
 import org.http4s.client.oauth1.{Consumer, Token}
 import org.scalatest.Assertions._
 
@@ -65,6 +65,6 @@ trait MockClientConfig {
   ): FsClient[IO, OAuthV1] = {
     val userAgent: UserAgent = UserAgent(appName, appVersion, appUrl)
     val consumer: Consumer = Consumer(key, secret)
-    FsClientV1(userAgent, AccessTokenV1(token, consumer))
+    FsClientV1(userAgent, AccessTokenCredentials(token, consumer))
   }
 }
