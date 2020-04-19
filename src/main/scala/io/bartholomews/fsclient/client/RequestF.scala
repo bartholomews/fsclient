@@ -1,4 +1,4 @@
-package io.bartholomews.fsclient.client.effect
+package io.bartholomews.fsclient.client
 
 import cats.Applicative
 import cats.effect.{ConcurrentEffect, Effect}
@@ -13,19 +13,19 @@ import org.http4s.{Headers, Request, Status}
 
 private[client] trait RequestF {
 
-  import HttpPipes._
   import Logger._
+  import io.bartholomews.fsclient.client.HttpPipes._
 
-  def signAndProcessRequest[F[_]: ConcurrentEffect, V <: OAuthVersion, Raw, Res](
+  def signAndProcessRequest[F[_]: ConcurrentEffect, Raw, Res](
     request: Request[F],
     client: Client[F],
-    signer: Signer[V]
+    signer: Signer
   )(implicit rawDecoder: RawDecoder[Raw], resDecoder: Pipe[F, Raw, Res]): Stream[F, HttpResponse[Res]] =
-    signRequest[F, V, Raw, Res](request, signer).flatMap(processRequest[F, V, Raw, Res](client))
+    signRequest[F, Raw, Res](request, signer).flatMap(processRequest[F, Raw, Res](client))
 
-  private def signRequest[F[_]: ConcurrentEffect: Applicative, V <: OAuthVersion, Raw, Res](
+  private def signRequest[F[_]: ConcurrentEffect: Applicative, Raw, Res](
     request: Request[F],
-    signer: Signer[V]
+    signer: Signer
   ): Stream[F, Request[F]] =
     signer match {
 
@@ -53,7 +53,7 @@ private[client] trait RequestF {
         )
     }
 
-  private def processRequest[F[_]: Effect, V <: OAuthVersion, Raw, Res](client: Client[F])(
+  private def processRequest[F[_]: Effect, Raw, Res](client: Client[F])(
     request: Request[F]
   )(implicit rawDecoder: RawDecoder[Raw], resDecoder: Pipe[F, Raw, Res]): Stream[F, HttpResponse[Res]] =
     client

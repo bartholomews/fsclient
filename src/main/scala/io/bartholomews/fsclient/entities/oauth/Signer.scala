@@ -3,22 +3,21 @@ package io.bartholomews.fsclient.entities.oauth
 import cats.effect.Effect
 import io.bartholomews.fsclient.codecs.FsJsonResponsePipe
 import io.bartholomews.fsclient.entities.defaultConfig
-import io.bartholomews.fsclient.entities.oauth.OAuthVersion.{OAuthV1, OAuthV2}
 import io.bartholomews.fsclient.entities.oauth.v2.OAuthV2AuthorizationFramework.{AccessToken, RefreshToken}
 import io.circe.Decoder
 import io.circe.generic.extras.semiauto.deriveConfiguredDecoder
 import org.http4s.Request
-import org.http4s.client.oauth1.{signRequest, Consumer, Token}
+import org.http4s.client.oauth1.{Consumer, Token, signRequest}
 
-sealed trait Signer[+O <: OAuthVersion]
+sealed trait Signer
 
-case object AuthDisabled extends Signer[Nothing]
+case object AuthDisabled extends Signer
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // OAUTH V1 SIGNER
 // https://tools.ietf.org/html/rfc5849#section-1.1
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sealed trait SignerV1 extends Signer[OAuthV1] {
+sealed trait SignerV1 extends Signer {
   def consumer: Consumer
   private[fsclient] def sign[F[_]: Effect](req: Request[F]): F[Request[F]]
 }
@@ -52,7 +51,7 @@ final case class AccessTokenCredentials private (token: Token, consumer: Consume
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 // https://tools.ietf.org/html/rfc6749#section-5.1
-sealed trait SignerV2 extends Signer[OAuthV2] {
+sealed trait SignerV2 extends Signer {
   final private val generatedAt: Long = System.currentTimeMillis()
   def accessToken: AccessToken
   // https://tools.ietf.org/html/rfc6749#section-7.1

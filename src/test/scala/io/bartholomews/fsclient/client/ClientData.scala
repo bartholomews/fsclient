@@ -1,7 +1,6 @@
 package io.bartholomews.fsclient.client
 
 import cats.effect.{ContextShift, IO}
-import io.bartholomews.fsclient.entities.oauth.OAuthVersion.OAuthV1
 import io.bartholomews.testudo.data.TestudoClientData
 
 import scala.concurrent.ExecutionContext
@@ -13,7 +12,7 @@ object ClientData extends TestudoClientData {
 
   val clientNoAuth: FClientNoAuth[IO] = FClientNoAuth(sampleUserAgent)
 
-  val clientV1Basic: FsClient[IO, OAuthV1] = FsClientV1.basic(sampleUserAgent, sampleConsumer)
+  val clientV1Basic: FsClient[IO] = FsClientV1.basic(sampleUserAgent, sampleConsumer)
 
   // FIXME: There is not point in having a V2 Token signer attached to the client;
   //  it needs to be refreshed so need to be dynamic at def level;

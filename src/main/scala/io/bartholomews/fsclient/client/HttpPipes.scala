@@ -1,4 +1,4 @@
-package io.bartholomews.fsclient.client.effect
+package io.bartholomews.fsclient.client
 
 import cats.effect.Effect
 import cats.implicits._
@@ -67,8 +67,7 @@ private[client] object HttpPipes {
   def errorHandler[F[_]: Effect]: Pipe[F, Response[F], ErrorOr[Nothing]] =
     _.flatMap { response =>
       response.headers.get(`Content-Type`).map(_.value) match {
-
-        case Some("application/json") =>
+        case Some("application/json") | Some("application/json; charset=utf-8") =>
           response.body
             .through(byteStreamParser)
             .last
@@ -81,6 +80,7 @@ private[client] object HttpPipes {
               )
             )
 
+        // could also intercept `text/html`
         case _ =>
           Stream
             .eval(response.as[String])

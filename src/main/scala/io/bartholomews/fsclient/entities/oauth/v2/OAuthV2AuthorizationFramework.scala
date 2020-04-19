@@ -6,6 +6,7 @@ import io.bartholomews.fsclient.requests.{AuthJsonRequest, JsonRequest}
 import io.bartholomews.fsclient.utils.FsHeaders
 import io.circe.Decoder
 import io.circe.generic.extras.semiauto.deriveUnwrappedDecoder
+import org.apache.http.entity.ContentType
 import org.http4s.{Header, Headers, Uri, UrlForm}
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,26 +60,31 @@ object OAuthV2AuthorizationFramework {
     ): Uri = authorizationUri(responseType = "code", clientId, redirectUri, state, scopes)(serverUri)
 
     // https://tools.ietf.org/html/rfc6749#section-4.1.3
-    trait AccessTokenRequest extends JsonRequest.Post[UrlForm, AuthorizationCode] {
-      def code: String
-      def clientPassword: ClientPassword
-      def redirectUri: Option[RedirectUri]
-      override val headers: Headers = Headers.of(clientPassword.authorizationBasic)
-      final override val entityBody = UrlForm(
+    abstract class AccessTokenRequest(
+      code: String,
+      clientPassword: ClientPassword,
+      maybeRedirectUri: Option[RedirectUri]
+    ) extends JsonRequest.Post[UrlForm, AuthorizationCode] {
+      override val headers: Headers = Headers.of(
+        clientPassword.authorizationBasic,
+        FsHeaders.contentType(ContentType.APPLICATION_FORM_URLENCODED)
+      )
+      final override lazy val entityBody = UrlForm(
         Map(
           "grant_type" -> Chain("authorization_code"),
           "code" -> Chain(code),
-          "redirect_uri" -> redirectUri.fold(Chain.empty[String])(uri => Chain.one(uri.value.renderString))
+          "redirect_uri" -> maybeRedirectUri.fold(Chain.empty[String])(uri => Chain.one(uri.value.renderString))
         )
       )
     }
 
     // https://tools.ietf.org/html/rfc6749#section-6
-    trait RefreshTokenRequest extends AuthJsonRequest.Post[UrlForm, AuthorizationCode] {
-      def refreshToken: RefreshToken
-      def clientPassword: ClientPassword
-      def scopes: List[String]
-      override val headers: Headers = Headers.of(clientPassword.authorizationBasic)
+    abstract class RefreshTokenRequest(refreshToken: RefreshToken, clientPassword: ClientPassword, scopes: List[String])
+        extends AuthJsonRequest.Post[UrlForm, AuthorizationCode] {
+      override val headers: Headers = Headers.of(
+        clientPassword.authorizationBasic,
+        FsHeaders.contentType(ContentType.APPLICATION_FORM_URLENCODED)
+      )
       final override val entityBody = UrlForm(
         Map(
           "grant_type" -> Chain("refresh_token"),
@@ -108,11 +114,13 @@ object OAuthV2AuthorizationFramework {
   // https://tools.ietf.org/html/rfc6749#section-4.4
   case object ClientCredentialsGrant extends SignerType {
     // https://tools.ietf.org/html/rfc6749#section-4.4.2
-    trait AccessTokenRequest extends JsonRequest.Post[UrlForm, NonRefreshableToken] {
-      def clientPassword: ClientPassword
+    abstract class AccessTokenRequest(clientPassword: ClientPassword)
+        extends JsonRequest.Post[UrlForm, NonRefreshableToken] {
       final override val entityBody = UrlForm(("grant_type", "client_credentials"))
-      // TODO: Test that the content-type urlencoded working is added automatically by `entityEncoder[UrlForm]`
-      override val headers: Headers = Headers.of(clientPassword.authorizationBasic)
+      override val headers: Headers = Headers.of(
+        clientPassword.authorizationBasic,
+        FsHeaders.contentType(ContentType.APPLICATION_FORM_URLENCODED)
+      )
     }
   }
 }

@@ -9,6 +9,7 @@ import org.http4s.Header
 
 object FsHeaders {
   def accept(contentType: ContentType): Header = Header("accept", contentType.getMimeType)
+  def contentType(contentType: ContentType): Header = Header("Content-Type", contentType.getMimeType)
   def userAgent(value: String): Header = Header("User-Agent", value)
   // https://tools.ietf.org/html/rfc7617
   def authorizationBasic(secret: String): Header = {

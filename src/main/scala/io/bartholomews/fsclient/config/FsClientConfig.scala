@@ -1,7 +1,6 @@
 package io.bartholomews.fsclient.config
 
-import io.bartholomews.fsclient.entities.oauth.OAuthVersion.OAuthV1
-import io.bartholomews.fsclient.entities.oauth.{AuthDisabled, ClientCredentials, OAuthVersion, Signer}
+import io.bartholomews.fsclient.entities.oauth.{AuthDisabled, ClientCredentials, Signer}
 import org.http4s.client.oauth1.{Consumer, Token}
 import pureconfig.ConfigReader.Result
 import pureconfig.ConfigSource
@@ -9,7 +8,7 @@ import pureconfig.error.ConfigReaderException
 
 import scala.reflect.ClassTag
 
-case class FsClientConfig[+V <: OAuthVersion](userAgent: UserAgent, signer: Signer[V])
+case class FsClientConfig(userAgent: UserAgent, signer: Signer)
 
 /**
  * Helpers to load consumer info and signer from application config.
@@ -61,25 +60,25 @@ object FsClientConfig {
         ClientCredentials(consumerConfig.consumer)
       )
 
-    def basic(userAgent: UserAgent, consumer: Consumer): FsClientConfig[OAuthV1] = {
-      val signer: Signer[OAuthV1] = ClientCredentials(consumer)
-      FsClientConfig[OAuthV1](userAgent, signer)
+    def basic(userAgent: UserAgent, consumer: Consumer): FsClientConfig = {
+      val signer: Signer = ClientCredentials(consumer)
+      FsClientConfig(userAgent, signer)
     }
 
-    def basic(key: String): Result[FsClientConfig[OAuthV1]] =
+    def basic(key: String): Result[FsClientConfig] =
       ConfigSource.default
         .load[BasicAppConfig](Derivations.withCustomKey(key))
         .map(_.consumer)
         .map(v1.basic)
 
-    def basic(): Result[FsClientConfig[OAuthV1]] =
+    def basic(): Result[FsClientConfig] =
       ConfigSource.default
         .load[BasicAppConfig]
         .map(_.consumer)
         .map(v1.basic)
   }
 
-  def disabled(userAgent: UserAgent): FsClientConfig[Nothing] = FsClientConfig(userAgent, AuthDisabled)
+  def disabled(userAgent: UserAgent): FsClientConfig = FsClientConfig(userAgent, AuthDisabled)
 
   sealed trait AppConfig
   case class BasicAppConfig(consumer: ConsumerConfig) extends AppConfig

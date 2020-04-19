@@ -26,6 +26,7 @@ object Logger {
 
   private[fsclient] def logRequest[F[_]: Effect, B](request: Request[F]): Request[F] = {
     logger.info(s"Request: ${request.method.name} [${request.uri}]")
+    // TODO: should probably obfuscate log entries like `Authorization: Bearer <token>`
     logger.debug(s"Request headers - {\n${request.headers.toList.mkString("\t", "\n\t", "\n")}}")
     request
   }
@@ -38,6 +39,7 @@ object Logger {
   private[fsclient] def responseHeadersLogPipe[F[_]: Effect, T]: Pipe[F, Response[F], Response[F]] =
     _.map { res =>
       logger.debug(s"Response status: [${res.status}]")
+      // TODO: should probably obfuscate log entries like `content-security-policy`
       logger.debug(s"Response headers - {\n${res.headers.toList.mkString("\t", "\n\t", "\n")}}")
       res
     }
