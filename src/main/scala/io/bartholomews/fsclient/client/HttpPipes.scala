@@ -6,9 +6,10 @@ import fs2.{Pipe, Stream}
 import io.bartholomews.fsclient.codecs.RawDecoder
 import io.bartholomews.fsclient.entities.{EmptyResponseException, HttpError, HttpErrorJson, HttpErrorString}
 import io.bartholomews.fsclient.utils.HttpTypes._
-import io.bartholomews.fsclient.utils.Logger
+import io.bartholomews.fsclient.utils.{FsHeaders, Logger}
 import io.circe.Json
 import io.circe.fs2.byteStreamParser
+import org.apache.http.entity.ContentType
 import org.http4s.headers.`Content-Type`
 import org.http4s.{Response, Status}
 
@@ -66,8 +67,8 @@ private[client] object HttpPipes {
    */
   def errorHandler[F[_]: Effect]: Pipe[F, Response[F], ErrorOr[Nothing]] =
     _.flatMap { response =>
-      response.headers.get(`Content-Type`).map(_.value) match {
-        case Some("application/json") | Some("application/json; charset=utf-8") =>
+      response.headers.get(`Content-Type`) match {
+        case Some(contentType) if FsHeaders.is(contentType, ContentType.APPLICATION_JSON) =>
           response.body
             .through(byteStreamParser)
             .last
@@ -93,5 +94,4 @@ private[client] object HttpPipes {
             )
       }
     }
-
 }

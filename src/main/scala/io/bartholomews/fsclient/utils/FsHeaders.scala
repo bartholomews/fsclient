@@ -5,7 +5,8 @@ import java.util.Base64
 
 import io.bartholomews.fsclient.entities.oauth.v2.OAuthV2AuthorizationFramework
 import org.apache.http.entity.ContentType
-import org.http4s.Header
+import org.http4s.headers.`Content-Type`
+import org.http4s.{Charset, Header}
 
 object FsHeaders {
   def accept(contentType: ContentType): Header = Header("accept", contentType.getMimeType)
@@ -19,4 +20,14 @@ object FsHeaders {
   // https://tools.ietf.org/html/rfc6750
   def authorizationBearer(accessToken: OAuthV2AuthorizationFramework.AccessToken): Header =
     Header("Authorization", s"Bearer ${accessToken.value}")
+
+  def is(
+    actualContentType: `Content-Type`,
+    expectedContentType: ContentType,
+    expectedCharset: Charset = Charset.`UTF-8`
+  ): Boolean = {
+    val `type` = s"${actualContentType.mediaType.mainType}/${actualContentType.mediaType.subType}"
+    val unexpectedCharset = actualContentType.charset.exists(_ != expectedCharset)
+    expectedContentType.getMimeType == `type` && !unexpectedCharset
+  }
 }
