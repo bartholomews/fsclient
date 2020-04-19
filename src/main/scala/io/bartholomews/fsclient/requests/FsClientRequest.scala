@@ -3,7 +3,7 @@ package io.bartholomews.fsclient.requests
 import cats.effect.Effect
 import io.bartholomews.fsclient.config.UserAgent
 import io.bartholomews.fsclient.utils.FsHeaders
-import io.bartholomews.fsclient.utils.Logger._
+import io.bartholomews.fsclient.utils.FsLogger._
 import org.http4s._
 
 // FIXME: Find a good way to unify these combinations: `Simple/Auth`

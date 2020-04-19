@@ -11,7 +11,7 @@ import org.http4s.{Request, Response}
 import org.log4s.getLogger
 import pureconfig.ConfigSource
 
-object Logger {
+object FsLogger {
 
   import pureconfig.generic.auto._
 

@@ -6,7 +6,7 @@ import fs2.{Pipe, Stream}
 import io.bartholomews.fsclient.codecs.RawDecoder
 import io.bartholomews.fsclient.entities.{EmptyResponseException, HttpError, HttpErrorJson, HttpErrorString}
 import io.bartholomews.fsclient.utils.HttpTypes._
-import io.bartholomews.fsclient.utils.{FsHeaders, Logger}
+import io.bartholomews.fsclient.utils.{FsHeaders, FsLogger}
 import io.circe.Json
 import io.circe.fs2.byteStreamParser
 import org.apache.http.entity.ContentType
@@ -15,7 +15,7 @@ import org.http4s.{Response, Status}
 
 private[client] object HttpPipes {
 
-  import Logger._
+  import FsLogger._
 
   /**
    * Attempt to decode an Http Response with the provided decoder

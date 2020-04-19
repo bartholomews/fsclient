@@ -7,13 +7,13 @@ import io.bartholomews.fsclient.codecs.RawDecoder
 import io.bartholomews.fsclient.entities._
 import io.bartholomews.fsclient.entities.oauth._
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
-import io.bartholomews.fsclient.utils.{FsHeaders, Logger}
+import io.bartholomews.fsclient.utils.{FsHeaders, FsLogger}
 import org.http4s.client.Client
 import org.http4s.{Headers, Request, Status}
 
 private[client] trait RequestF {
 
-  import Logger._
+  import FsLogger._
   import io.bartholomews.fsclient.client.HttpPipes._
 
   def signAndProcessRequest[F[_]: ConcurrentEffect, Raw, Res](

@@ -2,7 +2,7 @@ package io.bartholomews.fsclient.codecs
 
 import cats.effect.{ConcurrentEffect, Effect, Sync}
 import fs2.Pipe
-import io.bartholomews.fsclient.utils.Logger.{rawJsonResponseLogPipe, rawPlainTextResponseLogPipe}
+import io.bartholomews.fsclient.utils.FsLogger.{rawJsonResponseLogPipe, rawPlainTextResponseLogPipe}
 import io.circe.fs2.byteStreamParser
 import io.circe.{Decoder, Encoder, Json}
 import org.http4s.circe.jsonEncoderOf
