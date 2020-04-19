@@ -55,9 +55,9 @@ object OAuthV2AuthorizationFramework {
   case object AuthorizationCodeGrant extends SignerType {
 
     // https://tools.ietf.org/html/rfc6749#section-4.1.1
-    def authorizationCodeUri(clientId: ClientId, redirectUri: Uri, state: Option[String], scopes: List[String])(
+    def authorizationCodeUri(clientId: ClientId, redirectUri: Uri, state: Option[String], scope: List[String])(
       serverUri: Uri
-    ): Uri = authorizationUri(responseType = "code", clientId, redirectUri, state, scopes)(serverUri)
+    ): Uri = authorizationUri(responseType = "code", clientId, redirectUri, state, scope)(serverUri)
 
     // https://tools.ietf.org/html/rfc6749#section-4.1.3
     abstract class AccessTokenRequest(
@@ -79,7 +79,7 @@ object OAuthV2AuthorizationFramework {
     }
 
     // https://tools.ietf.org/html/rfc6749#section-6
-    abstract class RefreshTokenRequest(refreshToken: RefreshToken, clientPassword: ClientPassword, scopes: List[String])
+    abstract class RefreshTokenRequest(refreshToken: RefreshToken, clientPassword: ClientPassword, scope: List[String])
         extends JsonRequest.Post[UrlForm, AuthorizationCode] {
       override val headers: Headers = Headers.of(
         clientPassword.authorizationBasic,
@@ -91,7 +91,7 @@ object OAuthV2AuthorizationFramework {
           "refresh_token" -> Chain(refreshToken.value),
           // TODO: test behaviour of Chain.seq, make sure it doesn't discard the tail,
           //  otherwise you need to mkString first
-          "scope" -> Chain.fromSeq(scopes)
+          "scope" -> Chain.fromSeq(scope)
         )
       )
     }
