@@ -7,7 +7,7 @@ import io.bartholomews.fsclient.entities.oauth.v2.OAuthV2AuthorizationFramework.
 import io.circe.Decoder
 import io.circe.generic.extras.semiauto.deriveConfiguredDecoder
 import org.http4s.Request
-import org.http4s.client.oauth1.{Consumer, Token, signRequest}
+import org.http4s.client.oauth1.{signRequest, Consumer, Token}
 
 sealed trait Signer
 
@@ -58,10 +58,18 @@ sealed trait SignerV2 extends Signer {
   def tokenType: String
   def expiresIn: Long
   def maybeRefreshToken: Option[RefreshToken]
-  // https://tools.ietf.org/html/rfc6749#section-3.3
-  def scope: Option[String]
+  def scope: Scope
   final def isExpired: Boolean =
     System.currentTimeMillis() > generatedAt + (expiresIn * 1000)
+}
+
+// https://tools.ietf.org/html/rfc6749#section-3.3
+// TODO: consider passing a type param to `Signer` and implicit decoder for the actual application scope type
+case class Scope(values: List[String])
+object Scope {
+  def empty: Scope = Scope(List.empty)
+  implicit val decoder: Decoder[Scope] =
+    Decoder.decodeString.map(str => Scope(str.split(" ").toList))
 }
 
 /*
@@ -73,7 +81,7 @@ case class AuthorizationCode(
   tokenType: String,
   expiresIn: Long,
   refreshToken: RefreshToken,
-  scope: Option[String]
+  scope: Scope
 ) extends SignerV2 {
   final override val maybeRefreshToken: Option[RefreshToken] =
     Some(refreshToken)
@@ -92,7 +100,7 @@ case class NonRefreshableToken(
   accessToken: AccessToken,
   tokenType: String,
   expiresIn: Long,
-  scope: Option[String]
+  scope: Scope
 ) extends SignerV2 {
   final override val maybeRefreshToken: Option[RefreshToken] = None
 }
