@@ -9,6 +9,7 @@ import io.bartholomews.fsclient.utils.HttpTypes.ErrorOr
 import io.circe.Json
 import org.http4s.{Request, Response}
 import org.log4s.getLogger
+import org.slf4j.Logger
 import pureconfig.ConfigSource
 
 object FsLogger {
@@ -20,7 +21,7 @@ object FsLogger {
     .map(_.name)
     .getOrElse("fsclient-logger")
 
-  private[fsclient] val logger = getLogger(loggerName).logger
+  val logger: Logger = getLogger(loggerName).logger
 
   logger.info(s"$logger started.")
 
