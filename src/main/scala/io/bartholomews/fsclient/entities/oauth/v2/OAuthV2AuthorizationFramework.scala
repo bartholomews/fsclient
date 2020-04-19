@@ -2,7 +2,7 @@ package io.bartholomews.fsclient.entities.oauth.v2
 
 import cats.data.Chain
 import io.bartholomews.fsclient.entities.oauth.{AuthorizationCode, NonRefreshableToken}
-import io.bartholomews.fsclient.requests.{AuthJsonRequest, JsonRequest}
+import io.bartholomews.fsclient.requests.JsonRequest
 import io.bartholomews.fsclient.utils.FsHeaders
 import io.circe.Decoder
 import io.circe.generic.extras.semiauto.deriveUnwrappedDecoder
@@ -80,7 +80,7 @@ object OAuthV2AuthorizationFramework {
 
     // https://tools.ietf.org/html/rfc6749#section-6
     abstract class RefreshTokenRequest(refreshToken: RefreshToken, clientPassword: ClientPassword, scopes: List[String])
-        extends AuthJsonRequest.Post[UrlForm, AuthorizationCode] {
+        extends JsonRequest.Post[UrlForm, AuthorizationCode] {
       override val headers: Headers = Headers.of(
         clientPassword.authorizationBasic,
         FsHeaders.contentType(ContentType.APPLICATION_FORM_URLENCODED)
