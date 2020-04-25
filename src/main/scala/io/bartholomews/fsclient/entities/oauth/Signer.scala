@@ -69,7 +69,9 @@ case class Scope(values: List[String])
 object Scope {
   def empty: Scope = Scope(List.empty)
   implicit val decoder: Decoder[Scope] =
-    Decoder.decodeString.map(str => Scope(str.split(" ").toList))
+    Decoder
+      .decodeOption[String]
+      .map(_.fold(Scope(List.empty))(str => Scope(str.split(" ").toList)))
 }
 
 /*

@@ -85,14 +85,14 @@ object OAuthV2AuthorizationFramework {
         clientPassword.authorizationBasic,
         FsHeaders.contentType(ContentType.APPLICATION_FORM_URLENCODED)
       )
+
       final override val entityBody = UrlForm(
         Map(
           "grant_type" -> Chain("refresh_token"),
-          "refresh_token" -> Chain(refreshToken.value),
+          "refresh_token" -> Chain(refreshToken.value)
           // TODO: test behaviour of Chain.seq, make sure it doesn't discard the tail,
           //  otherwise you need to mkString first
-          "scope" -> Chain.fromSeq(scope)
-        )
+        ) ++ (if (scope.isEmpty) Map.empty else Map("scope" -> Chain.fromSeq(scope)))
       )
     }
   }
