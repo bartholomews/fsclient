@@ -7,7 +7,7 @@ jobs:
   build:
     filters:
       tags:
-        only: /^\d+\.\d+\.\d+$/
+        only: /^v\d+\.\d+\.\d+$/
 
     docker:
       - image: circleci/openjdk:8-jdk
