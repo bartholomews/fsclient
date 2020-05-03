@@ -5,6 +5,10 @@
 version: 2
 jobs:
   build:
+    filters:
+      tags:
+        only: /^\d+\.\d+\.\d+$/
+
     docker:
       - image: circleci/openjdk:8-jdk
 
@@ -28,6 +32,11 @@ jobs:
             - v1-dependencies-{{ checksum "build.sbt" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
+
+      - run:
+          name: Fetch tags
+          command: git fetch --tags
+
       - run:
           name: Compile code
           command: cat /dev/null | sbt clean compile
@@ -46,15 +55,5 @@ jobs:
           command: bash <(curl -s https://codecov.io/bash)
 
       - run:
-          name: Setup GPG
-          command: |
-            mkdir ~/.gnupg && touch ~/.gnupg/gpg.conf
-            echo use-agent >> ~/.gnupg/gpg.conf
-            echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
-            echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
-            echo RELOADAGENT | gpg-connect-agent
-            echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback --import
-
-      - run:
-          name: Publish
-          command: sbt publishSigned
+          name: Release
+          command: sbt ci-release

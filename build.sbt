@@ -1,16 +1,21 @@
 import Dependencies.{dependencies, testDependencies}
 
-organization := "io.bartholomews"
+inThisBuild(List(
+  organization := "io.bartholomews",
+  homepage := Some(url("https://github.com/bartholomews/fsclient")),
+  licenses := List("Unlicense" -> url("https://unlicense.org")),
+  developers := List(
+    Developer(
+      "bartholomews",
+      "Federico Bartolomei",
+      "fsclient@bartholomews.io",
+      url("https://bartholomews.io")
+    )
+  )
+))
+
 name := "fsclient"
 scalaVersion := "2.13.1"
-licenses += ("Unlicense", url("https://unlicense.org"))
-
-version := "0.0.1-SNAPSHOT"
-
-import xerial.sbt.Sonatype._
-sonatypeProjectHosting := Some(GitHubHosting("bartholomews", "fsclient", "fsclient@bartholomews.io"))
-publishTo := sonatypePublishToBundle.value
-publishMavenStyle := true
 
 resolvers += "Sonatype OSS Snapshots".at("https://oss.sonatype.org/content/repositories/snapshots")
 libraryDependencies ++= dependencies ++ testDependencies
