@@ -1,5 +1,8 @@
 import Dependencies.{dependencies, testDependencies}
 
+name := "fsclient"
+scalaVersion := "2.13.2"
+
 inThisBuild(List(
   organization := "io.bartholomews",
   homepage := Some(url("https://github.com/bartholomews/fsclient")),
@@ -13,9 +16,6 @@ inThisBuild(List(
     )
   )
 ))
-
-name := "fsclient"
-scalaVersion := "2.13.1"
 
 resolvers += "Sonatype OSS Snapshots".at("https://oss.sonatype.org/content/repositories/snapshots")
 libraryDependencies ++= dependencies ++ testDependencies
