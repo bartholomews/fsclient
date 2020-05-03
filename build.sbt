@@ -9,7 +9,6 @@ version := "0.0.1-SNAPSHOT"
 
 import xerial.sbt.Sonatype._
 sonatypeProjectHosting := Some(GitHubHosting("bartholomews", "fsclient", "fsclient@bartholomews.io"))
-
 publishTo := sonatypePublishToBundle.value
 publishMavenStyle := true
 
