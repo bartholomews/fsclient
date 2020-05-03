@@ -12,6 +12,7 @@ sonatypeProjectHosting := Some(GitHubHosting("bartholomews", "fsclient", "fsclie
 publishTo := sonatypePublishToBundle.value
 publishMavenStyle := true
 
+resolvers += "Sonatype OSS Snapshots".at("https://oss.sonatype.org/content/repositories/snapshots")
 libraryDependencies ++= dependencies ++ testDependencies
 
 scalacOptions ++= Compiler.tpolecatOptions
