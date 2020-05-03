@@ -51,8 +51,8 @@ jobs:
           command: bash <(curl -s https://codecov.io/bash)
 
       - run:
+          # TODO: This step should be run only for release (i.e. tag push triggered builds)
           name: Setup GPG
-          # echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback --import
           command: |
             mkdir ~/.gnupg && touch ~/.gnupg/gpg.conf
             echo use-agent >> ~/.gnupg/gpg.conf

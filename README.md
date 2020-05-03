@@ -93,10 +93,23 @@ https://circleci.com/docs/2.0/local-cli/
 circleci local execute
 ```
 
-### Deploy to Sonatype
+### CI/CD Pipeline
 
-Follow the instructions [here](https://discuss.circleci.com/t/gpg-keys-as-environment-variables/28641/4) 
-to setup the gpg private key to a CI machine (required for publishing to Sonatype)
+This project is using [sbt-ci-release](https://github.com/olafurpg/sbt-ci-release) plugin:
+ - Every push to master will trigger a snapshot release.  
+ - In order to trigger a regular release you need to push a tag:
+ 
+    ```bash
+    ./scripts/release.sh v1.0.0
+    ```
+ 
+ - If for some reason you need to replace an older version (e.g. the release stage failed):
+ 
+    ```bash
+    TAG=v1.0.0
+    git push --delete origin ${TAG} && git tag --delete ${TAG} \
+    && ./scripts/release.sh ${TAG}
+    ```
 
 ### TODO
 - [scala-steward](https://github.com/fthomas/scala-steward)
