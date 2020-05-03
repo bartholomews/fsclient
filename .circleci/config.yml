@@ -51,6 +51,17 @@ jobs:
           command: bash <(curl -s https://codecov.io/bash)
 
       - run:
+          name: Setup GPG
+          # echo -e "$GPG_PRIVATE" | gpg --no-tty --passphrase "$PGP_PASSPHRASE" --pinentry-mode loopback --import
+          command: |
+            mkdir ~/.gnupg && touch ~/.gnupg/gpg.conf
+            echo use-agent >> ~/.gnupg/gpg.conf
+            echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+            echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+            echo RELOADAGENT | gpg-connect-agent
+            echo $PGP_SECRET | base64 --decode | gpg --import --no-tty --batch --yes
+
+      - run:
           name: Release
           command: sbt ci-release
 
