@@ -31,7 +31,7 @@ sealed trait FsClient[F[_]] extends RequestF {
     f: ConcurrentEffect[F],
     rawDecoder: RawDecoder[Raw],
     decode: Pipe[F, Raw, Res]
-  ): F[FsResponse[HttpError, Res]] =
+  ): F[FsResponse[ErrorBody, Res]] =
     resource.use { client =>
       execute(f)(signAndProcessRequest[F, Raw, Res](request, client, signer))
     }

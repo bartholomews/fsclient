@@ -4,7 +4,7 @@ import cats.effect.Effect
 import cats.implicits._
 import fs2.{Pipe, Stream}
 import io.bartholomews.fsclient.codecs.RawDecoder
-import io.bartholomews.fsclient.entities.{EmptyResponseException, HttpError, HttpErrorJson, HttpErrorString}
+import io.bartholomews.fsclient.entities.{EmptyResponseException, ErrorBody, HttpError, HttpErrorJson, HttpErrorString}
 import io.bartholomews.fsclient.utils.HttpTypes._
 import io.bartholomews.fsclient.utils.{FsHeaders, FsLogger}
 import io.circe.Json
@@ -47,7 +47,7 @@ private[client] object HttpPipes {
    * @tparam A the type of expected response entity, which will be folded to the left
    * @return a Pipe transformed in an `Either.left[ResponseError, Nothing]`
    */
-  def foldToResponseError[F[_]: Effect, A, E <: HttpError](
+  def foldToResponseError[F[_]: Effect, A, E <: ErrorBody](
     response: Response[F],
     f: A => HttpError
   ): Pipe[F, Either[Throwable, A], ErrorOr[Nothing]] =

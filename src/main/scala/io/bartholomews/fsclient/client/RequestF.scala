@@ -80,11 +80,8 @@ private[client] trait RequestF {
 
         case Left(throwable) =>
           logger.error(throwable.getMessage)
-          throwable match {
-            case _ @FsResponseErrorString(headers, status, error) =>
-              Stream.emit(FsResponseErrorString(headers, status, error))
-            case err =>
-              Stream.emit(FsResponseErrorString(Headers.empty, Status.InternalServerError, err.getMessage))
-          }
+          Stream.emit(
+            FsResponse(Headers.empty, Status.InternalServerError, Left(ErrorBodyString(throwable.getMessage)))
+          )
       }
 }
