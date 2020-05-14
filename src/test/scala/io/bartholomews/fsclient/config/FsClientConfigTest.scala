@@ -20,23 +20,15 @@ class FsClientConfigTest extends AsyncFunSuite with Matchers with Inside {
   }
 
   test("v1.basic() with valid config") {
-    FsClientConfig.v1.basic().orThrow shouldBe FsClientConfig(
-      userAgent = UserAgent(appName = "mock-app-outer", appVersion = Some("2.2.1"), appUrl = None),
-      signer = ClientCredentials(Consumer(key = "mock-consumer-key-outer", secret = "mock-consumer-secret-outer"))
-    )
-  }
-
-  test("v1.basic(key: String) with valid config") {
-    FsClientConfig.v1.basic("mock-app").orThrow shouldBe FsClientConfig(
+    FsClientConfig.v1.basic(consumerNamespace = "mock-app").orThrow shouldBe FsClientConfig(
       userAgent = UserAgent(appName = "mock-app", appVersion = Some("0.0.1"), appUrl = None),
       signer = ClientCredentials(Consumer(key = "mock-consumer-key", secret = "mock-consumer-secret"))
     )
   }
 
   test("v1.basic(key: String) with invalid config") {
-    intercept[ConfigReaderException[FsClientConfig.BasicAppConfig]] {
-      FsClientConfig.v1.basic("unknown-key").orThrow
+    a[ConfigReaderException[Consumer]] shouldBe thrownBy {
+      FsClientConfig.v1.basic(consumerNamespace = "unknown-key").orThrow
     }
-    succeed
   }
 }

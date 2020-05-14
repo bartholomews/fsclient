@@ -1,7 +1,7 @@
 package io.bartholomews.fsclient.config
 
 import io.bartholomews.fsclient.entities.oauth.{AuthDisabled, ClientCredentials, Signer}
-import org.http4s.client.oauth1.{Consumer, Token}
+import org.http4s.client.oauth1.Consumer
 import pureconfig.ConfigReader.Result
 import pureconfig.ConfigSource
 import pureconfig.error.ConfigReaderException
@@ -54,46 +54,24 @@ object FsClientConfig {
 
   object v1 {
 
-    private def basic(consumerConfig: ConsumerConfig) =
-      new FsClientConfig(
-        consumerConfig.userAgent,
-        ClientCredentials(consumerConfig.consumer)
-      )
-
     def basic(userAgent: UserAgent, consumer: Consumer): FsClientConfig = {
       val signer: Signer = ClientCredentials(consumer)
       FsClientConfig(userAgent, signer)
     }
 
-    def basic(key: String): Result[FsClientConfig] =
-      ConfigSource.default
-        .load[BasicAppConfig](Derivations.withCustomKey(key))
-        .map(_.consumer)
-        .map(v1.basic)
+    def basic(consumerNamespace: String): Result[FsClientConfig] =
+      for {
+        consumer <- ConfigSource.default
+          .at(consumerNamespace)
+          .at(namespace = "consumer")
+          .load[Consumer]
 
-    def basic(): Result[FsClientConfig] =
-      ConfigSource.default
-        .load[BasicAppConfig]
-        .map(_.consumer)
-        .map(v1.basic)
+        userAgent <- ConfigSource.default.at(namespace = "user-agent").load[UserAgent]
+
+      } yield v1.basic(userAgent, consumer)
   }
 
   def disabled(userAgent: UserAgent): FsClientConfig = FsClientConfig(userAgent, AuthDisabled)
-
-  sealed trait AppConfig
-  case class BasicAppConfig(consumer: ConsumerConfig) extends AppConfig
-  case class TokenAppConfig(consumer: ConsumerConfig, accessToken: Token) extends AppConfig
-
-  case class ConsumerConfig(
-    appName: String,
-    appVersion: Option[String],
-    appUrl: Option[String],
-    key: String,
-    secret: String
-  ) {
-    def userAgent: UserAgent = UserAgent(appName, appVersion, appUrl)
-    def consumer: Consumer = Consumer(key, secret)
-  }
 
   private[fsclient] case class LoggerConfig(name: String)
 }

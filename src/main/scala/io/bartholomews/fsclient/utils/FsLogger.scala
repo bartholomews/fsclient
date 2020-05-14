@@ -3,7 +3,6 @@ package io.bartholomews.fsclient.utils
 import cats.effect.Effect
 import cats.implicits._
 import fs2.Pipe
-import io.bartholomews.fsclient.config.Derivations
 import io.bartholomews.fsclient.config.FsClientConfig.LoggerConfig
 import io.bartholomews.fsclient.utils.HttpTypes.ErrorOr
 import io.circe.Json
@@ -17,7 +16,8 @@ object FsLogger {
   import pureconfig.generic.auto._
 
   private val loggerName: String = ConfigSource.default
-    .load[LoggerConfig](Derivations.withCustomKey("logger"))
+    .at("logger")
+    .load[LoggerConfig]
     .map(_.name)
     .getOrElse("fsclient-logger")
 
