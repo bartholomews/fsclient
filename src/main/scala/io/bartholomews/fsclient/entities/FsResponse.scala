@@ -4,15 +4,18 @@ import io.bartholomews.fsclient.utils.HttpTypes.ErrorOr
 import io.circe.Json
 import org.http4s.{Headers, Response, Status}
 
-case class FsResponse[E <: ErrorBody, +A](headers: Headers, status: Status, entity: Either[E, A]) {
-  final def fold[C](fa: E => C, fb: A => C): C = entity.fold(fa, fb)
+final case class FsResponse[E <: ErrorBody, +A](headers: Headers, status: Status, entity: Either[E, A]) {
+  def foldBody[C](fa: E => C, fb: A => C): C = entity.fold(fa, fb)
 }
 
 object FsResponse {
-  def apply[F[_], A](response: Response[F], entity: ErrorOr[A]): FsResponse[ErrorBody, A] =
-    FsResponse(response.headers, response.status, entity.left.map(ErrorBody.apply))
+  private[fsclient] def apply[F[_], A](response: Response[F], entity: ErrorOr[A]): FsResponse[ErrorBody, A] =
+    entity.fold(
+      { case (status, errorBody) => FsResponse(response.headers, status, Left(errorBody)) },
+      entityBody => FsResponse(response.headers, response.status, Right(entityBody))
+    )
 
-  def apply(error: EmptyResponseException): FsResponse[ErrorBody, Nothing] = new FsResponse(
+  private[fsclient] def apply(error: EmptyResponseException): FsResponse[ErrorBody, Nothing] = new FsResponse(
     Headers.empty,
     error.status,
     Left(ErrorBodyString(error.getMessage))
@@ -20,12 +23,10 @@ object FsResponse {
 }
 
 sealed trait ErrorBody
-object ErrorBody {
-  def apply(httpError: HttpError): ErrorBody = httpError match {
-    case err: HttpErrorString => ErrorBodyString(err.body)
-    case err: HttpErrorJson   => ErrorBodyJson(err.body)
-  }
+private[fsclient] object ErrorBody {
+  def apply(error: String): ErrorBodyString = ErrorBodyString(error)
+  def apply(error: Json): ErrorBodyJson = ErrorBodyJson(error)
 }
 
-case class ErrorBodyString(value: String) extends ErrorBody
-case class ErrorBodyJson(value: Json) extends ErrorBody
+final case class ErrorBodyString(value: String) extends ErrorBody
+final case class ErrorBodyJson(value: Json) extends ErrorBody

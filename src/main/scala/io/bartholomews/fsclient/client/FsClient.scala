@@ -61,10 +61,10 @@ object FsClientV1 {
     contextShift: ContextShift[F]
   ): FsClientV1[F] = FsClientV1(FsClientConfig(userAgent, signer))
 
-  def unsafeFromConfigBasic[F[_]: ConcurrentEffect](
+  def unsafeFromConfigBasic[F[_]: ConcurrentEffect](consumerNamespace: String)(
     implicit ec: ExecutionContext,
     contextShift: ContextShift[F]
-  ): FsClientV1[F] = FsClientV1(FsClientConfig.v1.basic().orThrow)
+  ): FsClientV1[F] = FsClientV1(FsClientConfig.v1.basic(consumerNamespace).orThrow)
 
   def basic[F[_]: ConcurrentEffect](userAgent: UserAgent, consumer: Consumer)(
     implicit ec: ExecutionContext,

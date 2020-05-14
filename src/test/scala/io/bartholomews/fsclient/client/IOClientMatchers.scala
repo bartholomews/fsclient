@@ -1,7 +1,7 @@
 package io.bartholomews.fsclient.client
 
 import io.bartholomews.fsclient.entities.oauth.OAuthVersion
-import io.bartholomews.fsclient.entities.{FsResponseErrorJson, FsResponseErrorString, FsResponseSuccess}
+import io.bartholomews.fsclient.entities.{ErrorBodyJson, ErrorBodyString, FsResponse}
 import io.bartholomews.fsclient.utils.HttpTypes.{HttpResponse, IOResponse}
 import io.circe.Json
 import io.circe.syntax._
@@ -18,25 +18,21 @@ trait IOClientMatchers extends Matchers with Inside {
 
   def assertRight[V <: OAuthVersion, R](expectedEntity: R)(ioResponse: IOResponse[R]): Assertion =
     assertResponse(ioResponse) {
-      case FsResponseSuccess(_, status, entity) =>
+      case FsResponse(_, status, Right(entity)) =>
         status shouldBe Status.Ok
         entity shouldBe expectedEntity
     }
 
-  def assertErrorString[R](expectedStatus: Status, expectedError: String)(
-    ioResponse: IOResponse[R]
-  ): Assertion =
+  def assertErrorString[R](expectedStatus: Status, expectedError: String)(ioResponse: IOResponse[R]): Assertion =
     assertResponse(ioResponse) {
-      case FsResponseErrorString(_, status, error) =>
+      case FsResponse(_, status, Left(ErrorBodyString(error))) =>
         status shouldBe expectedStatus
         error shouldBe expectedError
     }
 
-  def assertErrorJson[R](expectedStatus: Status, expectedError: Json)(
-    ioResponse: IOResponse[R]
-  ): Assertion =
+  def assertErrorJson[R](expectedStatus: Status, expectedError: Json)(ioResponse: IOResponse[R]): Assertion =
     assertResponse(ioResponse) {
-      case FsResponseErrorJson(_, status, error) =>
+      case FsResponse(_, status, Left(ErrorBodyJson(error))) =>
         status shouldBe expectedStatus
         error shouldBe expectedError
     }

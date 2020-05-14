@@ -4,7 +4,7 @@ import cats.effect.Effect
 import cats.implicits._
 import fs2.{Pipe, Stream}
 import io.bartholomews.fsclient.codecs.RawDecoder
-import io.bartholomews.fsclient.entities.{EmptyResponseException, ErrorBody, HttpError, HttpErrorJson, HttpErrorString}
+import io.bartholomews.fsclient.entities.{EmptyResponseException, ErrorBody, ErrorBodyString}
 import io.bartholomews.fsclient.utils.HttpTypes._
 import io.bartholomews.fsclient.utils.{FsHeaders, FsLogger}
 import io.circe.Json
@@ -25,7 +25,7 @@ private[client] object HttpPipes {
    * @tparam F the `Effect`
    * @tparam Raw the raw type of the response to decode (e.g. Json, PlainText string)
    * @tparam Res the type of expected decoded response entity
-   * @return a Pipe transformed in an `Either[ResponseError, Res]`
+   * @return a Pipe transformed in an `Either[(Status, ErrorBody), Res]`
    */
   def decodeResponse[F[_]: Effect, Raw, Res](
     rawDecoder: RawDecoder[Raw],
@@ -35,7 +35,17 @@ private[client] object HttpPipes {
       .through(resDecoder)
       .attempt
       .through(errorLogPipe)
-      .map(_.leftMap(HttpErrorString(Status.UnprocessableEntity)))
+      .map(_.leftMap { error =>
+        Tuple2(
+          Status.UnprocessableEntity,
+          error match {
+            case _: io.circe.Error =>
+              ErrorBodyString("There was a problem decoding or parsing this response, please check the error logs")
+            case throwable =>
+              ErrorBodyString(throwable.getMessage)
+          }
+        )
+      })
 
   /**
    *
@@ -49,13 +59,13 @@ private[client] object HttpPipes {
    */
   def foldToResponseError[F[_]: Effect, A, E <: ErrorBody](
     response: Response[F],
-    f: A => HttpError
+    f: A => ErrorBody
   ): Pipe[F, Either[Throwable, A], ErrorOr[Nothing]] =
     _.through(errorLogPipe)
       .map(
         _.fold(
-          err => HttpErrorString(response.status)(err).asLeft,
-          res => f(res).asLeft
+          err => Tuple2(response.status, ErrorBodyString(err.getMessage)).asLeft,
+          res => Tuple2(response.status, f(res)).asLeft
         )
       )
 
@@ -74,24 +84,14 @@ private[client] object HttpPipes {
             .last
             .flatMap(_.fold[Stream[F, Json]](Stream.raiseError[F](EmptyResponseException()))(Stream.emit))
             .attempt
-            .through(
-              foldToResponseError(
-                response,
-                json => HttpErrorJson(response.status, body = json)
-              )
-            )
+            .through(foldToResponseError(response, ErrorBody.apply))
 
         // could also intercept `text/html`
         case _ =>
           Stream
             .eval(response.as[String])
             .attempt
-            .through(
-              foldToResponseError(
-                response,
-                errorString => HttpErrorString(response.status, body = errorString)
-              )
-            )
+            .through(foldToResponseError(response, ErrorBody.apply))
       }
     }
 }

@@ -32,7 +32,7 @@ import org.http4s.Uri
 
 import scala.concurrent.ExecutionContext
 
-object ReadmeTest extends App {
+object Example extends App {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val cs: ContextShift[IO] = IO.contextShift(ec)
@@ -51,7 +51,7 @@ object ReadmeTest extends App {
 
   // Sign with consumer key/secret, but without token
   // Otherwise you can use `AuthVersion.V1.OAuthToken`
-  val signer: Signer[OAuthV1] = ClientCredentials(consumer)
+  val signer: Signer = ClientCredentials(consumer)
 
   // Define your expected response entity
   case class Todo(userId: Long, id: Long, title: String, completed: Boolean)
@@ -78,10 +78,14 @@ object ReadmeTest extends App {
   // Run your `FsSimpleRequest` with the client for your effect
   val res: IO[HttpResponse[Todo]] = req.runWith(FsClientV1[IO, OAuthV1](userAgent, signer))
 
-  res.unsafeRunSync() match {
-    case FsResponseSuccess(_, _, todo) => println(todo.title)
-    case res: FsResponseError[_]       => println(s"x--(ツ)--x => ${res.error}")
-  }
+  val response = res.unsafeRunSync()
+
+  println(response.headers)
+  println(response.status)
+  response.foldBody({
+    case ErrorBodyString(error) => println(error)
+    case ErrorBodyJson(error)   => println(error.spaces2)
+  }, todo => println(todo.title))
 }
 ```
 
