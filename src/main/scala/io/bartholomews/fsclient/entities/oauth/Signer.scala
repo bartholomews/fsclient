@@ -6,8 +6,8 @@ import io.bartholomews.fsclient.entities.defaultConfig
 import io.bartholomews.fsclient.entities.oauth.v2.OAuthV2AuthorizationFramework.{AccessToken, RefreshToken}
 import io.circe.Decoder
 import io.circe.generic.extras.semiauto.deriveConfiguredDecoder
-import org.http4s.Request
 import org.http4s.client.oauth1.{signRequest, Consumer, Token}
+import org.http4s.{Request, Uri}
 
 sealed trait Signer
 
@@ -26,6 +26,12 @@ sealed trait SignerV1 extends Signer {
 final case class ClientCredentials(consumer: Consumer) extends SignerV1 {
   override private[fsclient] def sign[F[_]: Effect](req: Request[F]): F[Request[F]] =
     signRequest(req, consumer, callback = None, verifier = None, token = None)
+}
+
+// https://tools.ietf.org/html/rfc5849#page-9
+case class TemporaryCredentialsRequest(consumer: Consumer, callback: Uri) extends SignerV1 {
+  override private[fsclient] def sign[F[_]: Effect](req: Request[F]): F[Request[F]] =
+    signRequest(req, consumer, callback = Some(callback), verifier = None, token = None)
 }
 
 // Token signature

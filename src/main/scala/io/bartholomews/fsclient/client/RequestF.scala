@@ -37,6 +37,10 @@ private[client] trait RequestF {
         logger.debug("Signing request with OAuth 1.0 (Consumer info only)...")
         Stream.eval(basicSignature.sign(request))
 
+      case temporaryCredentials: TemporaryCredentialsRequest =>
+        logger.debug("Signing request with OAuth 1.0 (Temporary credentials)...")
+        Stream.eval(temporaryCredentials.sign(request))
+
       case tokenCredentials: TokenCredentials =>
         logger.debug("Signing request with OAuth v1...")
         Stream.eval(tokenCredentials.sign(request))
