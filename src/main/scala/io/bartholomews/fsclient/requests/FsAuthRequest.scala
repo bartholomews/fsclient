@@ -4,14 +4,14 @@ import cats.effect.ConcurrentEffect
 import fs2.Pipe
 import io.bartholomews.fsclient.client.FsClient
 import io.bartholomews.fsclient.codecs.RawDecoder
-import io.bartholomews.fsclient.entities.oauth.{OAuthVersion, Signer}
+import io.bartholomews.fsclient.entities.oauth.Signer
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.circe.Json
 import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s.{EntityEncoder, Method}
 
 sealed trait FsAuthRequest[Body, Raw, Res] extends FsClientRequest[Body] {
-  final def runWith[F[_]: ConcurrentEffect, V <: OAuthVersion](client: FsClient[F])(
+  final def runWith[F[_]: ConcurrentEffect](client: FsClient[F, _])(
     implicit
     signer: Signer,
     requestBodyEncoder: EntityEncoder[F, Body],

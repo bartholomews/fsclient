@@ -45,11 +45,16 @@ private[client] trait RequestF {
         logger.debug("Signing request with OAuth v1...")
         Stream.eval(tokenCredentials.sign(request))
 
-      case v2: SignerV2 =>
-        logger.debug("Signing request with OAuth v2...")
+      case ClientPasswordBasicAuthenticationV2(clientPassword) =>
+        logger.debug("Signing request with OAuth v2 Basic...")
+        Stream[F, Request[F]](request.putHeaders(clientPassword.authorizationBasic))
+
+      case v2: AccessTokenSignerV2 =>
         Stream[F, Request[F]](
           v2.tokenType.toUpperCase match {
-            case "BEARER" => request.putHeaders(FsHeaders.authorizationBearer(v2.accessToken))
+            case "BEARER" =>
+              logger.debug("Signing request with OAuth v2 Bearer...")
+              request.putHeaders(FsHeaders.authorizationBearer(v2.accessToken))
             case other =>
               logger.warn(s"Unknown token type [$other]: The request will not be signed")
               request

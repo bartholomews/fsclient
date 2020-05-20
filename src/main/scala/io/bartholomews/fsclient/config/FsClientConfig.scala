@@ -1,6 +1,6 @@
 package io.bartholomews.fsclient.config
 
-import io.bartholomews.fsclient.entities.oauth.{AuthDisabled, ClientCredentials, Signer}
+import io.bartholomews.fsclient.entities.oauth.{AuthDisabled, ClientCredentials, Signer, SignerV1}
 import org.http4s.client.oauth1.Consumer
 import pureconfig.ConfigReader.Result
 import pureconfig.ConfigSource
@@ -8,7 +8,7 @@ import pureconfig.error.ConfigReaderException
 
 import scala.reflect.ClassTag
 
-case class FsClientConfig(userAgent: UserAgent, signer: Signer)
+case class FsClientConfig[S <: Signer](userAgent: UserAgent, signer: S)
 
 /**
  * Helpers to load consumer info and signer from application config.
@@ -54,12 +54,10 @@ object FsClientConfig {
 
   object v1 {
 
-    def basic(userAgent: UserAgent, consumer: Consumer): FsClientConfig = {
-      val signer: Signer = ClientCredentials(consumer)
-      FsClientConfig(userAgent, signer)
-    }
+    def basic(userAgent: UserAgent, consumer: Consumer): FsClientConfig[SignerV1] =
+      FsClientConfig(userAgent, ClientCredentials(consumer))
 
-    def basic(consumerNamespace: String): Result[FsClientConfig] =
+    def basic(consumerNamespace: String): Result[FsClientConfig[SignerV1]] =
       for {
         consumer <- ConfigSource.default
           .at(consumerNamespace)
@@ -71,7 +69,7 @@ object FsClientConfig {
       } yield v1.basic(userAgent, consumer)
   }
 
-  def disabled(userAgent: UserAgent): FsClientConfig = FsClientConfig(userAgent, AuthDisabled)
+  def disabled(userAgent: UserAgent): FsClientConfig[AuthDisabled.type] = FsClientConfig(userAgent, AuthDisabled)
 
   private[fsclient] case class LoggerConfig(name: String)
 }

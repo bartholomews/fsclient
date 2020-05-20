@@ -6,9 +6,8 @@ import fs2.Pipe
 import io.bartholomews.fsclient.codecs.RawDecoder
 import io.bartholomews.fsclient.config.{FsClientConfig, UserAgent}
 import io.bartholomews.fsclient.entities._
-import io.bartholomews.fsclient.entities.oauth.OAuthVersion.OAuthV1
+import io.bartholomews.fsclient.entities.oauth._
 import io.bartholomews.fsclient.entities.oauth.v2.OAuthV2AuthorizationFramework.ClientPassword
-import io.bartholomews.fsclient.entities.oauth.{NonRefreshableToken, OAuthVersion, Signer}
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import org.http4s._
 import org.http4s.client.Client
@@ -17,9 +16,9 @@ import org.http4s.client.oauth1.Consumer
 
 import scala.concurrent.ExecutionContext
 
-sealed trait FsClient[F[_]] extends RequestF {
+sealed trait FsClient[F[_], S <: Signer] extends RequestF {
 
-  def appConfig: FsClientConfig
+  def appConfig: FsClientConfig[S]
 
   implicit def resource: Resource[F, Client[F]]
 
@@ -40,46 +39,49 @@ sealed trait FsClient[F[_]] extends RequestF {
 case class FClientNoAuth[F[_]: ConcurrentEffect](userAgent: UserAgent)(
   implicit val ec: ExecutionContext,
   val contextShift: ContextShift[F]
-) extends FsClient[F] {
-  final override val appConfig: FsClientConfig = FsClientConfig.disabled(userAgent)
+) extends FsClient[F, AuthDisabled.type] {
+  final override val appConfig: FsClientConfig[AuthDisabled.type] = FsClientConfig.disabled(userAgent)
   implicit override val resource: Resource[F, Client[F]] = BlazeClientBuilder[F](ec).resource
 }
 
-abstract class BlazeClient[F[_]: ConcurrentEffect]() extends FsClient[F] {
+abstract class BlazeClient[F[_]: ConcurrentEffect, S <: Signer]() extends FsClient[F, S] {
   def ec: ExecutionContext
   implicit override val resource: Resource[F, Client[F]] = BlazeClientBuilder[F](ec).resource
 }
 
-case class FsClientV1[F[_]: ConcurrentEffect](appConfig: FsClientConfig)(
+case class FsClientV1[F[_]: ConcurrentEffect, S <: Signer](appConfig: FsClientConfig[S])(
   implicit val ec: ExecutionContext,
   val contextShift: ContextShift[F]
-) extends BlazeClient[F]
+) extends BlazeClient[F, S]
 
 object FsClientV1 {
-  def apply[F[_]: ConcurrentEffect, V <: OAuthV1](userAgent: UserAgent, signer: Signer)(
+  def apply[F[_]: ConcurrentEffect](userAgent: UserAgent, signer: SignerV1)(
     implicit ec: ExecutionContext,
     contextShift: ContextShift[F]
-  ): FsClientV1[F] = FsClientV1(FsClientConfig(userAgent, signer))
+  ): FsClientV1[F, SignerV1] = FsClientV1(FsClientConfig(userAgent, signer))
 
   def unsafeFromConfigBasic[F[_]: ConcurrentEffect](consumerNamespace: String)(
     implicit ec: ExecutionContext,
     contextShift: ContextShift[F]
-  ): FsClientV1[F] = FsClientV1(FsClientConfig.v1.basic(consumerNamespace).orThrow)
+  ): FsClientV1[F, SignerV1] = FsClientV1(FsClientConfig.v1.basic(consumerNamespace).orThrow)
 
   def basic[F[_]: ConcurrentEffect](userAgent: UserAgent, consumer: Consumer)(
     implicit ec: ExecutionContext,
     contextShift: ContextShift[F]
-  ): FsClientV1[F] = FsClientV1(FsClientConfig.v1.basic(userAgent, consumer))
+  ): FsClientV1[F, SignerV1] = FsClientV1(FsClientConfig.v1.basic(userAgent, consumer))
 }
 
-case class FsClientV2[F[_]: ConcurrentEffect](appConfig: FsClientConfig, clientPassword: ClientPassword)(
+case class FsClientV2[F[_]: ConcurrentEffect, S <: SignerV2](
+  appConfig: FsClientConfig[S],
+  clientPassword: ClientPassword
+)(
   implicit val ec: ExecutionContext,
   val contextShift: ContextShift[F]
-) extends BlazeClient[F]
+) extends BlazeClient[F, S]
 
 object FsClientV2 {
   def apply[F[_]: ConcurrentEffect](userAgent: UserAgent, clientPassword: ClientPassword, signer: NonRefreshableToken)(
     implicit ec: ExecutionContext,
     contextShift: ContextShift[F]
-  ): FsClientV2[F] = new FsClientV2(FsClientConfig(userAgent, signer), clientPassword)
+  ): FsClientV2[F, SignerV2] = new FsClientV2(FsClientConfig(userAgent, signer), clientPassword)
 }

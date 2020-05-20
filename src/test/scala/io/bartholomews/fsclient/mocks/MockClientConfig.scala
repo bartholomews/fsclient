@@ -3,9 +3,8 @@ package io.bartholomews.fsclient.mocks
 import cats.effect.{ContextShift, IO}
 import io.bartholomews.fsclient.client.{FsClient, FsClientV1}
 import io.bartholomews.fsclient.config.UserAgent
-import io.bartholomews.fsclient.entities.oauth.{AccessTokenCredentials, OAuthVersion}
+import io.bartholomews.fsclient.entities.oauth.SignerV1
 import org.http4s.client.oauth1.{Consumer, Token}
-import org.scalatest.Assertions._
 
 import scala.concurrent.ExecutionContext
 
@@ -30,17 +29,8 @@ trait MockClientConfig {
 
   // override val verifier: Option[String] = Some(validOAuthVerifier)
 
-  def validSimpleClient(): FsClient[IO] =
+  def validSimpleClient(): FsClient[IO, SignerV1] =
     simpleClientWith(validConsumerKey, validConsumerSecret)
-
-  def validOAuthClient[V <: OAuthVersion](authVersion: V): FsClient[IO] =
-    authVersion match {
-      case OAuthVersion.V1 =>
-        oAuthClientWith(validConsumerKey, validConsumerSecret, validToken)
-
-      case OAuthVersion.V2 =>
-        fail("OAuthV2 client: test setup not implemented")
-    }
 
   def simpleClientWith(
     key: String,
@@ -48,22 +38,9 @@ trait MockClientConfig {
     appName: String = "someApp",
     appVersion: Option[String] = Some("1.0"),
     appUrl: Option[String] = Some("app.git")
-  ): FsClient[IO] =
+  ): FsClient[IO, SignerV1] =
     FsClientV1.basic(
       UserAgent(appName, appVersion, appUrl),
       Consumer(key, secret)
     )
-
-  def oAuthClientWith(
-    key: String,
-    secret: String,
-    token: Token,
-    appName: String = "someApp",
-    appVersion: Option[String] = Some("1.0"),
-    appUrl: Option[String] = Some("app.git")
-  ): FsClient[IO] = {
-    val userAgent: UserAgent = UserAgent(appName, appVersion, appUrl)
-    val consumer: Consumer = Consumer(key, secret)
-    FsClientV1(userAgent, AccessTokenCredentials(token, consumer))
-  }
 }

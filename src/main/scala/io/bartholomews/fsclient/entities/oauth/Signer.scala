@@ -3,11 +3,16 @@ package io.bartholomews.fsclient.entities.oauth
 import cats.effect.Effect
 import io.bartholomews.fsclient.codecs.FsJsonResponsePipe
 import io.bartholomews.fsclient.entities.defaultConfig
-import io.bartholomews.fsclient.entities.oauth.v2.OAuthV2AuthorizationFramework.{AccessToken, RefreshToken}
-import io.circe.Decoder
-import io.circe.generic.extras.semiauto.deriveConfiguredDecoder
+import io.bartholomews.fsclient.entities.oauth.v2.OAuthV2AuthorizationFramework.{
+  AccessToken,
+  ClientPassword,
+  RefreshToken
+}
+import io.circe.{Decoder, HCursor}
 import org.http4s.client.oauth1.{signRequest, Consumer, Token}
 import org.http4s.{Request, Uri}
+
+import scala.concurrent.duration.{Duration, _}
 
 sealed trait Signer
 
@@ -56,17 +61,22 @@ final case class AccessTokenCredentials private (token: Token, consumer: Consume
 // OAUTH V2 SIGNER
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+sealed trait SignerV2 extends Signer
+
+// https://tools.ietf.org/html/rfc6749#section-7.1
+case class ClientPasswordBasicAuthenticationV2(clientPassword: ClientPassword) extends SignerV2
+
 // https://tools.ietf.org/html/rfc6749#section-5.1
-sealed trait SignerV2 extends Signer {
-  final private val generatedAt: Long = System.currentTimeMillis()
+sealed trait AccessTokenSignerV2 extends SignerV2 {
+  def generatedAt: Long
   def accessToken: AccessToken
   // https://tools.ietf.org/html/rfc6749#section-7.1
   def tokenType: String
   def expiresIn: Long
-  def maybeRefreshToken: Option[RefreshToken]
+  def refreshToken: Option[RefreshToken]
   def scope: Scope
-  final def isExpired: Boolean =
-    System.currentTimeMillis() > generatedAt + (expiresIn * 1000)
+  final def isExpired(threshold: Duration = 1.minute): Boolean =
+    (System.currentTimeMillis() + threshold.toMillis) > generatedAt + (expiresIn * 1000)
 }
 
 // https://tools.ietf.org/html/rfc6749#section-3.3
@@ -85,18 +95,30 @@ object Scope {
  * Refreshable user-level token
  */
 case class AuthorizationCode(
+  generatedAt: Long,
   accessToken: AccessToken,
   tokenType: String,
   expiresIn: Long,
-  refreshToken: RefreshToken,
+  refreshToken: Option[RefreshToken],
   scope: Scope
-) extends SignerV2 {
-  final override val maybeRefreshToken: Option[RefreshToken] =
-    Some(refreshToken)
-}
+) extends AccessTokenSignerV2
 
 object AuthorizationCode extends FsJsonResponsePipe[AuthorizationCode] {
-  implicit val decoder: Decoder[AuthorizationCode] = deriveConfiguredDecoder
+  implicit val decoder: Decoder[AuthorizationCode] = (c: HCursor) =>
+    for {
+      accessToken <- c.downField("access_token").as[AccessToken]
+      tokenType <- c.downField("token_type").as[String]
+      expiresIn <- c.downField("expires_in").as[Long]
+      refreshToken <- c.downField("refresh_token").as[Option[RefreshToken]]
+      scope <- c.downField("scope").as[Scope]
+    } yield AuthorizationCode(
+      generatedAt = System.currentTimeMillis(),
+      accessToken,
+      tokenType,
+      expiresIn,
+      refreshToken,
+      scope
+    )
 }
 
 /*
@@ -105,14 +127,27 @@ object AuthorizationCode extends FsJsonResponsePipe[AuthorizationCode] {
  *  server-level client credentials (https://tools.ietf.org/html/rfc6749#section-4.4.3)
  */
 case class NonRefreshableToken(
+  generatedAt: Long,
   accessToken: AccessToken,
   tokenType: String,
   expiresIn: Long,
   scope: Scope
-) extends SignerV2 {
-  final override val maybeRefreshToken: Option[RefreshToken] = None
+) extends AccessTokenSignerV2 {
+  final override val refreshToken: Option[RefreshToken] = None
 }
 
 object NonRefreshableToken extends FsJsonResponsePipe[NonRefreshableToken] {
-  implicit val decoder: Decoder[NonRefreshableToken] = deriveConfiguredDecoder
+  implicit val decoder: Decoder[NonRefreshableToken] = (c: HCursor) =>
+    for {
+      accessToken <- c.downField("access_token").as[AccessToken]
+      tokenType <- c.downField("token_type").as[String]
+      expiresIn <- c.downField("expires_in").as[Long]
+      scope <- c.downField("scope").as[Scope]
+    } yield NonRefreshableToken(
+      generatedAt = System.currentTimeMillis(),
+      accessToken,
+      tokenType,
+      expiresIn,
+      scope
+    )
 }
