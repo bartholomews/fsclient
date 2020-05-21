@@ -1,15 +1,24 @@
 package io.bartholomews.fsclient.client
 
 import cats.effect.{ContextShift, IO}
+import io.bartholomews.fsclient.config.UserAgent
 import io.bartholomews.fsclient.entities.oauth.SignerV1
-import io.bartholomews.testudo.data.TestudoClientData
+import org.http4s.client.oauth1.Consumer
 
 import scala.concurrent.ExecutionContext
 
-object ClientData extends TestudoClientData {
+object ClientData {
 
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val cs: ContextShift[IO] = IO.contextShift(ec)
+
+  private val sampleUserAgent: UserAgent = UserAgent(
+    appName = "SAMPLE_APP_NAME",
+    appVersion = Some("SAMPLE_APP_VERSION"),
+    appUrl = Some("https://bartholomews.io/sample-app-url")
+  )
+
+  private val sampleConsumer = Consumer(key = "SAMPLE_CONSUMER_KEY", secret = "SAMPLE_CONSUMER_SECRET")
 
   val clientNoAuth: FClientNoAuth[IO] = FClientNoAuth(sampleUserAgent)
 

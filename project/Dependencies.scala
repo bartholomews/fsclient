@@ -4,7 +4,7 @@ object Versions {
   // https://github.com/typelevel/cats/releases
   val cats = "2.1.1"
   // https://github.com/typelevel/cats-effect/releases
-  val cats_effect = "2.1.2"
+  val cats_effect = "2.1.3"
   // https://github.com/circe/circe/releases
   val circe = "0.13.0"
   // https://github.com/circe/circe-fs2/releases
@@ -12,7 +12,7 @@ object Versions {
   // https://github.com/circe/circe-magnolia/releases
   val circe_magnolia = "0.6.1"
   // https://github.com/http4s/http4s/releases
-  val http4s = "0.21.3"
+  val http4s = "0.21.4"
   // https://github.com/lightbend/config/releases
   val lightbendConfig = "1.4.0"
   // https://github.com/qos-ch/logback/releases
@@ -20,7 +20,7 @@ object Versions {
   // https://github.com/pureconfig/pureconfig/releases
   val pureConfig = "0.12.3"
   // https://github.com/scalatest/scalatest/releases
-  val scalaTest = "3.1.1"
+  val scalaTest = "3.1.2"
   // https://github.com/tomakehurst/wiremock/releases
   val wiremock = "2.26.3"
 }
@@ -60,7 +60,6 @@ object Dependencies {
     apache ++ logback ++ pureConfig ++ typelevel
 
   lazy val testDependencies: Seq[ModuleID] = Seq(
-    "io.bartholomews" %% "scalatestudo" % "0.0.1-SNAPSHOT",
     "org.scalactic" %% "scalactic" % Versions.scalaTest,
     // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
     "org.scalatest" %% "scalatest" % Versions.scalaTest,
