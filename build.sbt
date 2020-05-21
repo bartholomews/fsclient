@@ -26,7 +26,7 @@ scalacOptions ++= Compiler.tpolecatOptions
 scalacOptions ++= Seq(Compiler.unchecked, Compiler.deprecation)
 
 testOptions in Test ++= TestSettings.options
-coverageMinimum := 49.05 // FIXME
+coverageMinimum := 44.74 // FIXME
 coverageFailOnMinimum := true
 
 // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
