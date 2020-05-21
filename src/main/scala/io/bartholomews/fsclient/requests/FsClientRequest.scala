@@ -6,7 +6,6 @@ import io.bartholomews.fsclient.utils.FsHeaders
 import io.bartholomews.fsclient.utils.FsLogger._
 import org.http4s._
 
-// FIXME: Find a good way to unify these combinations: `Simple/Auth`
 private[fsclient] trait FsClientRequest[Body] {
   def uri: Uri
 
@@ -21,9 +20,9 @@ private[fsclient] trait FsClientRequest[Body] {
   )(implicit requestBodyEncoder: EntityEncoder[F, Body]): Request[F] =
     logRequest {
       body
-        .fold[Request[F]](Request())(b => Request().withEntity(logRequestBody(b)))
+        .fold[Request[F]](Request())(b => Request().withEntity(b))
         .withMethod(method)
         .withUri(uri)
         .withHeaders(headers.++(Headers.of(FsHeaders.userAgent(userAgent.value))))
-    }
+    }(body)
 }

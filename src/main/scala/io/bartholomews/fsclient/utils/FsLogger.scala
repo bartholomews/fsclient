@@ -25,16 +25,12 @@ object FsLogger {
 
   logger.info(s"$logger started.")
 
-  private[fsclient] def logRequest[F[_]: Effect, B](request: Request[F]): Request[F] = {
+  private[fsclient] def logRequest[F[_]: Effect, B](request: Request[F])(maybeBody: Option[B]): Request[F] = {
     logger.info(s"Request: ${request.method.name} [${request.uri}]")
+    maybeBody.foreach(body => logger.debug(s"Request body - {\n\t$body\n}"))
     // TODO: should probably obfuscate log entries like `Authorization: Bearer <token>`
     logger.debug(s"Request headers - {\n${request.headers.toList.mkString("\t", "\n\t", "\n")}}")
     request
-  }
-
-  private[fsclient] def logRequestBody[F[_]: Effect, B](body: B): B = {
-    logger.debug(s"Request body - {\n\t$body\n}")
-    body
   }
 
   private[fsclient] def responseHeadersLogPipe[F[_]: Effect, T]: Pipe[F, Response[F], Response[F]] =
