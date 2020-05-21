@@ -22,7 +22,7 @@ trait WiremockServer extends BeforeAndAfterAll with MockClientConfig with MockEn
     stubApi()
   }
 
-  override def afterAll: Unit = server.stop()
+  override def afterAll(): Unit = server.stop()
 
   private def stubApi(): Unit = {
 

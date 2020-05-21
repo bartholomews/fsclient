@@ -1,5 +1,7 @@
 [![CircleCI](https://circleci.com/gh/bartholomews/fsclient/tree/master.svg?style=svg)](https://circleci.com/gh/bartholomews/fsclient/tree/master)
 [![codecov](https://codecov.io/gh/bartholomews/fsclient/branch/master/graph/badge.svg)](https://codecov.io/gh/bartholomews/fsclient)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13)
+[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](http://unlicense.org/)
 <a href="https://typelevel.org/cats/"><img src="https://typelevel.org/cats/img/cats-badge.svg" height="40px" align="right" alt="Cats friendly" /></a>
 
 # fsclient
@@ -7,8 +9,7 @@
 🔧 **This project is still early stage and very much WIP / experimental** 🔧  
 
 ```
-resolvers += "Sonatype OSS Snapshots".at("https://oss.sonatype.org/content/repositories/snapshots")
-libraryDependencies += "io.bartholomews" %% "fsclient" % "0.0.1-SNAPSHOT"
+libraryDependencies += "io.bartholomews" %% "fsclient" % "0.0.1"
 ```
 
 *Opinionated* http client on top of http4s/fs2
