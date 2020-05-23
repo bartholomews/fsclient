@@ -9,7 +9,7 @@
 🔧 **This project is still early stage and very much WIP / experimental** 🔧  
 
 ```
-libraryDependencies += "io.bartholomews" %% "fsclient" % "0.0.1"
+libraryDependencies += "io.bartholomews" %% "fsclient" % "<VERSION>"
 ```
 
 *Opinionated* http client on top of http4s/fs2
