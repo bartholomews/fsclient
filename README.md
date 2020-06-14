@@ -19,14 +19,14 @@ Motivation for this project is to
 - play around with the Typelevel stack
 - set up oAuth handling, logging, codecs patterns for api clients
 
-```
+```scala
 import cats.effect.{ContextShift, IO}
 import io.bartholomews.fsclient.client.FsClientV1
 import io.bartholomews.fsclient.codecs.FsJsonResponsePipe
 import io.bartholomews.fsclient.config.UserAgent
 import io.bartholomews.fsclient.entities._
 import io.bartholomews.fsclient.entities.oauth.OAuthVersion.OAuthV1
-import io.bartholomews.fsclient.entities.oauth.{ClientCredentials, Signer}
+import io.bartholomews.fsclient.entities.oauth.{ClientCredentials, SignerV1}
 import io.bartholomews.fsclient.requests.{FsSimpleRequest, JsonRequest}
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.circe.{Decoder, Json}
@@ -53,7 +53,7 @@ object Example extends App {
 
   // Sign with consumer key/secret, but without token
   // Otherwise you can use `AuthVersion.V1.OAuthToken`
-  val signer: Signer = ClientCredentials(consumer)
+  val signer: SignerV1 = ClientCredentials(consumer)
 
   // Define your expected response entity
   case class Todo(userId: Long, id: Long, title: String, completed: Boolean)
@@ -78,7 +78,7 @@ object Example extends App {
   }
 
   // Run your `FsSimpleRequest` with the client for your effect
-  val res: IO[HttpResponse[Todo]] = req.runWith(FsClientV1[IO, OAuthV1](userAgent, signer))
+  val res: IO[HttpResponse[Todo]] = req.runWith(FsClientV1(userAgent, signer))
 
   val response = res.unsafeRunSync()
 
