@@ -1,2 +1,0 @@
-- name: Scala Steward Github Action
-  uses: scala-steward-org/scala-steward-action@v1
