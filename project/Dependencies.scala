@@ -20,7 +20,7 @@ object Versions {
   // https://github.com/pureconfig/pureconfig/releases
   val pureConfig = "0.13.0"
   // https://github.com/scalatest/scalatest/releases
-  val scalaTest = "3.1.4"
+  val scalaTest = "3.2.2"
   // https://github.com/tomakehurst/wiremock/releases
   val wiremock = "2.27.1"
 }
