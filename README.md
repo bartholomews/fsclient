@@ -47,8 +47,8 @@ object Example extends App {
   )
 
   val consumer = org.http4s.client.oauth1.Consumer(
-    key = "kasldklSAJSALKDKAsd",
-    secret = "asjdoASIDJASOdjasojdoasijd"
+    key = "CONSUMER_KEY",
+    secret = "CONSUMER_SECRET"
   )
 
   // Sign with consumer key/secret, but without token
