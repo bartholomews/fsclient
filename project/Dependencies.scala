@@ -48,7 +48,7 @@ object Dependencies {
     // string interpolation to JSON model
     "io.circe" %% "circe-literal" % Versions.circe,
     // https://github.com/lloydmeta/enumeratum/releases
-    "com.beachape" %% "enumeratum-circe" % "1.5.23"
+    "com.beachape" %% "enumeratum-circe" % "1.6.1"
   )
 
   lazy val apache: Seq[ModuleID] = Seq(
