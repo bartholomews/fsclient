@@ -5,7 +5,7 @@ import io.bartholomews.fsclient.client.FsClientV1
 import io.bartholomews.fsclient.codecs.FsJsonResponsePipe
 import io.bartholomews.fsclient.config.UserAgent
 import io.bartholomews.fsclient.entities._
-import io.bartholomews.fsclient.entities.oauth.ClientCredentials
+import io.bartholomews.fsclient.entities.oauth.{ClientCredentials, SignerV1}
 import io.bartholomews.fsclient.requests.{FsSimpleRequest, JsonRequest}
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.circe.{Decoder, Json}
@@ -26,8 +26,8 @@ object ReadmeTest extends App {
   )
 
   val consumer = org.http4s.client.oauth1.Consumer(
-    key = "kasldklSAJSALKDKAsd",
-    secret = "asjdoASIDJASOdjasojdoasijd"
+    key = "CONSUMER_KEY",
+    secret = "CONSUMER_SECRET"
   )
 
   // Sign with consumer key/secret, but without token
@@ -57,7 +57,7 @@ object ReadmeTest extends App {
   }
 
   // Run your `FsSimpleRequest` with the client for your effect
-  val res: IO[HttpResponse[Todo]] = req.runWith(FsClientV1(userAgent, signer))
+  val res: IO[HttpResponse[Todo]] = req.runWith[IO, SignerV1](FsClientV1(userAgent, signer))
 
   val response = res.unsafeRunSync()
 
