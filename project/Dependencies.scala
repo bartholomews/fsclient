@@ -4,7 +4,7 @@ object Versions {
   // https://github.com/typelevel/cats/releases
   val cats = "2.1.1"
   // https://github.com/typelevel/cats-effect/releases
-  val cats_effect = "2.1.3"
+  val cats_effect = "2.1.4"
   // https://github.com/circe/circe/releases
   val circe = "0.13.0"
   // https://github.com/circe/circe-fs2/releases
@@ -12,17 +12,17 @@ object Versions {
   // https://github.com/circe/circe-magnolia/releases
   val circe_magnolia = "0.6.1"
   // https://github.com/http4s/http4s/releases
-  val http4s = "0.21.4"
+  val http4s = "0.21.7"
   // https://github.com/lightbend/config/releases
   val lightbendConfig = "1.4.0"
   // https://github.com/qos-ch/logback/releases
   val logback = "1.2.3"
   // https://github.com/pureconfig/pureconfig/releases
-  val pureConfig = "0.12.3"
+  val pureConfig = "0.13.0"
   // https://github.com/scalatest/scalatest/releases
-  val scalaTest = "3.1.2"
+  val scalaTest = "3.1.4"
   // https://github.com/tomakehurst/wiremock/releases
-  val wiremock = "2.26.3"
+  val wiremock = "2.27.1"
 }
 
 object Dependencies {
@@ -48,7 +48,7 @@ object Dependencies {
     // string interpolation to JSON model
     "io.circe" %% "circe-literal" % Versions.circe,
     // https://github.com/lloydmeta/enumeratum/releases
-    "com.beachape" %% "enumeratum-circe" % "1.5.22"
+    "com.beachape" %% "enumeratum-circe" % "1.5.23"
   )
 
   lazy val apache: Seq[ModuleID] = Seq(
