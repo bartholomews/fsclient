@@ -52,6 +52,9 @@ jobs:
 
       - run:
           name: Setup GPG
+          branches:
+            only:
+              - master
           command: |
             mkdir ~/.gnupg && touch ~/.gnupg/gpg.conf
             echo use-agent >> ~/.gnupg/gpg.conf
@@ -62,11 +65,10 @@ jobs:
 
       - run:
           name: Release
-          command: sbt ci-release
-          # https://circleci.com/docs/reference-2-1/#jobs
           branches:
             only:
               - master
+          command: sbt ci-release
 
 workflows:
   version: 2
