@@ -22,7 +22,7 @@ object Versions {
   // https://github.com/scalatest/scalatest/releases
   val scalaTest = "3.1.4"
   // https://github.com/tomakehurst/wiremock/releases
-  val wiremock = "2.26.3"
+  val wiremock = "2.27.1"
 }
 
 object Dependencies {
