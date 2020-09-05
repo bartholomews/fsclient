@@ -75,6 +75,7 @@ workflows:
   fsclient:
     jobs:
       - build:
+          context: Sonatype
           filters:
             tags:
               only: /^v\d+\.\d+\.\d+$/
