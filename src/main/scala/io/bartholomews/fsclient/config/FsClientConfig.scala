@@ -19,12 +19,8 @@ case class FsClientConfig[S <: Signer](userAgent: UserAgent, signer: S)
  *   app-name: "<consumer-app-name>",
  *   app-version: "<consumer-app-version>",
  *   app-url: "<consumer-app-url>", // OPTIONAL
- * key: "<consumer-key>",
+ *   key: "<consumer-key>",
  *   secret: "<consumer-secret>"
- * }
- *
- * logger {
- *   name = "<app-logger-name>" // OPTIONAL, DEFAULT WITH `fsclient` LOGGER
  * }
  *
  * OAuth V1 Token needs additional token information:
@@ -39,7 +35,6 @@ case class FsClientConfig[S <: Signer](userAgent: UserAgent, signer: S)
  * my-app {
  *   consumer...
  * }
- *
  */
 object FsClientConfig {
 
@@ -50,8 +45,6 @@ object FsClientConfig {
     }
   }
 
-  import pureconfig.generic.auto._
-
   object v1 {
 
     def basic(userAgent: UserAgent, consumer: Consumer): FsClientConfig[SignerV1] =
@@ -59,10 +52,11 @@ object FsClientConfig {
 
     def basic(consumerNamespace: String): Result[FsClientConfig[SignerV1]] =
       for {
-        consumer <- ConfigSource.default
-          .at(consumerNamespace)
-          .at(namespace = "consumer")
-          .load[Consumer]
+        consumer <-
+          ConfigSource.default
+            .at(consumerNamespace)
+            .at(namespace = "consumer")
+            .load[Consumer]
 
         userAgent <- ConfigSource.default.at(namespace = "user-agent").load[UserAgent]
 
@@ -70,6 +64,4 @@ object FsClientConfig {
   }
 
   def disabled(userAgent: UserAgent): FsClientConfig[AuthDisabled.type] = FsClientConfig(userAgent, AuthDisabled)
-
-  private[fsclient] case class LoggerConfig(name: String)
 }
