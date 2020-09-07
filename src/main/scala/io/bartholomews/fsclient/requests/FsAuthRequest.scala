@@ -11,8 +11,7 @@ import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s.{EntityEncoder, Method}
 
 sealed trait FsAuthRequest[Body, Raw, Res] extends FsClientRequest[Body] {
-  final def runWith[F[_]: ConcurrentEffect](client: FsClient[F, _])(
-    implicit
+  final def runWith[F[_]: ConcurrentEffect](client: FsClient[F, _])(implicit
     signer: Signer,
     requestBodyEncoder: EntityEncoder[F, Body],
     rawDecoder: RawDecoder[Raw],

@@ -63,8 +63,11 @@ object ReadmeTest extends App {
 
   println(response.headers)
   println(response.status)
-  response.foldBody({
-    case ErrorBodyString(error) => println(error)
-    case ErrorBodyJson(error)   => println(error.spaces2)
-  }, todo => println(todo.title))
+  response.foldBody(
+    {
+      case ErrorBodyString(error) => println(error)
+      case ErrorBodyJson(error)   => println(error.spaces2)
+    },
+    todo => println(todo.title)
+  )
 }

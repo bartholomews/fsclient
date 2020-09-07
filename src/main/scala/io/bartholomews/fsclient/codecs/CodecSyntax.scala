@@ -20,8 +20,8 @@ trait CodecSyntax extends PlainTextDecodingSyntax {
 
   implicit def emptyEntityEncoder[F[_]]: EntityEncoder[F, Nothing] = EntityEncoder.emptyEncoder[F, Nothing]
 
-  implicit def deriveJsonBodyEncoder[F[_]: ConcurrentEffect, Body](
-    implicit encode: Encoder[Body]
+  implicit def deriveJsonBodyEncoder[F[_]: ConcurrentEffect, Body](implicit
+    encode: Encoder[Body]
   ): EntityEncoder[F, Body] =
     jsonEncoderOf[F, Body]
 

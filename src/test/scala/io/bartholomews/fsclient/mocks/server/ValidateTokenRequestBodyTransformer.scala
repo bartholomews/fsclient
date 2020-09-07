@@ -20,14 +20,15 @@ object ValidateTokenRequestBodyTransformer
     parameters: Parameters
   ): ResponseDefinition = {
 
-    def validateVerifier: ResponseDefinition = oAuthRequestHeaders(request) match {
-      case requestTokenResponseRegex(_, _, _, _, _, _, _, verifier) =>
+    def validateVerifier: ResponseDefinition =
+      oAuthRequestHeaders(request) match {
+        case requestTokenResponseRegex(_, _, _, _, _, _, _, verifier) =>
 //        if(verifier == emptyResponseMock) likeResponse.withBody("").build()
-        if (verifier == validOAuthVerifier) response
-        else response.error(401, ErrorMessage.invalidVerifier)
+          if (verifier == validOAuthVerifier) response
+          else response.error(401, ErrorMessage.invalidVerifier)
 
-      case _ => response.error(401, ErrorMessage.invalidSignature)
-    }
+        case _ => response.error(401, ErrorMessage.invalidSignature)
+      }
 
     val requestBody = "oauth_token=(.*)&oauth_token_secret=(.*)".r
 

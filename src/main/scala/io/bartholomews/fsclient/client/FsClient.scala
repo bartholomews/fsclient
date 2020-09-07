@@ -25,8 +25,7 @@ sealed trait FsClient[F[_], S <: Signer] extends RequestF {
   private def execute[A](implicit f: ConcurrentEffect[F]): fs2.Stream[F, HttpResponse[A]] => F[HttpResponse[A]] =
     _.compile.last.flatMap(maybeResponse => f.pure(maybeResponse.getOrElse(FsResponse(EmptyResponseException()))))
 
-  private[fsclient] def fetch[V <: OAuthVersion, Raw, Res](request: Request[F], signer: Signer)(
-    implicit
+  private[fsclient] def fetch[V <: OAuthVersion, Raw, Res](request: Request[F], signer: Signer)(implicit
     f: ConcurrentEffect[F],
     rawDecoder: RawDecoder[Raw],
     decode: Pipe[F, Raw, Res]
@@ -36,8 +35,8 @@ sealed trait FsClient[F[_], S <: Signer] extends RequestF {
     }
 }
 
-case class FClientNoAuth[F[_]: ConcurrentEffect](userAgent: UserAgent)(
-  implicit val ec: ExecutionContext,
+case class FClientNoAuth[F[_]: ConcurrentEffect](userAgent: UserAgent)(implicit
+  val ec: ExecutionContext,
   val contextShift: ContextShift[F]
 ) extends FsClient[F, AuthDisabled.type] {
   final override val appConfig: FsClientConfig[AuthDisabled.type] = FsClientConfig.disabled(userAgent)
@@ -49,24 +48,24 @@ abstract class BlazeClient[F[_]: ConcurrentEffect, S <: Signer]() extends FsClie
   implicit override val resource: Resource[F, Client[F]] = BlazeClientBuilder[F](ec).resource
 }
 
-case class FsClientV1[F[_]: ConcurrentEffect, S <: Signer](appConfig: FsClientConfig[S])(
-  implicit val ec: ExecutionContext,
+case class FsClientV1[F[_]: ConcurrentEffect, S <: Signer](appConfig: FsClientConfig[S])(implicit
+  val ec: ExecutionContext,
   val contextShift: ContextShift[F]
 ) extends BlazeClient[F, S]
 
 object FsClientV1 {
-  def apply[F[_]: ConcurrentEffect](userAgent: UserAgent, signer: SignerV1)(
-    implicit ec: ExecutionContext,
+  def apply[F[_]: ConcurrentEffect](userAgent: UserAgent, signer: SignerV1)(implicit
+    ec: ExecutionContext,
     contextShift: ContextShift[F]
   ): FsClientV1[F, SignerV1] = FsClientV1(FsClientConfig(userAgent, signer))
 
-  def unsafeFromConfigBasic[F[_]: ConcurrentEffect](consumerNamespace: String)(
-    implicit ec: ExecutionContext,
+  def unsafeFromConfigBasic[F[_]: ConcurrentEffect](consumerNamespace: String)(implicit
+    ec: ExecutionContext,
     contextShift: ContextShift[F]
   ): FsClientV1[F, SignerV1] = FsClientV1(FsClientConfig.v1.basic(consumerNamespace).orThrow)
 
-  def basic[F[_]: ConcurrentEffect](userAgent: UserAgent, consumer: Consumer)(
-    implicit ec: ExecutionContext,
+  def basic[F[_]: ConcurrentEffect](userAgent: UserAgent, consumer: Consumer)(implicit
+    ec: ExecutionContext,
     contextShift: ContextShift[F]
   ): FsClientV1[F, SignerV1] = FsClientV1(FsClientConfig.v1.basic(userAgent, consumer))
 }
@@ -74,14 +73,15 @@ object FsClientV1 {
 case class FsClientV2[F[_]: ConcurrentEffect, S <: SignerV2](
   appConfig: FsClientConfig[S],
   clientPassword: ClientPassword
-)(
-  implicit val ec: ExecutionContext,
+)(implicit
+  val ec: ExecutionContext,
   val contextShift: ContextShift[F]
 ) extends BlazeClient[F, S]
 
 object FsClientV2 {
   def apply[F[_]: ConcurrentEffect](userAgent: UserAgent, clientPassword: ClientPassword, signer: NonRefreshableToken)(
-    implicit ec: ExecutionContext,
+    implicit
+    ec: ExecutionContext,
     contextShift: ContextShift[F]
   ): FsClientV2[F, SignerV2] = new FsClientV2(FsClientConfig(userAgent, signer), clientPassword)
 }

@@ -48,7 +48,6 @@ private[client] object HttpPipes {
       })
 
   /**
-   *
    * Fold both sides of an `Either[Throwable, A]` into an `Either.left[ResponseError]`
    *
    * @param response the `Response`

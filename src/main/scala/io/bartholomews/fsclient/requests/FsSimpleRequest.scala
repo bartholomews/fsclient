@@ -11,8 +11,7 @@ import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
 import org.http4s._
 
 sealed trait FsSimpleRequest[Body, Raw, Res] extends FsClientRequest[Body] {
-  final def runWith[F[_]: ConcurrentEffect, S <: Signer](client: FsClient[F, S])(
-    implicit
+  final def runWith[F[_]: ConcurrentEffect, S <: Signer](client: FsClient[F, S])(implicit
     requestBodyEncoder: EntityEncoder[F, Body],
     rawDecoder: RawDecoder[Raw],
     resDecoder: Pipe[F, Raw, Res]

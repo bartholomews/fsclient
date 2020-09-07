@@ -15,11 +15,12 @@ object FsResponse {
       entityBody => FsResponse(response.headers, response.status, Right(entityBody))
     )
 
-  private[fsclient] def apply(error: EmptyResponseException): FsResponse[ErrorBody, Nothing] = new FsResponse(
-    Headers.empty,
-    error.status,
-    Left(ErrorBodyString(error.getMessage))
-  )
+  private[fsclient] def apply(error: EmptyResponseException): FsResponse[ErrorBody, Nothing] =
+    new FsResponse(
+      Headers.empty,
+      error.status,
+      Left(ErrorBodyString(error.getMessage))
+    )
 }
 
 sealed trait ErrorBody
