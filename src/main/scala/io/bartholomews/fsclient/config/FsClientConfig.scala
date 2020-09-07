@@ -38,6 +38,8 @@ case class FsClientConfig[S <: Signer](userAgent: UserAgent, signer: S)
  */
 object FsClientConfig {
 
+  import pureconfig.generic.auto._
+
   implicit class LoadConfigOrThrow[A: ClassTag](maybeConfig: Result[A]) {
     def orThrow: A = {
       import cats.syntax.either._
