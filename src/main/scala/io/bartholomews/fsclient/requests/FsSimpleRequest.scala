@@ -7,7 +7,7 @@ import io.bartholomews.fsclient.codecs.RawDecoder
 import io.bartholomews.fsclient.entities.oauth.Signer
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.circe.Json
-import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
+import org.http4s.Method.{DefaultMethodWithBody, IdempotentMethodWithBody, SafeMethodWithBody}
 import org.http4s._
 
 sealed trait FsSimpleRequest[Body, Raw, Res] extends FsClientRequest[Body] {
@@ -21,8 +21,15 @@ sealed trait FsSimpleRequest[Body, Raw, Res] extends FsClientRequest[Body] {
 
 object FsSimpleRequest {
 
+  type SimplePost[Body] = Post[Body, Unit, Unit]
+  type SimplePut[Body] = Put[Body, Unit, Unit]
+
   trait Get[Body, Raw, Res] extends FsSimpleRequest[Body, Raw, Res] {
     final override private[fsclient] def method: SafeMethodWithBody = Method.GET
+  }
+
+  trait Put[Body, Raw, Res] extends FsSimpleRequest[Body, Raw, Res] {
+    final override private[fsclient] def method: IdempotentMethodWithBody = Method.PUT
   }
 
   trait Post[Body, Raw, Res] extends FsSimpleRequest[Body, Raw, Res] {
@@ -36,6 +43,11 @@ object JsonRequest {
     final override private[fsclient] def body: Option[Nothing] = None
   }
 
+  trait Put[Body, Res] extends FsSimpleRequest.Put[Body, Json, Res] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
+  }
+
   trait Post[Body, Res] extends FsSimpleRequest.Post[Body, Json, Res] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
@@ -46,6 +58,11 @@ object PlainTextRequest {
 
   trait Get[Res] extends FsSimpleRequest.Get[Nothing, String, Res] {
     final override private[fsclient] def body: Option[Nothing] = None
+  }
+
+  trait Put[Body, Res] extends FsSimpleRequest.Put[Body, String, Res] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
 
   trait Post[Body, Res] extends FsSimpleRequest.Post[Body, String, Res] {
