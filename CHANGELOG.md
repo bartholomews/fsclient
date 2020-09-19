@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `FsJsonRequest[A]` trait which imports an `EntityEncoder`
 ### Removed
 - Logger name from config (to avoid concurrency error when using multiple clients)
 ### Changed
