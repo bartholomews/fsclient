@@ -37,7 +37,9 @@ private[fsclient] object FsAuthRequest {
 
 object AuthRequest {
 
-  trait PutEmpty extends FsSimpleRequest.Put[Nothing, Unit, Unit]
+  trait PutEmpty extends FsAuthRequest.Put[Nothing, Unit, Unit] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
 
   trait Put[Body] extends FsAuthRequest.Put[Body, Unit, Unit] {
     def entityBody: Body

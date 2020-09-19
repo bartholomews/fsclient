@@ -52,8 +52,6 @@ trait CodecSyntax extends PlainTextDecodingSyntax {
   // implicit def decodeIdentity[F[_], A]: Pipe[F, A, A] = _.map(identity)
   implicit def stringDecoderPipe[F[_]]: Pipe[F, String, String] = _.map(identity)
 
-  implicit def decodeAsUnit[F[_], A]: Pipe[F, A, Unit] = _.map(_ => ())
-
   implicit def decodeJsonAsString[F[_]: Sync]: Pipe[F, Json, String] =
     deriveJsonPipe[F, String](implicitly[Sync[F]], Decoder.decodeString)
 
