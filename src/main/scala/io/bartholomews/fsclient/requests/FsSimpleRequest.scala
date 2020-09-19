@@ -19,11 +19,7 @@ sealed trait FsSimpleRequest[Body, Raw, Res] extends FsClientRequest[Body] {
     client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), client.appConfig.signer)
 }
 
-object FsSimpleRequest {
-
-  type SimplePost[Body] = Post[Body, Unit, Unit]
-  type SimplePut[Body] = Put[Body, Unit, Unit]
-
+private[fsclient] object FsSimpleRequest {
   trait Get[Body, Raw, Res] extends FsSimpleRequest[Body, Raw, Res] {
     final override private[fsclient] def method: SafeMethodWithBody = Method.GET
   }
@@ -34,6 +30,18 @@ object FsSimpleRequest {
 
   trait Post[Body, Raw, Res] extends FsSimpleRequest[Body, Raw, Res] {
     final override private[fsclient] def method: DefaultMethodWithBody = Method.POST
+  }
+}
+
+object SimpleRequest {
+  trait Put[Body] extends FsSimpleRequest.Put[Body, Unit, Unit] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
+  }
+
+  trait Post[Body] extends FsSimpleRequest.Post[Body, Unit, Unit] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
 }
 
