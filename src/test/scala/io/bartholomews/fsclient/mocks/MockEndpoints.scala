@@ -30,24 +30,24 @@ trait MockEndpoints {
   final val okAccessTokenResponse = "valid-access-token-plaintext-response"
 
   def postPlainTextEndpoint[B, R](endpoint: String, requestBody: B): FsSimpleRequest.Post[B, String, R] =
-    new PlainTextRequest.Post[B, R] {
+    new FsSimplePlainText.Post[B, R] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
       override def entityBody: B = requestBody
     }
 
   def postJsonEndpoint[B, R](endpoint: String, requestBody: B): FsSimpleRequest.Post[B, Json, R] =
-    new JsonRequest.Post[B, R] {
+    new FsSimpleJson.Post[B, R] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
       override def entityBody: B = requestBody
     }
 
   def getPlainTextEndpoint[Res](endpoint: String): FsSimpleRequest.Get[Nothing, String, Res] =
-    new PlainTextRequest.Get[Res] {
+    new FsSimplePlainText.Get[Res] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
     }
 
   def getJsonEndpoint[Res](endpoint: String): FsSimpleRequest.Get[Nothing, Json, Res] =
-    new JsonRequest.Get[Res] {
+    new FsSimpleJson.Get[Res] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
     }
 }

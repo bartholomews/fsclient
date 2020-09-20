@@ -73,7 +73,7 @@ private[client] trait RequestF {
         case Right(response) =>
           (response.status match {
 
-            case Status.Ok =>
+            case status if status.isSuccess =>
               Stream
                 .emit(response)
                 .through(decodeResponse(rawDecoder, resDecoder))
