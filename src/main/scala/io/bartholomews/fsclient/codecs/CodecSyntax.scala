@@ -53,11 +53,11 @@ trait CodecSyntax extends PlainTextDecodingSyntax {
   implicit def stringDecoderPipe[F[_]]: Pipe[F, String, String] = _.map(identity)
 
   implicit def decodeJsonAsString[F[_]: Sync]: Pipe[F, Json, String] =
-    deriveJsonPipe[F, String](implicitly[Sync[F]], Decoder.decodeString)
+    io.circe.fs2.decoder[F, String](implicitly[Sync[F]], Decoder.decodeString)
 
   implicit def decodeJsonAsInt[F[_]: Sync]: Pipe[F, Json, Int] =
-    deriveJsonPipe[F, Int](implicitly[Sync[F]], Decoder.decodeInt)
+    io.circe.fs2.decoder[F, Int](implicitly[Sync[F]], Decoder.decodeInt)
 
   // diverging implicit expansion for type io.circe.Decoder[A] starting with lazy value decodeZoneOffset in object Decoder
-  def deriveJsonPipe[F[_]: Sync, A](implicit decode: Decoder[A]): Pipe[F, Json, A] = io.circe.fs2.decoder[F, A]
+  implicit def deriveJsonPipe[F[_]: Sync, A](implicit decode: Decoder[A]): Pipe[F, Json, A] = io.circe.fs2.decoder[F, A]
 }
