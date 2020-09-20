@@ -7,7 +7,7 @@ import io.bartholomews.fsclient.codecs.RawDecoder
 import io.bartholomews.fsclient.entities.oauth.Signer
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.circe.Json
-import org.http4s.Method.{DefaultMethodWithBody, SafeMethodWithBody}
+import org.http4s.Method.{DefaultMethodWithBody, IdempotentMethodWithBody, SafeMethodWithBody}
 import org.http4s._
 
 sealed trait FsSimpleRequest[Body, Raw, Res] extends FsClientRequest[Body] {
@@ -19,10 +19,13 @@ sealed trait FsSimpleRequest[Body, Raw, Res] extends FsClientRequest[Body] {
     client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), client.appConfig.signer)
 }
 
-object FsSimpleRequest {
-
+private[fsclient] object FsSimpleRequest {
   trait Get[Body, Raw, Res] extends FsSimpleRequest[Body, Raw, Res] {
     final override private[fsclient] def method: SafeMethodWithBody = Method.GET
+  }
+
+  trait Put[Body, Raw, Res] extends FsSimpleRequest[Body, Raw, Res] {
+    final override private[fsclient] def method: IdempotentMethodWithBody = Method.PUT
   }
 
   trait Post[Body, Raw, Res] extends FsSimpleRequest[Body, Raw, Res] {
@@ -30,10 +33,39 @@ object FsSimpleRequest {
   }
 }
 
-object JsonRequest {
+/**
+ * Requests which are not concerned with decoding a response, or expecting an empty response body.
+ * If you need to sign / oAuth handling, you should use the `Auth` objects instead
+ */
+object FsSimple {
+
+  trait PutEmpty extends FsSimpleRequest.Put[Nothing, Unit, Unit] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
+  trait Put[Body] extends FsSimpleRequest.Put[Body, Unit, Unit] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
+  }
+
+  trait Post[Body] extends FsSimpleRequest.Post[Body, Unit, Unit] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
+  }
+}
+
+/**
+ * Requests which are decoding a Json response into a `Res` type
+ */
+object FsSimpleJson {
 
   trait Get[Res] extends FsSimpleRequest.Get[Nothing, Json, Res] {
     final override private[fsclient] def body: Option[Nothing] = None
+  }
+
+  trait Put[Body, Res] extends FsSimpleRequest.Put[Body, Json, Res] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
 
   trait Post[Body, Res] extends FsSimpleRequest.Post[Body, Json, Res] {
@@ -42,10 +74,18 @@ object JsonRequest {
   }
 }
 
-object PlainTextRequest {
+/**
+ * Requests which are decoding a PlainText response into a `Res` type
+ */
+object FsSimplePlainText {
 
   trait Get[Res] extends FsSimpleRequest.Get[Nothing, String, Res] {
     final override private[fsclient] def body: Option[Nothing] = None
+  }
+
+  trait Put[Body, Res] extends FsSimpleRequest.Put[Body, String, Res] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
 
   trait Post[Body, Res] extends FsSimpleRequest.Post[Body, String, Res] {
