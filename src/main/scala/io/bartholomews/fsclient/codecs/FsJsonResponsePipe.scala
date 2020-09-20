@@ -7,5 +7,5 @@ import io.circe.{Decoder, Json}
 // FIXME: You could try with a macro annotation like @ConfiguredFsJsonResponsePipe
 trait FsJsonResponsePipe[A] {
   implicit def deriveEntityJsonDecoder[F[_]: Effect](implicit decode: Decoder[A]): Pipe[F, Json, A] =
-    io.bartholomews.fsclient.implicits.deriveJsonPipe[F, A]
+    io.circe.fs2.decoder[F, A]
 }

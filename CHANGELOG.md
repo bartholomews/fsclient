@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `FsJsonRequest[A]` trait which imports an `EntityEncoder`
+- `PUT` requests and `Unit` decoders
 ### Removed
 - Logger name from config (to avoid concurrency error when using multiple clients)
+- `FsSimpleRequest` and `FsAuthRequest` objects are not public anymore:
+   The accessible objects to create requests are
+   - `SimpleRequest`, `JsonRequest`, `PlainTextRequest`
+   - `AuthRequest`, `AuthJsonRequest`, `AuthPlainTextRequest`
 ### Changed
 - Updated [Readme](https://github.com/bartholomews/fsclient/compare/v0.0.2...HEAD#diff-04c6e90faac2675aa89e2176d2eec7d8) scala snippets
+- Decode < 400 as `success` status instead of just 200
+- Renamed `FsRequest` objects to `FsSimple/Auth`
 ### Fixed
 
 ## [0.0.2] - 2020-05-23
