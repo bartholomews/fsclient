@@ -28,7 +28,7 @@ import io.bartholomews.fsclient.config.UserAgent
 import io.bartholomews.fsclient.entities._
 import io.bartholomews.fsclient.entities.oauth.OAuthVersion.OAuthV1
 import io.bartholomews.fsclient.entities.oauth.{ClientCredentials, SignerV1}
-import io.bartholomews.fsclient.requests.{FsSimpleRequest, JsonRequest}
+import io.bartholomews.fsclient.requests.{FsSimpleRequest, FsSimpleJson}
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.circe.{Decoder, Json}
 import org.http4s.Uri
@@ -74,7 +74,7 @@ object Example extends App {
     Depending on the types you will be forced to add the request body
     and have the right implicits in scope for the codecs
    */
-  val req: FsSimpleRequest[Nothing, Json, Todo] = new JsonRequest.Get[Todo] {
+  val req: FsSimpleRequest[Nothing, Json, Todo] = new FsSimpleJson.Get[Todo] {
     override val uri: Uri = org.http4s.Uri.unsafeFromString("http://jsonplaceholder.typicode.com/todos/1")
   }
 

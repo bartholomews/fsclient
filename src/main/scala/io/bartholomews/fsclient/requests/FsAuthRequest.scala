@@ -35,7 +35,11 @@ private[fsclient] object FsAuthRequest {
   }
 }
 
-object AuthRequest {
+/**
+ * Requests which are not concerned with decoding a response, or expecting an empty response body.
+ * If you don't need to sign / oAuth handling, you should use the `Simple` objects instead
+ */
+object FsAuth {
 
   trait PutEmpty extends FsAuthRequest.Put[Nothing, Unit, Unit] {
     final override private[fsclient] def body: Option[Nothing] = None
@@ -52,7 +56,10 @@ object AuthRequest {
   }
 }
 
-object AuthJsonRequest {
+/**
+ * Requests which are decoding a Json response into a `Res` type
+ */
+object FsAuthJson {
   trait Get[Res] extends FsAuthRequest.Get[Nothing, Json, Res] {
     final override private[fsclient] def body: Option[Nothing] = None
   }
@@ -68,7 +75,10 @@ object AuthJsonRequest {
   }
 }
 
-object AuthPlainTextRequest {
+/**
+ * Requests which are decoding a PlainText response into a `Res` type
+ */
+object FsAuthPlainText {
   trait Get[Res] extends FsAuthRequest.Get[Nothing, String, Res] {
     final override private[fsclient] def body: Option[Nothing] = None
   }
