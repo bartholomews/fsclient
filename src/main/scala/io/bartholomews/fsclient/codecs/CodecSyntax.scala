@@ -4,14 +4,11 @@ import cats.effect.{ConcurrentEffect, Effect, Sync}
 import fs2.Pipe
 import io.bartholomews.fsclient.utils.FsLogger.{rawJsonResponseLogPipe, rawPlainTextResponseLogPipe}
 import io.circe.fs2.byteStreamParser
-import io.circe.{Codec, Decoder, Encoder, Json}
+import io.circe.{Decoder, Encoder, Json}
 import org.http4s.circe.jsonEncoderOf
-import org.http4s.{EntityEncoder, Response, Uri, UrlForm}
+import org.http4s.{EntityEncoder, Response, UrlForm}
 
 trait CodecSyntax extends PlainTextDecodingSyntax {
-
-  import org.http4s.circe.{decodeUri, encodeUri}
-  implicit val uriCodec: Codec[Uri] = Codec.from(decodeUri, encodeUri)
 
   implicit def decodeListAtKey[F[_]: Sync, A](
     key: String
@@ -52,12 +49,12 @@ trait CodecSyntax extends PlainTextDecodingSyntax {
   // implicit def decodeIdentity[F[_], A]: Pipe[F, A, A] = _.map(identity)
   implicit def stringDecoderPipe[F[_]]: Pipe[F, String, String] = _.map(identity)
 
-  implicit def decodeJsonAsString[F[_]: Sync]: Pipe[F, Json, String] =
-    io.circe.fs2.decoder[F, String](implicitly[Sync[F]], Decoder.decodeString)
+  implicit def decodeJsonAsString[F[_]: ConcurrentEffect]: Pipe[F, Json, String] =
+    io.circe.fs2.decoder[F, String](implicitly[ConcurrentEffect[F]], Decoder.decodeString)
 
-  implicit def decodeJsonAsInt[F[_]: Sync]: Pipe[F, Json, Int] =
-    io.circe.fs2.decoder[F, Int](implicitly[Sync[F]], Decoder.decodeInt)
+  implicit def decodeJsonAsInt[F[_]: ConcurrentEffect]: Pipe[F, Json, Int] =
+    io.circe.fs2.decoder[F, Int](implicitly[ConcurrentEffect[F]], Decoder.decodeInt)
 
   // diverging implicit expansion for type io.circe.Decoder[A] starting with lazy value decodeZoneOffset in object Decoder
-  implicit def deriveJsonPipe[F[_]: Sync, A](implicit decode: Decoder[A]): Pipe[F, Json, A] = io.circe.fs2.decoder[F, A]
+  implicit def deriveJsonPipe[F[_]: ConcurrentEffect, A](implicit decode: Decoder[A]): Pipe[F, Json, A] = io.circe.fs2.decoder[F, A]
 }

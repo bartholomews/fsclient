@@ -36,6 +36,8 @@ import org.http4s.Uri
 import scala.concurrent.ExecutionContext
 
 object Example extends App {
+  // You need this for common codecs like empty body encoder and raw json decoder
+  import io.bartholomews.fsclient.implicits._
 
   implicit val ec: ExecutionContext = ExecutionContext.global
   implicit val cs: ContextShift[IO] = IO.contextShift(ec)
@@ -62,9 +64,6 @@ object Example extends App {
   object Todo extends FsJsonResponsePipe[Todo] {
     implicit val decoder: Decoder[Todo] = io.circe.generic.semiauto.deriveDecoder
   }
-
-  // You also need this for common codecs like empty body encoder and raw json decoder
-  import io.bartholomews.fsclient.implicits._
 
   /*
     `FsSimpleRequest` has three type parameters:
