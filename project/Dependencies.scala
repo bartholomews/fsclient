@@ -4,7 +4,7 @@ object Versions {
   // https://github.com/typelevel/cats/releases
   val cats = "2.1.1"
   // https://github.com/typelevel/cats-effect/releases
-  val cats_effect = "2.1.4"
+  val cats_effect = "2.2.0"
   // https://github.com/circe/circe/releases
   val circe = "0.13.0"
   // https://github.com/circe/circe-fs2/releases
@@ -22,7 +22,7 @@ object Versions {
   // https://github.com/scalatest/scalatest/releases
   val scalaTest = "3.2.2"
   // https://github.com/tomakehurst/wiremock/releases
-  val wiremock = "2.27.1"
+  val wiremock = "2.27.2"
 }
 
 object Dependencies {
