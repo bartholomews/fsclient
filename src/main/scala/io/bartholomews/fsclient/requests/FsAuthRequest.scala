@@ -45,6 +45,10 @@ object FsAuth {
     final override private[fsclient] def body: Option[Nothing] = None
   }
 
+  trait PostEmpty extends FsAuthRequest.Post[Nothing, Unit, Unit] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
   trait Put[Body] extends FsAuthRequest.Put[Body, Unit, Unit] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
@@ -64,6 +68,14 @@ object FsAuthJson {
     final override private[fsclient] def body: Option[Nothing] = None
   }
 
+  trait PutEmpty[Res] extends FsAuthRequest.Put[Nothing, Json, Res] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
+  trait PostEmpty[Res] extends FsAuthRequest.Post[Nothing, Json, Res] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
   trait Put[Body, Res] extends FsAuthRequest.Put[Body, Json, Res] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
@@ -80,6 +92,14 @@ object FsAuthJson {
  */
 object FsAuthPlainText {
   trait Get[Res] extends FsAuthRequest.Get[Nothing, String, Res] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
+  trait PutEmpty[Res] extends FsAuthRequest.Put[Nothing, String, Res] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
+  trait PostEmpty[Res] extends FsAuthRequest.Post[Nothing, String, Res] {
     final override private[fsclient] def body: Option[Nothing] = None
   }
 

@@ -43,6 +43,10 @@ object FsSimple {
     final override private[fsclient] def body: Option[Nothing] = None
   }
 
+  trait PostEmpty extends FsSimpleRequest.Post[Nothing, Unit, Unit] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
   trait Put[Body] extends FsSimpleRequest.Put[Body, Unit, Unit] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
@@ -63,6 +67,14 @@ object FsSimpleJson {
     final override private[fsclient] def body: Option[Nothing] = None
   }
 
+  trait PutEmpty[Res] extends FsSimpleRequest.Put[Nothing, Json, Res] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
+  trait PostEmpty[Res] extends FsSimpleRequest.Post[Nothing, Json, Res] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
   trait Put[Body, Res] extends FsSimpleRequest.Put[Body, Json, Res] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
@@ -80,6 +92,14 @@ object FsSimpleJson {
 object FsSimplePlainText {
 
   trait Get[Res] extends FsSimpleRequest.Get[Nothing, String, Res] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
+  trait PutEmpty[Res] extends FsSimpleRequest.Put[Nothing, String, Res] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
+  trait PostEmpty[Res] extends FsSimpleRequest.Post[Nothing, String, Res] {
     final override private[fsclient] def body: Option[Nothing] = None
   }
 
