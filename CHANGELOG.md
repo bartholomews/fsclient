@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `FsJsonRequest[A]` trait which imports an `EntityEncoder`
-- `PUT` requests and `Unit` decoders
+- `PUT` / `DELETE` requests and `Unit` decoders
 ### Removed
 - Logger name from config (to avoid concurrency error when using multiple clients)
 - `FsSimpleRequest` and `FsAuthRequest` objects are not public anymore:

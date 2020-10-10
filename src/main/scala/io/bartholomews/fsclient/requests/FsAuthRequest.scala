@@ -33,6 +33,10 @@ private[fsclient] object FsAuthRequest {
   trait Post[Body, Raw, Res] extends FsAuthRequest[Body, Raw, Res] {
     final override private[fsclient] def method: DefaultMethodWithBody = Method.POST
   }
+
+  trait Delete[Body, Raw, Res] extends FsAuthRequest[Body, Raw, Res] {
+    final override private[fsclient] def method: IdempotentMethodWithBody = Method.DELETE
+  }
 }
 
 /**
@@ -49,12 +53,21 @@ object FsAuth {
     final override private[fsclient] def body: Option[Nothing] = None
   }
 
+  trait DeleteEmpty extends FsAuthRequest.Delete[Nothing, Unit, Unit] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
   trait Put[Body] extends FsAuthRequest.Put[Body, Unit, Unit] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
 
   trait Post[Body] extends FsAuthRequest.Post[Body, Unit, Unit] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
+  }
+
+  trait Delete[Body] extends FsAuthRequest.Delete[Body, Unit, Unit] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
@@ -76,12 +89,21 @@ object FsAuthJson {
     final override private[fsclient] def body: Option[Nothing] = None
   }
 
+  trait DeleteEmpty[Res] extends FsAuthRequest.Delete[Nothing, Json, Res] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
   trait Put[Body, Res] extends FsAuthRequest.Put[Body, Json, Res] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
 
   trait Post[Body, Res] extends FsAuthRequest.Post[Body, Json, Res] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
+  }
+
+  trait Delete[Body, Res] extends FsAuthRequest.Delete[Body, Json, Res] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
@@ -103,12 +125,21 @@ object FsAuthPlainText {
     final override private[fsclient] def body: Option[Nothing] = None
   }
 
+  trait DeleteEmpty[Res] extends FsAuthRequest.Delete[Nothing, String, Res] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
   trait Put[Body, Res] extends FsAuthRequest.Put[Body, String, Res] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
 
   trait Post[Body, Res] extends FsAuthRequest.Post[Body, String, Res] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
+  }
+
+  trait Delete[Body, Res] extends FsAuthRequest.Delete[Body, String, Res] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
