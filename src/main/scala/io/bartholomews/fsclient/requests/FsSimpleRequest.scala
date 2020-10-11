@@ -31,6 +31,10 @@ private[fsclient] object FsSimpleRequest {
   trait Post[Body, Raw, Res] extends FsSimpleRequest[Body, Raw, Res] {
     final override private[fsclient] def method: DefaultMethodWithBody = Method.POST
   }
+
+  trait Delete[Body, Raw, Res] extends FsSimpleRequest[Body, Raw, Res] {
+    final override private[fsclient] def method: IdempotentMethodWithBody = Method.DELETE
+  }
 }
 
 /**
@@ -47,12 +51,21 @@ object FsSimple {
     final override private[fsclient] def body: Option[Nothing] = None
   }
 
+  trait DeleteEmpty extends FsSimpleRequest.Delete[Nothing, Unit, Unit] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
   trait Put[Body] extends FsSimpleRequest.Put[Body, Unit, Unit] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
 
   trait Post[Body] extends FsSimpleRequest.Post[Body, Unit, Unit] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
+  }
+
+  trait Delete[Body] extends FsSimpleRequest.Delete[Body, Unit, Unit] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
@@ -75,12 +88,21 @@ object FsSimpleJson {
     final override private[fsclient] def body: Option[Nothing] = None
   }
 
+  trait DeleteEmpty[Res] extends FsSimpleRequest.Delete[Nothing, Json, Res] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
   trait Put[Body, Res] extends FsSimpleRequest.Put[Body, Json, Res] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
 
   trait Post[Body, Res] extends FsSimpleRequest.Post[Body, Json, Res] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
+  }
+
+  trait Delete[Body, Res] extends FsSimpleRequest.Delete[Body, Json, Res] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
@@ -103,12 +125,21 @@ object FsSimplePlainText {
     final override private[fsclient] def body: Option[Nothing] = None
   }
 
+  trait DeleteEmpty[Res] extends FsSimpleRequest.Delete[Nothing, String, Res] {
+    final override private[fsclient] def body: Option[Nothing] = None
+  }
+
   trait Put[Body, Res] extends FsSimpleRequest.Put[Body, String, Res] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
 
   trait Post[Body, Res] extends FsSimpleRequest.Post[Body, String, Res] {
+    def entityBody: Body
+    final override private[fsclient] def body: Option[Body] = Some(entityBody)
+  }
+
+  trait Delete[Body, Res] extends FsSimpleRequest.Delete[Body, String, Res] {
     def entityBody: Body
     final override private[fsclient] def body: Option[Body] = Some(entityBody)
   }
