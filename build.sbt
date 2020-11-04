@@ -1,7 +1,7 @@
 import Dependencies.{dependencies, testDependencies}
 
 name := "fsclient"
-scalaVersion := "2.13.2"
+scalaVersion := "2.13.3"
 
 inThisBuild(
   List(
