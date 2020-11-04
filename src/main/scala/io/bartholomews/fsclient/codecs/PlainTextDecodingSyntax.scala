@@ -20,7 +20,7 @@ trait PlainTextDecodingSyntax {
   ): Pipe[F, String, A] =
     _.attempt
       .map(_.leftMap(_.getMessage))
-      .flatMap(pf.andThen(entity => fs2.Stream.emit(entity)).orElse {
-        case other => raiseError[F](other)
+      .flatMap(pf.andThen(entity => fs2.Stream.emit(entity)).orElse { case other =>
+        raiseError[F](other)
       })
 }

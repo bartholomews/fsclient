@@ -6,7 +6,7 @@ import io.bartholomews.fsclient.codecs.FsJsonResponsePipe
 import io.bartholomews.fsclient.config.UserAgent
 import io.bartholomews.fsclient.entities._
 import io.bartholomews.fsclient.entities.oauth.{ClientCredentials, SignerV1}
-import io.bartholomews.fsclient.requests.{FsSimpleRequest, FsSimpleJson}
+import io.bartholomews.fsclient.requests.{FsSimpleJson, FsSimpleRequest}
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.circe.{Decoder, Json}
 import org.http4s.Uri
