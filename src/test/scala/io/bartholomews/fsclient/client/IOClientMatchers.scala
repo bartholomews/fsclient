@@ -17,24 +17,21 @@ trait IOClientMatchers extends Matchers with Inside {
     inside(ioResponse.unsafeRunSync())(pf)
 
   def assertRight[V <: OAuthVersion, R](expectedEntity: R)(ioResponse: IOResponse[R]): Assertion =
-    assertResponse(ioResponse) {
-      case FsResponse(_, status, Right(entity)) =>
-        status shouldBe Status.Ok
-        entity shouldBe expectedEntity
+    assertResponse(ioResponse) { case FsResponse(_, status, Right(entity)) =>
+      status shouldBe Status.Ok
+      entity shouldBe expectedEntity
     }
 
   def assertErrorString[R](expectedStatus: Status, expectedError: String)(ioResponse: IOResponse[R]): Assertion =
-    assertResponse(ioResponse) {
-      case FsResponse(_, status, Left(ErrorBodyString(error))) =>
-        status shouldBe expectedStatus
-        error shouldBe expectedError
+    assertResponse(ioResponse) { case FsResponse(_, status, Left(ErrorBodyString(error))) =>
+      status shouldBe expectedStatus
+      error shouldBe expectedError
     }
 
   def assertErrorJson[R](expectedStatus: Status, expectedError: Json)(ioResponse: IOResponse[R]): Assertion =
-    assertResponse(ioResponse) {
-      case FsResponse(_, status, Left(ErrorBodyJson(error))) =>
-        status shouldBe expectedStatus
-        error shouldBe expectedError
+    assertResponse(ioResponse) { case FsResponse(_, status, Left(ErrorBodyJson(error))) =>
+      status shouldBe expectedStatus
+      error shouldBe expectedError
     }
 
   def assertEmptyResponseError[R](ioResponse: IOResponse[R]): Assertion =

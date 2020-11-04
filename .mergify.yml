@@ -1,5 +1,10 @@
 pull_request_rules:
-  - name: Merge scala steward PRs
+  - name: Update scala steward PRs 🤖
+    conditions:
+      - base=master
+    actions:
+      update: {}
+  - name: Merge scala steward PRs 🤖
     conditions:
       - author=scala-steward
       - check-success=fsclient
