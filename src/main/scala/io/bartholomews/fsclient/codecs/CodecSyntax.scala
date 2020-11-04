@@ -56,5 +56,6 @@ trait CodecSyntax extends PlainTextDecodingSyntax {
     io.circe.fs2.decoder[F, Int](implicitly[ConcurrentEffect[F]], Decoder.decodeInt)
 
   // diverging implicit expansion for type io.circe.Decoder[A] starting with lazy value decodeZoneOffset in object Decoder
-  def deriveJsonPipe[F[_]: ConcurrentEffect, A](implicit decode: Decoder[A]): Pipe[F, Json, A] = io.circe.fs2.decoder[F, A]
+  def deriveJsonPipe[F[_]: ConcurrentEffect, A](implicit decode: Decoder[A]): Pipe[F, Json, A] =
+    io.circe.fs2.decoder[F, A]
 }
