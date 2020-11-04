@@ -14,7 +14,7 @@ object Versions {
   // https://github.com/http4s/http4s/releases
   val http4s = "0.21.8"
   // https://github.com/lightbend/config/releases
-  val lightbendConfig = "1.4.0"
+  val lightbendConfig = "1.4.1"
   // https://github.com/qos-ch/logback/releases
   val logback = "1.2.3"
   // https://github.com/pureconfig/pureconfig/releases
