@@ -2,7 +2,6 @@ package io.bartholomews.fsclient.entities.oauth
 
 import cats.effect.Effect
 import io.bartholomews.fsclient.codecs.FsJsonResponsePipe
-import io.bartholomews.fsclient.entities.defaultConfig
 import io.bartholomews.fsclient.entities.oauth.v2.OAuthV2AuthorizationFramework.{
   AccessToken,
   ClientPassword,
