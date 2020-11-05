@@ -2,19 +2,21 @@ import sbt._
 
 object Versions {
   // https://github.com/typelevel/cats/releases
-  val cats = "2.1.1"
+  val cats = "2.2.0"
   // https://github.com/typelevel/cats-effect/releases
   val cats_effect = "2.2.0"
   // https://github.com/circe/circe/releases
-  val circe = "0.13.0"
+  val circe = "0.14.0-M1"
+  // https://github.com/circe/circe-generic-extras/releases
+  val circe_generic_extras = "0.13.0"
   // https://github.com/circe/circe-fs2/releases
   val circe_fs2 = "0.13.0"
   // https://github.com/circe/circe-magnolia/releases
   val circe_magnolia = "0.6.1"
   // https://github.com/http4s/http4s/releases
-  val http4s = "0.21.8"
+  val http4s = "1.0.0-M5"
   // https://github.com/lightbend/config/releases
-  val lightbendConfig = "1.4.0"
+  val lightbendConfig = "1.4.1"
   // https://github.com/qos-ch/logback/releases
   val logback = "1.2.3"
   // https://github.com/pureconfig/pureconfig/releases
@@ -44,7 +46,7 @@ object Dependencies {
     "org.http4s" %% "http4s-blaze-client" % Versions.http4s,
     "org.http4s" %% "http4s-circe" % Versions.http4s,
     "io.circe" %% "circe-fs2" % Versions.circe_fs2,
-    "io.circe" %% "circe-generic-extras" % Versions.circe,
+    "io.circe" %% "circe-generic-extras" % Versions.circe_generic_extras,
     // string interpolation to JSON model
     "io.circe" %% "circe-literal" % Versions.circe,
     // https://github.com/lloydmeta/enumeratum/releases

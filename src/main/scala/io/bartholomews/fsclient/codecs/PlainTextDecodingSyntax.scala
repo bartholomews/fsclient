@@ -1,13 +1,12 @@
 package io.bartholomews.fsclient.codecs
 
-import cats.effect.Effect
 import cats.implicits._
-import fs2.{INothing, Pipe}
+import fs2.{INothing, Pipe, RaiseThrowable}
 import io.bartholomews.fsclient.entities.EmptyResponseException
 
 trait PlainTextDecodingSyntax {
 
-  private def raiseError[F[_]: Effect](either: Either[String, String]): fs2.Stream[F, INothing] =
+  private def raiseError[F[_]: RaiseThrowable](either: Either[String, String]): fs2.Stream[F, INothing] =
     fs2.Stream.raiseError[F] {
       either match {
         case Right(response) => new Exception(s"Unexpected response: $response")
@@ -15,7 +14,7 @@ trait PlainTextDecodingSyntax {
       }
     }
 
-  final def plainTextDecoderPipe[F[_]: Effect, A](
+  final def plainTextDecoderPipe[F[_]: RaiseThrowable, A](
     pf: PartialFunction[Either[String, String], A]
   ): Pipe[F, String, A] =
     _.attempt

@@ -7,7 +7,6 @@ import io.bartholomews.fsclient.codecs.RawDecoder
 import io.bartholomews.fsclient.entities.oauth.Signer
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.circe.Json
-import org.http4s.Method.{DefaultMethodWithBody, IdempotentMethodWithBody, SafeMethodWithBody}
 import org.http4s.{EntityEncoder, Method}
 
 sealed trait FsAuthRequest[Body, Raw, Res] extends FsClientRequest[Body] {
@@ -23,19 +22,19 @@ sealed trait FsAuthRequest[Body, Raw, Res] extends FsClientRequest[Body] {
 private[fsclient] object FsAuthRequest {
 
   trait Get[Body, Raw, Res] extends FsAuthRequest[Body, Raw, Res] {
-    final override private[fsclient] def method: SafeMethodWithBody = Method.GET
+    final override private[fsclient] def method = Method.GET
   }
 
   trait Put[Body, Raw, Res] extends FsAuthRequest[Body, Raw, Res] {
-    final override private[fsclient] def method: IdempotentMethodWithBody = Method.PUT
+    final override private[fsclient] def method = Method.PUT
   }
 
   trait Post[Body, Raw, Res] extends FsAuthRequest[Body, Raw, Res] {
-    final override private[fsclient] def method: DefaultMethodWithBody = Method.POST
+    final override private[fsclient] def method = Method.POST
   }
 
   trait Delete[Body, Raw, Res] extends FsAuthRequest[Body, Raw, Res] {
-    final override private[fsclient] def method: IdempotentMethodWithBody = Method.DELETE
+    final override private[fsclient] def method = Method.DELETE
   }
 }
 
