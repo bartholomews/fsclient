@@ -12,15 +12,15 @@ private[fsclient] trait FsClientRequest[Body] {
   def headers: Headers = Headers.empty
 
   private[fsclient] def method: Method
-
   private[fsclient] def body: Option[Body]
+  private[fsclient] def requestBodyEncoder[F[_]]: EntityEncoder[F, Body]
 
   final private[fsclient] def toHttpRequest[F[_]: Effect](
     userAgent: UserAgent
-  )(implicit requestBodyEncoder: EntityEncoder[F, Body]): Request[F] =
+  ): Request[F] =
     logRequest {
       body
-        .fold[Request[F]](Request())(b => Request().withEntity(b))
+        .fold[Request[F]](Request())(b => Request().withEntity(b)(requestBodyEncoder))
         .withMethod(method)
         .withUri(uri)
         .withHeaders(headers.++(Headers.of(FsHeaders.userAgent(userAgent.value))))

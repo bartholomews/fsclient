@@ -1,7 +1,8 @@
 package io.bartholomews.fsclient.mocks
 
+import io.bartholomews.fsclient.codecs.StringPipe
 import io.bartholomews.fsclient.requests._
-import io.circe.Json
+import io.circe.{Decoder, Encoder}
 import org.http4s.Uri
 
 trait MockEndpoints {
@@ -29,24 +30,30 @@ trait MockEndpoints {
   final val ok = "timeout-response"
   final val okAccessTokenResponse = "valid-access-token-plaintext-response"
 
-  def postPlainTextEndpoint[B, R](endpoint: String, requestBody: B): FsSimpleRequest.Post[B, String, R] =
+  def postPlainTextEndpoint[B, R](endpoint: String, b: B)(implicit
+    encode: Encoder[B],
+    decoder: StringPipe[R]
+  ): FsSimplePlainText.Post[B, R] =
     new FsSimplePlainText.Post[B, R] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
-      override def entityBody: B = requestBody
+      override def requestBody: B = b
     }
 
-  def postJsonEndpoint[B, R](endpoint: String, requestBody: B): FsSimpleRequest.Post[B, Json, R] =
+  def postJsonEndpoint[B, R](endpoint: String, b: B)(implicit
+    encode: Encoder[B],
+    decoder: Decoder[R]
+  ): FsSimpleJson.Post[B, R] =
     new FsSimpleJson.Post[B, R] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
-      override def entityBody: B = requestBody
+      override def requestBody: B = b
     }
 
-  def getPlainTextEndpoint[Res](endpoint: String): FsSimpleRequest.Get[Nothing, String, Res] =
+  def getPlainTextEndpoint[Res](endpoint: String)(implicit decoder: StringPipe[Res]): FsSimplePlainText.Get[Res] =
     new FsSimplePlainText.Get[Res] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
     }
 
-  def getJsonEndpoint[Res](endpoint: String): FsSimpleRequest.Get[Nothing, Json, Res] =
+  def getJsonEndpoint[Res](endpoint: String)(implicit decoder: Decoder[Res]): FsSimpleJson.Get[Res] =
     new FsSimpleJson.Get[Res] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
     }

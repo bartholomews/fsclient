@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Updated [Readme](https://github.com/bartholomews/fsclient/compare/v0.0.2...HEAD#diff-04c6e90faac2675aa89e2176d2eec7d8) scala snippets
 - Decode < 400 as `success` status instead of just 200
-- Renamed `FsRequest` objects to `FsSimple/Auth`
+- Renamed `FsRequest` objects to `FsSimple/Auth` and providing some implicit codecs
 ### Fixed
 
 ## [0.0.2] - 2020-05-23

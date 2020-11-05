@@ -1,26 +1,5 @@
-[![CircleCI](https://circleci.com/gh/bartholomews/fsclient/tree/master.svg?style=svg)](https://circleci.com/gh/bartholomews/fsclient/tree/master)
-[![codecov](https://codecov.io/gh/bartholomews/fsclient/branch/master/graph/badge.svg)](https://codecov.io/gh/bartholomews/fsclient)
-[![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
-[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-black.svg)](http://unlicense.org/)
-<a href="https://typelevel.org/cats/"><img src="https://typelevel.org/cats/img/cats-badge.svg" height="40px" align="right" alt="Cats friendly" /></a>
+package io.bartholomews.fsclient
 
-# fsclient
-
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13)
-
-🔧 **This project is still early stage and very much WIP / experimental** 🔧  
-
-```
-libraryDependencies += "io.bartholomews" %% "fsclient" % "0.0.2"
-```
-
-*Opinionated* http client on top of http4s/fs2
-
-Motivation for this project is to 
-- play around with the Typelevel stack
-- set up oAuth handling, logging, codecs patterns for api clients
-
-```scala
 import cats.effect.{ContextShift, IO}
 import io.bartholomews.fsclient.client.FsClientV1
 import io.bartholomews.fsclient.config.UserAgent
@@ -102,30 +81,3 @@ object Example extends App {
     todo => println(todo.head.title)
   )
 }
-```
-
-## CircleCI deployment
-
-### Verify local configuration
-https://circleci.com/docs/2.0/local-cli/
-```bash
-circleci local execute
-```
-
-### CI/CD Pipeline
-
-This project is using [sbt-ci-release](https://github.com/olafurpg/sbt-ci-release) plugin:
- - Every push to master will trigger a snapshot release.  
- - In order to trigger a regular release you need to push a tag:
- 
-    ```bash
-    ./scripts/release.sh v1.0.0
-    ```
- 
- - If for some reason you need to replace an older version (e.g. the release stage failed):
- 
-    ```bash
-    TAG=v1.0.0
-    git push --delete origin ${TAG} && git tag --delete ${TAG} \
-    && ./scripts/release.sh ${TAG}
-    ```

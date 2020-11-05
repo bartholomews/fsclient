@@ -2,7 +2,7 @@ package io.bartholomews.fsclient.entities.oauth.v2
 
 import cats.data.Chain
 import io.bartholomews.fsclient.entities.oauth.{AuthorizationCode, NonRefreshableToken}
-import io.bartholomews.fsclient.requests.FsAuthJson
+import io.bartholomews.fsclient.requests.UrlFormRequest
 import io.bartholomews.fsclient.utils.FsHeaders
 import io.circe.Decoder
 import io.circe.generic.extras.semiauto.deriveUnwrappedDecoder
@@ -63,9 +63,9 @@ object OAuthV2AuthorizationFramework {
     abstract class AccessTokenRequest(
       code: String,
       maybeRedirectUri: Option[RedirectUri]
-    ) extends FsAuthJson.Post[UrlForm, AuthorizationCode] {
+    ) extends UrlFormRequest.Post[AuthorizationCode] {
       override val headers: Headers = Headers.of(FsHeaders.contentType(ContentType.APPLICATION_FORM_URLENCODED))
-      final override lazy val entityBody = UrlForm(
+      final override lazy val requestBody = UrlForm(
         Map(
           "grant_type" -> Chain("authorization_code"),
           "code" -> Chain(code),
@@ -76,9 +76,11 @@ object OAuthV2AuthorizationFramework {
 
     // https://tools.ietf.org/html/rfc6749#section-6
     abstract class RefreshTokenRequest(refreshToken: RefreshToken, scope: List[String])
-        extends FsAuthJson.Post[UrlForm, AuthorizationCode] {
+        extends UrlFormRequest.Post[AuthorizationCode] {
       override val headers: Headers = Headers.of(FsHeaders.contentType(ContentType.APPLICATION_FORM_URLENCODED))
-      final override val entityBody = UrlForm(
+      println(refreshToken)
+      println(scope)
+      final override val requestBody = UrlForm(
         Map(
           "grant_type" -> Chain("refresh_token"),
           "refresh_token" -> Chain(refreshToken.value)
@@ -106,8 +108,8 @@ object OAuthV2AuthorizationFramework {
   // https://tools.ietf.org/html/rfc6749#section-4.4
   case object ClientCredentialsGrant extends SignerType {
     // https://tools.ietf.org/html/rfc6749#section-4.4.2
-    abstract class AccessTokenRequest() extends FsAuthJson.Post[UrlForm, NonRefreshableToken] {
-      final override val entityBody = UrlForm(("grant_type", "client_credentials"))
+    abstract class AccessTokenRequest() extends UrlFormRequest.Post[NonRefreshableToken] {
+//      final override val requestBody = UrlForm(("grant_type", "client_credentials"))
       override val headers: Headers = Headers.of(FsHeaders.contentType(ContentType.APPLICATION_FORM_URLENCODED))
     }
   }

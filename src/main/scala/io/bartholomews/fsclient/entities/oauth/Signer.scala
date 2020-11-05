@@ -1,7 +1,6 @@
 package io.bartholomews.fsclient.entities.oauth
 
 import cats.effect.Effect
-import io.bartholomews.fsclient.codecs.FsJsonResponsePipe
 import io.bartholomews.fsclient.entities.oauth.v2.OAuthV2AuthorizationFramework.{
   AccessToken,
   ClientPassword,
@@ -102,7 +101,7 @@ case class AuthorizationCode(
   scope: Scope
 ) extends AccessTokenSignerV2
 
-object AuthorizationCode extends FsJsonResponsePipe[AuthorizationCode] {
+object AuthorizationCode {
   implicit val decoder: Decoder[AuthorizationCode] = (c: HCursor) =>
     for {
       accessToken <- c.downField("access_token").as[AccessToken]
@@ -135,7 +134,7 @@ case class NonRefreshableToken(
   final override val refreshToken: Option[RefreshToken] = None
 }
 
-object NonRefreshableToken extends FsJsonResponsePipe[NonRefreshableToken] {
+object NonRefreshableToken {
   implicit val decoder: Decoder[NonRefreshableToken] = (c: HCursor) =>
     for {
       accessToken <- c.downField("access_token").as[AccessToken]
