@@ -15,12 +15,13 @@ import scala.concurrent.duration.{Duration, _}
 sealed trait Signer
 
 case object AuthDisabled extends Signer
+sealed trait OAuthSigner extends Signer
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // OAUTH V1 SIGNER
 // https://tools.ietf.org/html/rfc5849#section-1.1
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sealed trait SignerV1 extends Signer {
+sealed trait SignerV1 extends OAuthSigner {
   def consumer: Consumer
   private[fsclient] def sign[F[_]: Effect](req: Request[F]): F[Request[F]]
 }
@@ -59,7 +60,7 @@ final case class AccessTokenCredentials private (token: Token, consumer: Consume
 // OAUTH V2 SIGNER
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-sealed trait SignerV2 extends Signer
+sealed trait SignerV2 extends OAuthSigner
 
 // https://tools.ietf.org/html/rfc6749#section-7.1
 case class ClientPasswordBasicAuthenticationV2(clientPassword: ClientPassword) extends SignerV2

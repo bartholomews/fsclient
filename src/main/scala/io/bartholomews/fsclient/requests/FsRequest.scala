@@ -3,7 +3,7 @@ package io.bartholomews.fsclient.requests
 import cats.effect.ConcurrentEffect
 import io.bartholomews.fsclient.client.FsClient
 import io.bartholomews.fsclient.codecs.ResDecoder
-import io.bartholomews.fsclient.entities.oauth.Signer
+import io.bartholomews.fsclient.entities.oauth.{OAuthSigner, Signer}
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.circe.{Decoder, Encoder, Json}
 import org.http4s.{Method, UrlForm}
@@ -12,8 +12,11 @@ sealed private[fsclient] trait FsRequest[Body, Raw, Res]
     extends FsClientRequest[Body]
     with RequestBodyInfo[Body]
     with HasDecoder[Raw, Res] {
-  def runWith[F[_]: ConcurrentEffect, S <: Signer](client: FsClient[F, S], signer: Option[S]): F[HttpResponse[Res]] =
-    client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), signer.getOrElse(client.appConfig.signer))(
+  def runWith[F[_]: ConcurrentEffect, S <: Signer](
+    client: FsClient[F, S],
+    oAuthSigner: Option[OAuthSigner]
+  ): F[HttpResponse[Res]] =
+    client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), oAuthSigner.getOrElse(client.appConfig.signer))(
       implicitly[ConcurrentEffect[F]],
       rawDecoder,
       resDecoder.decodePipe
@@ -22,11 +25,13 @@ sealed private[fsclient] trait FsRequest[Body, Raw, Res]
 
 sealed trait FsSimpleRequest[Body, Raw, Res] extends FsRequest[Body, Raw, Res] {
   def runWith[F[_]: ConcurrentEffect, S <: Signer](client: FsClient[F, S]): F[HttpResponse[Res]] =
-    super.runWith(client, signer = None)
+    super.runWith(client, oAuthSigner = None)
 }
 
 sealed private[fsclient] trait FsAuthRequest[Body, Raw, Res] extends FsRequest[Body, Raw, Res] {
-  def runWith[F[_]: ConcurrentEffect, S <: Signer](client: FsClient[F, S])(implicit signer: S): F[HttpResponse[Res]] =
+  def runWith[F[_]: ConcurrentEffect, S <: Signer](client: FsClient[F, S])(implicit
+    signer: OAuthSigner
+  ): F[HttpResponse[Res]] =
     super.runWith(client, Some(signer))
 }
 
@@ -293,7 +298,11 @@ object FsSimplePlainText {
 }
 
 object UrlFormRequest {
-  trait Post[Res] extends FsAuthRequest[UrlForm, Json, Res] with HasRequestBodyAsUrlForm with HasJsonDecoder[Res] {
+  abstract class Post[Res](implicit decoder: Decoder[Res])
+      extends FsAuthRequest[UrlForm, Json, Res]
+      with HasRequestBodyAsUrlForm
+      with HasJsonDecoder[Res] {
     final override private[fsclient] def method: Method = Method.POST
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder[Res]
   }
 }
