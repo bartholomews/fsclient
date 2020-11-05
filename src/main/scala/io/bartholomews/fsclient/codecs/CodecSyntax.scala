@@ -4,11 +4,11 @@ import cats.effect.{ConcurrentEffect, Effect, Sync}
 import fs2.Pipe
 import io.bartholomews.fsclient.utils.FsLogger.{rawJsonResponseLogPipe, rawPlainTextResponseLogPipe}
 import io.circe.fs2.byteStreamParser
-import io.circe.{Decoder, Encoder, Json}
-import org.http4s.circe.jsonEncoderOf
+import io.circe.{Decoder, Json}
+import org.http4s.circe.CirceEntityEncoder
 import org.http4s.{EntityEncoder, Response, UrlForm}
 
-trait CodecSyntax extends PlainTextDecodingSyntax {
+trait CodecSyntax extends PlainTextDecodingSyntax with CirceEntityEncoder {
 
   implicit def decodeListAtKey[F[_]: Sync, A](
     key: String
@@ -16,11 +16,6 @@ trait CodecSyntax extends PlainTextDecodingSyntax {
     io.circe.fs2.decoder[F, List[A]](evidence, Decoder.decodeList[A].at(key))
 
   implicit def emptyEntityEncoder[F[_]]: EntityEncoder[F, Nothing] = EntityEncoder.emptyEncoder[F, Nothing]
-
-  implicit def deriveJsonBodyEncoder[F[_]: ConcurrentEffect, Body](implicit
-    encode: Encoder[Body]
-  ): EntityEncoder[F, Body] =
-    jsonEncoderOf[F, Body]
 
   implicit def urlFormEntityEncoder[F[_]]: EntityEncoder[F, UrlForm] = UrlForm.entityEncoder
 
