@@ -2,7 +2,7 @@ package io.bartholomews.fsclient.requests
 
 import cats.effect.ConcurrentEffect
 import io.bartholomews.fsclient.client.FsClient
-import io.bartholomews.fsclient.codecs.StringPipe
+import io.bartholomews.fsclient.codecs.ResDecoder
 import io.bartholomews.fsclient.entities.oauth.Signer
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
 import io.circe.{Decoder, Encoder, Json}
@@ -16,7 +16,7 @@ sealed private[fsclient] trait FsRequest[Body, Raw, Res]
     client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), signer.getOrElse(client.appConfig.signer))(
       implicitly[ConcurrentEffect[F]],
       rawDecoder,
-      pipeDecoder
+      resDecoder.decodePipe
     )
 }
 
@@ -40,7 +40,7 @@ object FsAuthJson {
       with HasJsonDecoder[Res]
       with EmptyRequestBody {
     final override private[fsclient] def method: Method = Method.GET
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 
   abstract class Put[Body, Res](implicit encoder: Encoder[Body], decoder: Decoder[Res])
@@ -49,7 +49,7 @@ object FsAuthJson {
       with HasRequestBodyAsJson[Body] {
     final override private[fsclient] def method: Method = Method.PUT
     final override def bodyEncoder: Encoder[Body] = encoder
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 
   abstract class PutEmpty[Res](implicit decoder: Decoder[Res])
@@ -57,7 +57,7 @@ object FsAuthJson {
       with HasJsonDecoder[Res]
       with EmptyRequestBody {
     final override private[fsclient] def method: Method = Method.PUT
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 
   abstract class Post[Body, Res](implicit encoder: Encoder[Body], decoder: Decoder[Res])
@@ -66,7 +66,7 @@ object FsAuthJson {
       with HasRequestBodyAsJson[Body] {
     final override private[fsclient] def method: Method = Method.POST
     final override def bodyEncoder: Encoder[Body] = encoder
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 
   abstract class PostEmpty[Res](implicit decoder: Decoder[Res])
@@ -74,7 +74,7 @@ object FsAuthJson {
       with HasJsonDecoder[Res]
       with EmptyRequestBody {
     final override private[fsclient] def method: Method = Method.POST
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 
   abstract class Delete[Body, Res](implicit encoder: Encoder[Body], decoder: Decoder[Res])
@@ -83,7 +83,7 @@ object FsAuthJson {
       with HasRequestBodyAsJson[Body] {
     final override private[fsclient] def method: Method = Method.DELETE
     final override def bodyEncoder: Encoder[Body] = encoder
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 
   abstract class DeleteEmpty[Res](implicit decoder: Decoder[Res])
@@ -91,7 +91,7 @@ object FsAuthJson {
       with HasJsonDecoder[Res]
       with EmptyRequestBody {
     final override private[fsclient] def method: Method = Method.DELETE
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 }
 
@@ -101,47 +101,63 @@ object FsAuthJson {
 
 object FsAuthPlainText {
 
-  trait GetEmpty[Res] extends FsAuthRequest[Nothing, String, Res] with EmptyRequestBody with HasPlainTextDecoder[Res] {
+  abstract class GetEmpty[Res](implicit decoder: ResDecoder[String, Res])
+      extends FsAuthRequest[Nothing, String, Res]
+      with EmptyRequestBody
+      with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.GET
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 
-  abstract class Put[Body, Res](implicit encoder: Encoder[Body])
+  abstract class Put[Body, Res](implicit encoder: Encoder[Body], decoder: ResDecoder[String, Res])
       extends FsAuthRequest[Body, String, Res]
       with HasRequestBodyAsJson[Body]
       with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.PUT
     final override def bodyEncoder: Encoder[Body] = encoder
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 
-  trait PutEmpty[Res] extends FsAuthRequest[Nothing, String, Res] with EmptyRequestBody with HasPlainTextDecoder[Res] {
+  abstract class PutEmpty[Res](implicit decoder: ResDecoder[String, Res])
+      extends FsAuthRequest[Nothing, String, Res]
+      with EmptyRequestBody
+      with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.PUT
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 
-  abstract class Post[Body, Res](implicit encoder: Encoder[Body])
+  abstract class Post[Body, Res](implicit encoder: Encoder[Body], decoder: ResDecoder[String, Res])
       extends FsAuthRequest[Body, String, Res]
       with HasRequestBodyAsJson[Body]
       with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.POST
     final override def bodyEncoder: Encoder[Body] = encoder
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 
-  trait PostEmpty[Res] extends FsAuthRequest[Nothing, String, Res] with EmptyRequestBody with HasPlainTextDecoder[Res] {
+  abstract class PostEmpty[Res](implicit decoder: ResDecoder[String, Res])
+      extends FsAuthRequest[Nothing, String, Res]
+      with EmptyRequestBody
+      with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.POST
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 
-  abstract class Delete[Body, Res](implicit encoder: Encoder[Body])
+  abstract class Delete[Body, Res](implicit encoder: Encoder[Body], decoder: ResDecoder[String, Res])
       extends FsAuthRequest[Body, String, Res]
       with HasRequestBodyAsJson[Body]
       with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.DELETE
     final override def bodyEncoder: Encoder[Body] = encoder
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 
-  trait DeleteEmpty[Res]
+  abstract class DeleteEmpty[Res](implicit decoder: ResDecoder[String, Res])
       extends FsAuthRequest[Nothing, String, Res]
       with EmptyRequestBody
       with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.DELETE
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 }
 
@@ -155,7 +171,7 @@ object FsSimpleJson {
       with HasJsonDecoder[Res]
       with EmptyRequestBody {
     final override private[fsclient] def method: Method = Method.GET
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 
   abstract class Put[Body, Res](implicit encoder: Encoder[Body], decoder: Decoder[Res])
@@ -164,7 +180,7 @@ object FsSimpleJson {
       with HasRequestBodyAsJson[Body] {
     final override private[fsclient] def method: Method = Method.PUT
     final override def bodyEncoder: Encoder[Body] = encoder
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 
   abstract class PutEmpty[Res](implicit decoder: Decoder[Res])
@@ -172,7 +188,7 @@ object FsSimpleJson {
       with HasJsonDecoder[Res]
       with EmptyRequestBody {
     final override private[fsclient] def method: Method = Method.PUT
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 
   abstract class Post[Body, Res](implicit encoder: Encoder[Body], decoder: Decoder[Res])
@@ -181,7 +197,7 @@ object FsSimpleJson {
       with HasRequestBodyAsJson[Body] {
     final override private[fsclient] def method: Method = Method.POST
     final override def bodyEncoder: Encoder[Body] = encoder
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 
   abstract class PostEmpty[Res](implicit decoder: Decoder[Res])
@@ -189,7 +205,7 @@ object FsSimpleJson {
       with HasJsonDecoder[Res]
       with EmptyRequestBody {
     final override private[fsclient] def method: Method = Method.POST
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 
   abstract class Delete[Body, Res](implicit encoder: Encoder[Body], decoder: Decoder[Res])
@@ -198,7 +214,7 @@ object FsSimpleJson {
       with HasRequestBodyAsJson[Body] {
     final override private[fsclient] def method: Method = Method.DELETE
     final override def bodyEncoder: Encoder[Body] = encoder
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 
   abstract class DeleteEmpty[Res](implicit decoder: Decoder[Res])
@@ -206,7 +222,7 @@ object FsSimpleJson {
       with HasJsonDecoder[Res]
       with EmptyRequestBody {
     final override private[fsclient] def method: Method = Method.DELETE
-    final override def resDecoder: Decoder[Res] = decoder
+    final override def resDecoder: ResDecoder[Json, Res] = ResDecoder.jsonResDecoder
   }
 }
 
@@ -216,68 +232,68 @@ object FsSimpleJson {
 
 object FsSimplePlainText {
 
-  abstract class Get[Res](implicit decoder: StringPipe[Res])
+  abstract class Get[Res](implicit decoder: ResDecoder[String, Res])
       extends FsSimpleRequest[Nothing, String, Res]
       with EmptyRequestBody
       with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.GET
-    final override def resDecoder: StringPipe[Res] = decoder
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 
-  abstract class Put[Body, Res](implicit encoder: Encoder[Body], decoder: StringPipe[Res])
+  abstract class Put[Body, Res](implicit encoder: Encoder[Body], decoder: ResDecoder[String, Res])
       extends FsSimpleRequest[Body, String, Res]
       with HasRequestBodyAsJson[Body]
       with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.PUT
     final override def bodyEncoder: Encoder[Body] = encoder
-    final override def resDecoder: StringPipe[Res] = decoder
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 
-  abstract class PutEmpty[Res](implicit decoder: StringPipe[Res])
+  abstract class PutEmpty[Res](implicit decoder: ResDecoder[String, Res])
       extends FsSimpleRequest[Nothing, String, Res]
       with EmptyRequestBody
       with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.PUT
-    final override def resDecoder: StringPipe[Res] = decoder
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 
-  abstract class Post[Body, Res](implicit encoder: Encoder[Body], decoder: StringPipe[Res])
+  abstract class Post[Body, Res](implicit encoder: Encoder[Body], decoder: ResDecoder[String, Res])
       extends FsSimpleRequest[Body, String, Res]
       with HasRequestBodyAsJson[Body]
       with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.POST
     final override def bodyEncoder: Encoder[Body] = encoder
-    final override def resDecoder: StringPipe[Res] = decoder
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 
-  abstract class PostEmpty[Res](implicit decoder: StringPipe[Res])
+  abstract class PostEmpty[Res](implicit decoder: ResDecoder[String, Res])
       extends FsSimpleRequest[Nothing, String, Res]
       with EmptyRequestBody
       with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.POST
-    final override def resDecoder: StringPipe[Res] = decoder
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 
-  abstract class Delete[Body, Res](implicit encoder: Encoder[Body], decoder: StringPipe[Res])
+  abstract class Delete[Body, Res](implicit encoder: Encoder[Body], decoder: ResDecoder[String, Res])
       extends FsSimpleRequest[Body, String, Res]
       with HasRequestBodyAsJson[Body]
       with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.DELETE
     final override def bodyEncoder: Encoder[Body] = encoder
-    final override def resDecoder: StringPipe[Res] = decoder
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 
-  abstract class DeleteEmpty[Res](implicit decoder: StringPipe[Res])
+  abstract class DeleteEmpty[Res](implicit decoder: ResDecoder[String, Res])
       extends FsSimpleRequest[Nothing, String, Res]
       with EmptyRequestBody
       with HasPlainTextDecoder[Res] {
     final override private[fsclient] def method: Method = Method.DELETE
-    final override def resDecoder: StringPipe[Res] = decoder
+    final override def resDecoder: ResDecoder[String, Res] = decoder
   }
 }
 
 object UrlFormRequest {
-  trait Post[Res] extends FsAuthRequest[UrlForm, Json, Res] with HasRequestBodyAsUrlForm {
+  trait Post[Res] extends FsAuthRequest[UrlForm, Json, Res] with HasRequestBodyAsUrlForm with HasJsonDecoder[Res] {
     final override private[fsclient] def method: Method = Method.POST
   }
 }

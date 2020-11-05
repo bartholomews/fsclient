@@ -1,7 +1,7 @@
 package io.bartholomews.fsclient.client
 
 import cats.effect.IO
-import io.bartholomews.fsclient.codecs.StringPipe
+import io.bartholomews.fsclient.codecs.ResDecoder
 import io.bartholomews.fsclient.entities.oauth.SignerV1
 import io.bartholomews.fsclient.mocks.server.{OAuthServer, WiremockServer}
 import io.bartholomews.fsclient.requests._
@@ -18,12 +18,12 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
 
     val client: FsClient[IO, SignerV1] = validSimpleClient()
 
-    def validPlainTextResponseGetEndpoint[R](implicit decoder: StringPipe[R]): FsSimplePlainText.Get[R] =
+    def validPlainTextResponseGetEndpoint[R](implicit decoder: ResDecoder[String, R]): FsSimplePlainText.Get[R] =
       getPlainTextEndpoint[R](okPlainTextResponse)
 
     def validPlainTextResponsePostEndpoint[B, R](body: B)(implicit
       encoder: Encoder[B],
-      decoder: StringPipe[R]
+      decoder: ResDecoder[String, R]
     ): FsSimpleRequest[B, String, R] =
       postPlainTextEndpoint(okPlainTextResponse, body)
 
@@ -142,7 +142,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
 
         "respond applying the provided `plainTextDecoder`" in {
           case class MyEntity(str: String)
-          implicit val plainTextDecoder: StringPipe[MyEntity] = (str: String) => Right(MyEntity(str))
+          implicit val plainTextDecoder: ResDecoder[String, MyEntity] = (str: String) => Right(MyEntity(str))
           assertRight(expectedEntity = MyEntity("This is a valid plaintext response")) {
             validPlainTextResponseGetEndpoint[MyEntity].runWith(client)
           }
@@ -279,7 +279,7 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
 
         "respond applying the provided `plainTextDecoder`" in {
           case class MyEntity(str: Option[String])
-          implicit val plainTextDecoder: StringPipe[MyEntity] = (str: String) => Right(MyEntity(Some(str)))
+          implicit val plainTextDecoder: ResDecoder[String, MyEntity] = (str: String) => Right(MyEntity(Some(str)))
           assertRight(MyEntity(Some("This is a valid plaintext response"))) {
             validPlainTextResponsePostEndpoint[MyRequestBody, MyEntity](requestBody).runWith(client)
           }

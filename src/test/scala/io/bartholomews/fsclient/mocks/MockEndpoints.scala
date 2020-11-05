@@ -1,6 +1,6 @@
 package io.bartholomews.fsclient.mocks
 
-import io.bartholomews.fsclient.codecs.StringPipe
+import io.bartholomews.fsclient.codecs.ResDecoder
 import io.bartholomews.fsclient.requests._
 import io.circe.{Decoder, Encoder}
 import org.http4s.Uri
@@ -32,7 +32,7 @@ trait MockEndpoints {
 
   def postPlainTextEndpoint[B, R](endpoint: String, b: B)(implicit
     encode: Encoder[B],
-    decoder: StringPipe[R]
+    decoder: ResDecoder[String, R]
   ): FsSimplePlainText.Post[B, R] =
     new FsSimplePlainText.Post[B, R] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
@@ -48,7 +48,9 @@ trait MockEndpoints {
       override def requestBody: B = b
     }
 
-  def getPlainTextEndpoint[Res](endpoint: String)(implicit decoder: StringPipe[Res]): FsSimplePlainText.Get[Res] =
+  def getPlainTextEndpoint[Res](
+    endpoint: String
+  )(implicit decoder: ResDecoder[String, Res]): FsSimplePlainText.Get[Res] =
     new FsSimplePlainText.Get[Res] {
       override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$endpoint")
     }
