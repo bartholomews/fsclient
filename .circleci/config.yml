@@ -42,9 +42,9 @@ jobs:
             - ~/.m2
           key: v1-dependencies--{{ checksum "build.sbt" }}
 
-      - run:
-          name: Test / Coverage
-          command: cat /dev/null | sbt coverage test coverageReport
+#      - run:
+#          name: Test / Coverage
+#          command: cat /dev/null | sbt coverage test coverageReport
 
       - run:
           name: Codecov report
