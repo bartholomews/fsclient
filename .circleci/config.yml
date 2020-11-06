@@ -30,8 +30,8 @@ jobs:
             - v1-dependencies-
 
       - run:
-          name: Fetch tags
-          command: git fetch --tags
+          name: "What branch am I on?"
+          command: echo ${CIRCLE_BRANCH}
 
       - run:
           name: Compile code
@@ -50,35 +50,67 @@ jobs:
           name: Codecov report
           command: bash <(curl -s https://codecov.io/bash)
 
+  release:
+    docker:
+      - image: circleci/openjdk:8-jdk
+
+    # Specify service dependencies here if necessary
+    # CircleCI maintains a library of pre-built images
+    # documented at https://circleci.com/docs/2.0/circleci-images/
+    # - image: circleci/postgres:9.4
+
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      JVM_OPTS: -Xmx3200m
+      TERM: dumb
+
+    steps:
+      - checkout
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.sbt" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      - run:
+          name: Fetch tags
+          command: git fetch --tags
+
+      - run:
+          name: Compile code
+          command: cat /dev/null | sbt clean compile
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies--{{ checksum "build.sbt" }}
+
       - run:
           name: Setup GPG
           command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
               mkdir ~/.gnupg && touch ~/.gnupg/gpg.conf
               echo use-agent >> ~/.gnupg/gpg.conf
               echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
               echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
               echo RELOADAGENT | gpg-connect-agent
               echo $PGP_SECRET | base64 --decode | gpg --import --no-tty --batch --yes
-            else
-              echo "${CIRCLE_BRANCH} != master, skipping gpg setup"
-            fi
 
       - run:
           name: Release
-          command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              sbt ci-release
-            else
-              echo "${CIRCLE_BRANCH} != master, skipping release step"
-            fi
+          command: sbt ci-release
 
 workflows:
   version: 2
   fsclient:
     jobs:
       - build:
+      - release:
           context: Sonatype
           filters:
+            branches:
+              only: master
             tags:
               only: /^v\d+\.\d+\.\d+$/
