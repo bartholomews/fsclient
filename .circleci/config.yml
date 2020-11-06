@@ -80,13 +80,8 @@ jobs:
           command: git fetch --tags
 
       - run:
-          name: Compile code
-          command: cat /dev/null | sbt clean compile
-
-      - save_cache:
-          paths:
-            - ~/.m2
-          key: v1-dependencies--{{ checksum "build.sbt" }}
+          name: Skip this job for Pull Requests
+          command: '[[ -v CIRCLE_PR_NUMBER ]] && circleci step halt || true'
 
       - run:
           name: Setup GPG

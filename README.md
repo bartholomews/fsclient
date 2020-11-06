@@ -8,10 +8,10 @@
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13)
 
-🔧 **This project is still early stage and very much WIP / experimental** 🔧  
+🔧 **This project is still early stage and ery much WIP / experimental** 🔧  
 
 ```
-libraryDependencies += "io.bartholomews" %% "fsclient" % "0.0.2"
+libraryDependencies += "io.bartholomews" %% "fsclient" % "0.0.3"
 ```
 
 *Opinionated* http client on top of http4s/fs2
