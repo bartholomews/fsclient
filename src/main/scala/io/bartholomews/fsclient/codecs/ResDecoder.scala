@@ -12,6 +12,7 @@ trait ResDecoder[Raw, Res] {
 
 object ResDecoder {
   implicit val stringPipeIdentity: ResDecoder[String, String] = _.asRight
+  implicit def unitResDecoder[Raw]: ResDecoder[Raw, Unit] = _ => Right(())
   implicit def jsonResDecoder[Res](implicit decoder: Decoder[Res]): ResDecoder[Json, Res] =
     (raw: Json) => decoder.apply(raw.hcursor)
 }

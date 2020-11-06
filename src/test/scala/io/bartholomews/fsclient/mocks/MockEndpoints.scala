@@ -7,7 +7,7 @@ import org.http4s.Uri
 
 trait MockEndpoints {
 
-  private val wiremockBaseUri = "http://127.0.0.1:8080"
+  val wiremockBaseUri = "http://127.0.0.1:8080"
 
   final val notFoundJsonResponse = "not-found-json-response"
   final val notFoundPlainTextResponse = "not-found-plaintext-response"

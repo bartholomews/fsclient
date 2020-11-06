@@ -1,14 +1,16 @@
 package io.bartholomews.fsclient.client
 
 import cats.effect.IO
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.github.tomakehurst.wiremock.client.MappingBuilder
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, post, stubFor, urlPathEqualTo}
 import io.bartholomews.fsclient.codecs.ResDecoder
 import io.bartholomews.fsclient.entities.oauth.SignerV1
 import io.bartholomews.fsclient.mocks.server.{OAuthServer, WiremockServer}
 import io.bartholomews.fsclient.requests._
-import io.circe.generic.codec.DerivedAsObjectCodec.deriveCodec
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder, Json}
-import org.http4s.Status
+import org.http4s.{Status, Uri}
 import org.scalatest.tagobjects.Slow
 import org.scalatest.wordspec.AnyWordSpec
 
@@ -17,6 +19,16 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
   "A valid simple client with no OAuth" when {
 
     val client: FsClient[IO, SignerV1] = validSimpleClient()
+
+    case class ValidEntity(message: String)
+    object ValidEntity {
+      implicit val decoder: Decoder[ValidEntity] = io.circe.generic.semiauto.deriveDecoder
+    }
+
+    case class InvalidEntity(something: Boolean)
+    object InvalidEntity {
+      implicit val decoder: Decoder[InvalidEntity] = io.circe.generic.semiauto.deriveDecoder
+    }
 
     def validPlainTextResponseGetEndpoint[R](implicit decoder: ResDecoder[String, R]): FsSimplePlainText.Get[R] =
       getPlainTextEndpoint[R](okPlainTextResponse)
@@ -38,7 +50,9 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
 
     case class MyRequestBody(a: String, b: List[Int])
     object MyRequestBody {
+
       import io.circe.generic.semiauto._
+
       implicit val encoder: Encoder[MyRequestBody] = deriveEncoder
       implicit val decoder: Decoder[MyRequestBody] = deriveDecoder
     }
@@ -61,10 +75,6 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
         }
 
         "retrieve the decoded json with Status Ok and entity" in {
-          case class ValidEntity(message: String)
-          object ValidEntity {
-            implicit val decoder: Decoder[ValidEntity] = io.circe.generic.semiauto.deriveDecoder
-          }
           assertRight(ValidEntity("this is a json response")) {
             val r: FsSimpleJson.Get[ValidEntity] = validResponseGetEndpoint[ValidEntity]
             r.runWith(client)
@@ -72,14 +82,12 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
         }
 
         "respond with error if the response json is unexpected" in {
-          case class InvalidEntity(something: Boolean)
           assertDecodingFailure {
             validResponseGetEndpoint[InvalidEntity].runWith(client)
           }
         }
 
         "respond with error if the response body is empty" in {
-          case class InvalidEntity(something: Boolean)
           assertDecodingFailure {
             validResponseGetEndpoint[InvalidEntity].runWith(client)
           }
@@ -204,21 +212,18 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
         }
 
         "retrieve the decoded json with Status Ok and entity" in {
-          case class ValidEntity(message: String)
           assertRight(ValidEntity("this is a json response")) {
             validResponsePostJsonEndpoint[ValidEntity].runWith(client)
           }
         }
 
         "respond with error if the response json is unexpected" in {
-          case class InvalidEntity(something: Boolean)
           assertDecodingFailure {
             validResponsePostJsonEndpoint[InvalidEntity].runWith(client)
           }
         }
 
         "respond with error if the response body is empty" in {
-          case class InvalidEntity(something: Boolean)
           assertDecodingFailure {
             validResponsePostJsonEndpoint[InvalidEntity].runWith(client)
           }
@@ -334,6 +339,44 @@ class IOClientTest extends AnyWordSpec with IOClientMatchers with WiremockServer
       }
 
       // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    }
+
+    "calling a POST endpoint with Unit response" when {
+      val samplePath = "unitTest"
+      def endpoint: MappingBuilder = post(urlPathEqualTo("/unitTest"))
+
+      "response is successful" should {
+
+        "return Status Ok and Unit entity regardless of the plainText response" in {
+          val endpointRequest = endpoint
+          stubFor(endpointRequest.willReturn(aResponse().withStatus(200)))
+
+          assertRight(()) {
+            new FsSimplePlainText.Post[String, Unit] {
+              override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$samplePath")
+              override def requestBody: String = "Payload"
+            }.runWith(client)
+          }
+        }
+
+        "return Status Ok and Unit entity for a valid Json response" in {
+          val endpointRequest = endpoint
+          stubFor(
+            endpointRequest.willReturn(
+              aResponse()
+                .withStatus(200)
+                .withJsonBody(new ObjectMapper().createObjectNode())
+            )
+          )
+
+          assertRight(()) {
+            new FsSimpleJson.Post[String, Unit] {
+              override val uri: Uri = Uri.unsafeFromString(s"$wiremockBaseUri/$samplePath")
+              override def requestBody: String = "Payload"
+            }.runWith(client)
+          }
+        }
+      }
     }
   }
 }
