@@ -30,10 +30,6 @@ jobs:
             - v1-dependencies-
 
       - run:
-          name: "Is a PR?"
-          command: echo ${CIRCLE_PR_NUMBER}
-
-      - run:
           name: Compile code
           command: cat /dev/null | sbt clean compile
 
