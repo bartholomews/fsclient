@@ -6,15 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- *No changes*
 ### Removed
+- *No changes*
 ### Changed
-### Fixed
+- *No changes*
+### Fixed 
+- *No changes*
 
 ## [0.0.3] - 2020-11-06
 ### Added
 - `PUT` / `DELETE` requests and `Unit` decoders
 ### Removed
-- Logger name from config (to avoid concurrency error when using multiple clients)
+- Removed `Logger` name from config (to avoid concurrency error when using multiple clients)
 - Removed implicit attribute to `deriveJsonPipe` in `CodecSyntax` to avoid diverging expansion 
 ### Changed
 - Updated [Readme](https://github.com/bartholomews/fsclient/compare/v0.0.2...HEAD#diff-04c6e90faac2675aa89e2176d2eec7d8) scala snippets
