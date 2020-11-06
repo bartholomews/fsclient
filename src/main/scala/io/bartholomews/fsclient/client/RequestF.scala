@@ -2,8 +2,8 @@ package io.bartholomews.fsclient.client
 
 import cats.Applicative
 import cats.effect.{ConcurrentEffect, Effect}
-import fs2.{Pipe, Pure, Stream}
-import io.bartholomews.fsclient.codecs.RawDecoder
+import fs2.{Pure, Stream}
+import io.bartholomews.fsclient.codecs.{RawDecoder, ResDecoder}
 import io.bartholomews.fsclient.entities._
 import io.bartholomews.fsclient.entities.oauth._
 import io.bartholomews.fsclient.utils.HttpTypes.HttpResponse
@@ -20,7 +20,7 @@ private[client] trait RequestF {
     request: Request[F],
     client: Client[F],
     signer: Signer
-  )(implicit rawDecoder: RawDecoder[Raw], resDecoder: Pipe[F, Raw, Res]): Stream[F, HttpResponse[Res]] =
+  )(implicit rawDecoder: RawDecoder[Raw], resDecoder: ResDecoder[Raw, Res]): Stream[F, HttpResponse[Res]] =
     signRequest[F, Raw, Res](request, signer).flatMap(processRequest[F, Raw, Res](client))
 
   private def signRequest[F[_]: ConcurrentEffect: Applicative, Raw, Res](
@@ -64,7 +64,7 @@ private[client] trait RequestF {
 
   private def processRequest[F[_]: Effect, Raw, Res](client: Client[F])(
     request: Request[F]
-  )(implicit rawDecoder: RawDecoder[Raw], resDecoder: Pipe[F, Raw, Res]): Stream[F, HttpResponse[Res]] =
+  )(implicit rawDecoder: RawDecoder[Raw], resDecoder: ResDecoder[Raw, Res]): Stream[F, HttpResponse[Res]] =
     client
       .stream(request)
       .through(responseHeadersLogPipe)

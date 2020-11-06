@@ -3,7 +3,7 @@ package io.bartholomews.fsclient.client
 import cats.effect.Effect
 import cats.implicits._
 import fs2.{Pipe, Stream}
-import io.bartholomews.fsclient.codecs.RawDecoder
+import io.bartholomews.fsclient.codecs.{RawDecoder, ResDecoder}
 import io.bartholomews.fsclient.entities.{EmptyResponseException, ErrorBody, ErrorBodyString}
 import io.bartholomews.fsclient.utils.HttpTypes._
 import io.bartholomews.fsclient.utils.{FsHeaders, FsLogger}
@@ -29,10 +29,10 @@ private[client] object HttpPipes {
    */
   def decodeResponse[F[_]: Effect, Raw, Res](
     rawDecoder: RawDecoder[Raw],
-    resDecoder: Pipe[F, Raw, Res]
+    resDecoder: ResDecoder[Raw, Res]
   ): Pipe[F, Response[F], ErrorOr[Res]] =
-    _.through(rawDecoder.decode)
-      .through(resDecoder)
+    _.through(rawDecoder.pipe)
+      .through(resDecoder.pipe)
       .attempt
       .through(errorLogPipe)
       .map(_.leftMap { error =>

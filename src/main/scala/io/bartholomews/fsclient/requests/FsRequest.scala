@@ -19,7 +19,7 @@ sealed private[fsclient] trait FsRequest[Body, Raw, Res]
     client.fetch(this.toHttpRequest[F](client.appConfig.userAgent), oAuthSigner.getOrElse(client.appConfig.signer))(
       implicitly[ConcurrentEffect[F]],
       rawDecoder,
-      resDecoder.decodePipe
+      resDecoder
     )
 }
 

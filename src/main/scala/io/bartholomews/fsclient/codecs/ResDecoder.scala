@@ -6,7 +6,7 @@ import io.circe.{Decoder, Json}
 
 trait ResDecoder[Raw, Res] {
   def decode(raw: Raw): Either[Throwable, Res]
-  final def decodePipe[F[_]: RaiseThrowable]: Pipe[F, Raw, Res] =
+  final def pipe[F[_]: RaiseThrowable]: Pipe[F, Raw, Res] =
     _.flatMap(str => decode(str).fold(fs2.Stream.raiseError[F], fs2.Stream.emit))
 }
 
