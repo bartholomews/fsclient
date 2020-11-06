@@ -91,22 +91,26 @@ jobs:
       - run:
           name: Setup GPG
           command: |
-              mkdir ~/.gnupg && touch ~/.gnupg/gpg.conf
-              echo use-agent >> ~/.gnupg/gpg.conf
-              echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
-              echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
-              echo RELOADAGENT | gpg-connect-agent
-              echo $PGP_SECRET | base64 --decode | gpg --import --no-tty --batch --yes
+            mkdir ~/.gnupg && touch ~/.gnupg/gpg.conf
+            echo use-agent >> ~/.gnupg/gpg.conf
+            echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+            echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+            echo RELOADAGENT | gpg-connect-agent
+            echo $PGP_SECRET | base64 --decode | gpg --import --no-tty --batch --yes
 
       - run:
           name: Release
           command: sbt ci-release
 
+# https://circleci.com/docs/2.0/workflows/#executing-workflows-for-a-git-tag
 workflows:
   version: 2
   fsclient:
     jobs:
-      - build
+      - build:
+          filters:
+            tags:
+              only: /^v\d+\.\d+\.\d+$/
       - release:
           requires:
             - build
