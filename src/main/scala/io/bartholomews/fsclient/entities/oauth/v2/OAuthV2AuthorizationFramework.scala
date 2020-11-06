@@ -109,7 +109,7 @@ object OAuthV2AuthorizationFramework {
   case object ClientCredentialsGrant extends SignerType {
     // https://tools.ietf.org/html/rfc6749#section-4.4.2
     abstract class AccessTokenRequest() extends UrlFormRequest.Post[NonRefreshableToken] {
-//      final override val requestBody = UrlForm(("grant_type", "client_credentials"))
+      final override val requestBody = UrlForm(("grant_type", "client_credentials"))
       override val headers: Headers = Headers.of(FsHeaders.contentType(ContentType.APPLICATION_FORM_URLENCODED))
     }
   }
