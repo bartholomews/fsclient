@@ -109,7 +109,7 @@ object Example extends App {
 ### Verify local configuration
 https://circleci.com/docs/2.0/local-cli/
 ```bash
-circleci local execute
+circleci config validate
 ```
 
 ### CI/CD Pipeline

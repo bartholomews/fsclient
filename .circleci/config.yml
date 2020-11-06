@@ -106,7 +106,7 @@ workflows:
   version: 2
   fsclient:
     jobs:
-      - build:
+      - build
       - release:
           context: Sonatype
           filters:
