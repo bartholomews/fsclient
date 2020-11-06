@@ -75,10 +75,6 @@ jobs:
           name: Fetch tags
           command: git fetch --tags
 
-#      - run:
-#          name: Skip this job for Pull Requests
-#          command: '[[ -v CIRCLE_PR_NUMBER ]] && true || circleci step halt'
-
       - run:
           name: Setup GPG
           command: |
