@@ -108,6 +108,8 @@ workflows:
     jobs:
       - build
       - release:
+          requires:
+            - build
           context: Sonatype
           filters:
             branches:
