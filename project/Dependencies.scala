@@ -14,7 +14,7 @@ object Versions {
   // https://github.com/circe/circe-magnolia/releases
   val circe_magnolia = "0.6.1"
   // https://github.com/http4s/http4s/releases
-  val http4s = "1.0.0-M5"
+  val http4s = "1.0.0-M6"
   // https://github.com/lightbend/config/releases
   val lightbendConfig = "1.4.1"
   // https://github.com/qos-ch/logback/releases
@@ -22,7 +22,7 @@ object Versions {
   // https://github.com/pureconfig/pureconfig/releases
   val pureConfig = "0.14.0"
   // https://github.com/scalatest/scalatest/releases
-  val scalaTest = "3.2.2"
+  val scalaTest = "3.2.3"
   // https://github.com/tomakehurst/wiremock/releases
   val wiremock = "2.27.2"
 }
