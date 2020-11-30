@@ -55,7 +55,7 @@ object Dependencies {
 
   lazy val apache: Seq[ModuleID] = Seq(
     // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpcore
-    "org.apache.httpcomponents" % "httpcore" % "4.4.13"
+    "org.apache.httpcomponents" % "httpcore" % "4.4.14"
   )
 
   val dependencies: Seq[ModuleID] =
