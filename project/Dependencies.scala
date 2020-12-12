@@ -14,7 +14,7 @@ object Versions {
   // https://github.com/circe/circe-magnolia/releases
   val circe_magnolia = "0.6.1"
   // https://github.com/http4s/http4s/releases
-  val http4s = "1.0.0-M8"
+  val http4s = "1.0.0-M9"
   // https://github.com/lightbend/config/releases
   val lightbendConfig = "1.4.1"
   // https://github.com/qos-ch/logback/releases
