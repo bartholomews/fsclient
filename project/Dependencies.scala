@@ -6,7 +6,7 @@ object Versions {
   // https://github.com/typelevel/cats-effect/releases
   val cats_effect = "2.3.1"
   // https://github.com/circe/circe/releases
-  val circe = "0.14.0-M1"
+  val circe = "0.14.0-M2"
   // https://github.com/circe/circe-generic-extras/releases
   val circe_generic_extras = "0.13.0"
   // https://github.com/circe/circe-fs2/releases
