@@ -9,10 +9,6 @@ object Versions {
   val circe = "0.14.0-M1"
   // https://github.com/circe/circe-generic-extras/releases
   val circe_generic_extras = "0.13.0"
-  // https://github.com/circe/circe-fs2/releases
-  val circe_fs2 = "0.13.0"
-  // https://github.com/circe/circe-magnolia/releases
-  val circe_magnolia = "0.6.1"
   // https://github.com/lightbend/config/releases
   val lightbendConfig = "1.4.1"
   // https://github.com/qos-ch/logback/releases
@@ -47,7 +43,6 @@ object Dependencies {
   lazy val typelevel: Seq[ModuleID] = Seq(
     "com.typesafe" % "config" % Versions.lightbendConfig,
     "org.typelevel" %% "cats-effect" % Versions.cats_effect,
-    "io.circe" %% "circe-fs2" % Versions.circe_fs2,
     "io.circe" %% "circe-generic-extras" % Versions.circe_generic_extras,
     // string interpolation to JSON model
     "io.circe" %% "circe-literal" % Versions.circe,
@@ -55,13 +50,8 @@ object Dependencies {
     "com.beachape" %% "enumeratum-circe" % "1.6.1"
   )
 
-  lazy val apache: Seq[ModuleID] = Seq(
-    // https://mvnrepository.com/artifact/org.apache.httpcomponents/httpcore
-    "org.apache.httpcomponents" % "httpcore" % "4.4.13"
-  )
-
   val dependencies: Seq[ModuleID] =
-    apache ++ logback ++ pureConfig ++ sttp ++ typelevel
+    logback ++ pureConfig ++ sttp ++ typelevel
 
   lazy val testDependencies: Seq[ModuleID] = Seq(
     "org.scalactic" %% "scalactic" % Versions.scalaTest,
