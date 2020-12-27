@@ -1,4 +1,4 @@
-package io.bartholomews.fsclient.config
+package io.bartholomews.fsclient.core.config
 
 case class UserAgent(appName: String, appVersion: Option[String], appUrl: Option[String]) {
 

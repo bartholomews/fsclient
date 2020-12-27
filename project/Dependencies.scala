@@ -13,8 +13,6 @@ object Versions {
   val circe_fs2 = "0.13.0"
   // https://github.com/circe/circe-magnolia/releases
   val circe_magnolia = "0.6.1"
-  // https://github.com/http4s/http4s/releases
-  val http4s = "1.0.0-M6"
   // https://github.com/lightbend/config/releases
   val lightbendConfig = "1.4.1"
   // https://github.com/qos-ch/logback/releases
@@ -23,6 +21,8 @@ object Versions {
   val pureConfig = "0.14.0"
   // https://github.com/scalatest/scalatest/releases
   val scalaTest = "3.2.3"
+  // https://github.com/softwaremill/sttp/releases
+  val sttp = "2.2.9"
   // https://github.com/tomakehurst/wiremock/releases
   val wiremock = "2.27.2"
 }
@@ -39,12 +39,14 @@ object Dependencies {
     "com.github.pureconfig" %% "pureconfig-cats-effect"
   ).map(_ % Versions.pureConfig)
 
+  lazy val sttp = Seq(
+    "com.softwaremill.sttp.client" %% "core" % Versions.sttp,
+    "com.softwaremill.sttp.client" %% "circe" % Versions.sttp
+  )
+
   lazy val typelevel: Seq[ModuleID] = Seq(
     "com.typesafe" % "config" % Versions.lightbendConfig,
     "org.typelevel" %% "cats-effect" % Versions.cats_effect,
-    "org.http4s" %% "http4s-dsl" % Versions.http4s,
-    "org.http4s" %% "http4s-blaze-client" % Versions.http4s,
-    "org.http4s" %% "http4s-circe" % Versions.http4s,
     "io.circe" %% "circe-fs2" % Versions.circe_fs2,
     "io.circe" %% "circe-generic-extras" % Versions.circe_generic_extras,
     // string interpolation to JSON model
@@ -59,7 +61,7 @@ object Dependencies {
   )
 
   val dependencies: Seq[ModuleID] =
-    apache ++ logback ++ pureConfig ++ typelevel
+    apache ++ logback ++ pureConfig ++ sttp ++ typelevel
 
   lazy val testDependencies: Seq[ModuleID] = Seq(
     "org.scalactic" %% "scalactic" % Versions.scalaTest,

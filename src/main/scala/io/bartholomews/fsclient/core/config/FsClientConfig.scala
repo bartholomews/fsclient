@@ -1,7 +1,7 @@
-package io.bartholomews.fsclient.config
+package io.bartholomews.fsclient.core.config
 
-import io.bartholomews.fsclient.entities.oauth.{AuthDisabled, ClientCredentials, Signer, SignerV1}
-import org.http4s.client.oauth1.Consumer
+import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.Consumer
+import io.bartholomews.fsclient.core.oauth.{AuthDisabled, ClientCredentials, Signer, SignerV1}
 import pureconfig.ConfigReader.Result
 import pureconfig.ConfigSource
 import pureconfig.error.ConfigReaderException

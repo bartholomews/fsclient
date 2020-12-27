@@ -2,6 +2,7 @@
 *.log
 *.idea
 .bsp
+.bloop
 project/project
 project/target
 target
