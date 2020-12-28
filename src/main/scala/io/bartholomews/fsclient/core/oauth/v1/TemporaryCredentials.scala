@@ -1,6 +1,6 @@
 package io.bartholomews.fsclient.core.oauth.v1
 
-import io.bartholomews.fsclient.core.http.FromPlainText
+import io.bartholomews.fsclient.core.http.ResponseMapping
 import io.bartholomews.fsclient.core.oauth.ResourceOwnerAuthorizationUri
 import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, Token}
 import sttp.client.DeserializationError
@@ -20,22 +20,23 @@ case class TemporaryCredentials(
 }
 
 object TemporaryCredentials {
-
-  def fromPlainText(
+  def responseMapping(
     consumer: Consumer,
     resourceOwnerAuthorizationUri: ResourceOwnerAuthorizationUri
-  ): FromPlainText[TemporaryCredentials] = {
-    case s"oauth_token=$token&oauth_token_secret=$secret&oauth_callback_confirmed=$flag" =>
-      Right(
-        TemporaryCredentials(
-          consumer = consumer,
-          token = Token(token, secret),
-          callbackConfirmed = Try(flag.toBoolean).getOrElse(false),
-          resourceOwnerAuthorizationUri
+  ): ResponseMapping[String, TemporaryCredentials] =
+    ResponseMapping.plainTextTo[TemporaryCredentials] {
+      case s"oauth_token=$token&oauth_token_secret=$secret&oauth_callback_confirmed=$flag" =>
+        Right(
+          TemporaryCredentials(
+            consumer = consumer,
+            token = Token(token, secret),
+            callbackConfirmed = Try(flag.toBoolean).getOrElse(false),
+            resourceOwnerAuthorizationUri
+          )
         )
-      )
 
-    case other =>
-      Left(DeserializationError(other, new Exception("Unexpected response")))
-  }
+      case other =>
+        Left(DeserializationError(other, new Exception("Unexpected response")))
+    }
+
 }

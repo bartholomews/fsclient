@@ -1,13 +1,12 @@
 package io.bartholomews.fsclient.core.oauth.v1
 
-import io.bartholomews.fsclient.core.http.FromPlainText
+import io.bartholomews.fsclient.core.http.FsClientSttpExtensions.mapInto
+import io.bartholomews.fsclient.core.http.ResponseMapping
 import io.bartholomews.fsclient.core.oauth.AccessTokenCredentials
 import sttp.client.{emptyRequest, Identity, RequestT, ResponseError}
 import sttp.model.Uri
 
 object OAuthV1 {
-
-  import io.bartholomews.fsclient.core.http.FsClientSttpExtensions._
 
   sealed trait SignatureMethod {
     def value: String
@@ -29,11 +28,11 @@ object OAuthV1 {
   def accessTokenRequest(
     uri: Uri
   )(implicit
-    fromString: FromPlainText[AccessTokenCredentials]
+    responseMapping: ResponseMapping[String, AccessTokenCredentials]
   ): RequestT[Identity, Either[ResponseError[Exception], AccessTokenCredentials], Nothing] =
     emptyRequest
       .post(uri)
-      .response(asStringMappedInto[AccessTokenCredentials])
+      .response(mapInto[String, AccessTokenCredentials])
 
   /** Representation of a Consumer key and secret */
   final case class Consumer(key: String, secret: String)

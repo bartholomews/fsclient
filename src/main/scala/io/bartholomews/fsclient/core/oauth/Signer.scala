@@ -2,14 +2,14 @@ package io.bartholomews.fsclient.core.oauth
 
 import cats.implicits.toBifunctorOps
 import io.bartholomews.fsclient.core.config.UserAgent
-import io.bartholomews.fsclient.core.http.FromPlainText
-import io.bartholomews.fsclient.core.http.FsClientSttpExtensions.{PartialRequestExtensions, RequestExtensions, asStringMappedInto}
-import io.bartholomews.fsclient.core.oauth.v1.Signatures.{authorization, makeOAuthParams}
+import io.bartholomews.fsclient.core.http.FsClientSttpExtensions.{mapInto, PartialRequestExtensions, RequestExtensions}
+import io.bartholomews.fsclient.core.http.ResponseMapping
 import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod, Token}
+import io.bartholomews.fsclient.core.oauth.v1.Signatures.{authorization, makeOAuthParams}
 import io.bartholomews.fsclient.core.oauth.v1.{Signatures, TemporaryCredentials}
 import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, ClientPassword, RefreshToken}
 import io.circe.{Decoder, HCursor}
-import sttp.client.{DeserializationError, Request, Response, ResponseError, SttpBackend, emptyRequest}
+import sttp.client.{emptyRequest, DeserializationError, Request, Response, ResponseError, SttpBackend}
 import sttp.model.Uri
 
 import scala.concurrent.duration.{Duration, DurationInt}
@@ -69,14 +69,14 @@ final case class TemporaryCredentialsRequest(
   )(implicit
     backend: SttpBackend[F, Nothing, Nothing]
   ): F[Response[Either[ResponseError[Exception], TemporaryCredentials]]] = {
-    implicit val fromPlainText: FromPlainText[TemporaryCredentials] =
-      TemporaryCredentials.fromPlainText(consumer, resourceOwnerAuthorizationUri)
+    implicit val responseMapping: ResponseMapping[String, TemporaryCredentials] =
+      TemporaryCredentials.responseMapping(consumer, resourceOwnerAuthorizationUri)
 
     emptyRequest
       .get(temporaryCredentialsRequestUri)
       .sign(this)
       .userAgent(userAgent)
-      .response(asStringMappedInto[TemporaryCredentials])
+      .response(mapInto[String, TemporaryCredentials])
       .send()
   }
 }
@@ -162,12 +162,16 @@ final case class AccessTokenCredentials private (token: Token, consumer: Consume
 }
 
 object AccessTokenCredentials {
-  def fromPlainText(consumer: Consumer, signatureMethod: SignatureMethod): FromPlainText[AccessTokenCredentials] = {
-    case s"oauth_token=$token&oauth_token_secret=$secret" =>
-      Right(AccessTokenCredentials(Token(token, secret), consumer, signatureMethod))
-    case other =>
-      Left(DeserializationError(other, new Exception("Unexpected response")))
-  }
+  def responseMapping(
+    consumer: Consumer,
+    signatureMethod: SignatureMethod
+  ): ResponseMapping[String, AccessTokenCredentials] =
+    ResponseMapping.plainTextTo[AccessTokenCredentials] {
+      case s"oauth_token=$token&oauth_token_secret=$secret" =>
+        Right(AccessTokenCredentials(Token(token, secret), consumer, signatureMethod))
+      case other =>
+        Left(DeserializationError(other, new Exception("Unexpected response")))
+    }
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

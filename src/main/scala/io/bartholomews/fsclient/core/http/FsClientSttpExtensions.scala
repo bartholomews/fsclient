@@ -21,7 +21,7 @@ import sttp.model.{Header, HeaderNames, MediaType, Uri}
 
 trait FsClientSttpExtensions {
 
-  // TODO: debug request.toCurl
+  type FsResponseAs[T] = ResponseAs[Either[ResponseError[Exception], T], Nothing]
 
   def baseRequest[F[_], S <: Signer](client: FsClient[F, S]): RequestT[Empty, Either[String, String], Nothing] =
     emptyRequest
@@ -33,12 +33,9 @@ trait FsClientSttpExtensions {
       else asStringAlways.map(body => Left(HttpError(body, meta.code)))
     }
 
-  def asStringMappedInto[T](implicit
-    fromPlainText: FromPlainText[T]
-  ): ResponseAs[Either[ResponseError[Exception], T], Nothing] =
-    fromMetadata { meta: ResponseMetadata =>
-      asStringAlways.map(body => if (meta.isSuccess) fromPlainText.decode(body) else Left(HttpError(body, meta.code)))
-    }
+  def mapInto[A, B](implicit
+                    responseMapping: ResponseMapping[A, B]
+  ): ResponseAs[Either[ResponseError[Exception], B], Nothing] = responseMapping.responseAs
 
   implicit class UriExtensions(uri: Uri) {
     def /(path: String): Uri =
