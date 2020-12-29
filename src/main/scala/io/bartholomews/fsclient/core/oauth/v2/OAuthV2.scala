@@ -1,10 +1,13 @@
 package io.bartholomews.fsclient.core.oauth.v2
 
-import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, NonRefreshableTokenSigner}
+import cats.implicits.toBifunctorOps
+import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, NonRefreshableTokenSigner, Scope}
 import io.circe.generic.extras.semiauto.deriveUnwrappedDecoder
 import io.circe.{Decoder, Error}
 import sttp.client.{Identity, RequestT, ResponseAs, ResponseError}
 import sttp.model.Uri
+
+import scala.util.Try
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
@@ -41,9 +44,9 @@ object OAuthV2 {
       request: AuthorizationCodeRequest,
       redirectionUriResponse: Uri
     ): Either[String, AuthorizationCode] = {
-      val responseParams = redirectionUriResponse.paramsSeq
+      val params = redirectionUriResponse.paramsMap
 
-      val maybeCode: Either[String, AuthorizationCode] = responseParams
+      def maybeCode: Either[String, AuthorizationCode] = params
         .collectFirst({
           case ("code", code)   => Right(AuthorizationCode(code))
           case ("error", error) => Left(error)
@@ -52,7 +55,7 @@ object OAuthV2 {
         .joinRight
 
       request.state.fold(maybeCode) { stateRequest =>
-        responseParams
+        params
           .collectFirst({ case ("state", stateResponse) =>
             if (stateRequest == stateResponse) maybeCode
             else Left("state_parameter_mismatch")
@@ -63,7 +66,7 @@ object OAuthV2 {
 
     // https://tools.ietf.org/html/rfc6749#section-4.1.3
     def accessTokenRequest(
-      uri: Uri,
+      serverUri: Uri,
       code: AuthorizationCode,
       maybeRedirectUri: Option[RedirectUri],
       clientPassword: ClientPassword
@@ -80,7 +83,7 @@ object OAuthV2 {
         .getOrElse(Map.empty)
 
       sttp.client.emptyRequest
-        .post(uri)
+        .post(serverUri)
         .auth
         .basic(clientPassword.clientId.value, clientPassword.clientSecret.value)
         .body(requestBody)
@@ -88,8 +91,13 @@ object OAuthV2 {
     }
 
     // https://tools.ietf.org/html/rfc6749#section-6
-    def refreshTokenRequest(uri: Uri, refreshToken: RefreshToken, scopes: List[String], clientPassword: ClientPassword)(
-      implicit handleResponse: ResponseHandler[AccessTokenSigner]
+    def refreshTokenRequest(
+      serverUri: Uri,
+      refreshToken: RefreshToken,
+      scopes: List[String],
+      clientPassword: ClientPassword
+    )(implicit
+      handleResponse: ResponseHandler[AccessTokenSigner]
     ): RequestT[Identity, Either[ResponseError[Error], AccessTokenSigner], Nothing] = {
       val requestBody: Map[String, String] = Map(
         "grant_type" -> "refresh_token",
@@ -97,7 +105,7 @@ object OAuthV2 {
       ) ++ (if (scopes.isEmpty) Map.empty else Map("scope" -> scopes.mkString(",")))
 
       sttp.client.emptyRequest
-        .post(uri)
+        .post(serverUri)
         .auth
         .basic(clientPassword.clientId.value, clientPassword.clientSecret.value)
         .body(requestBody)
@@ -113,6 +121,44 @@ object OAuthV2 {
     // https://tools.ietf.org/html/rfc6749#section-4.2.1
     def authorizationRequestUri(request: AuthorizationTokenRequest, serverUri: Uri): Uri =
       request.uri(serverUri)
+
+    // https://tools.ietf.org/html/rfc6749#section-4.2.2
+    // TODO: `AuthorizationError` type
+    def accessTokenResponse(
+      request: AuthorizationTokenRequest,
+      redirectionUriResponse: Uri
+    ): Either[String, NonRefreshableTokenSigner] = {
+      val params = redirectionUriResponse.paramsMap
+
+      def extractToken: Either[String, NonRefreshableTokenSigner] =
+        params
+          .collectFirst({ case ("error", error) => Left(error) })
+          .getOrElse(
+            for {
+              accessToken <- params.get("access_token").toRight("missing_access_token")
+              tokenType <- params.get("token_type").toRight("missing_token_type")
+              expiresIn <- params.get("expires_in").toRight("missing_expires_in").flatMap { str =>
+                Try(str.toLong).toEither.leftMap(_ => "invalid_expires_in")
+              }
+              scopes <- Right(params.get("scope").toList.flatMap(_.split(" ")))
+            } yield NonRefreshableTokenSigner.apply(
+              generatedAt = System.currentTimeMillis(),
+              accessToken = AccessToken(accessToken),
+              tokenType = tokenType,
+              expiresIn = expiresIn,
+              scope = Scope.apply(scopes)
+            )
+          )
+
+      request.state.fold(extractToken) { stateRequest =>
+        params
+          .collectFirst({ case ("state", stateResponse) =>
+            if (stateRequest == stateResponse) extractToken
+            else Left("state_parameter_mismatch")
+          })
+          .getOrElse(Left("missing_required_state_parameter"))
+      }
+    }
   }
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -121,14 +167,14 @@ object OAuthV2 {
   // https://tools.ietf.org/html/rfc6749#section-4.4
   case object ClientCredentialsGrant extends SignerType {
     // https://tools.ietf.org/html/rfc6749#section-4.4.2
-    def accessTokenRequest(uri: Uri, clientPassword: ClientPassword)(implicit
+    def accessTokenRequest(serverUri: Uri, clientPassword: ClientPassword)(implicit
       handleResponse: ResponseHandler[NonRefreshableTokenSigner]
     ): RequestT[Identity, Either[
       ResponseError[Error],
       NonRefreshableTokenSigner
     ], Nothing] = // extends UrlFormRequest.Post[NonRefreshableToken] {
       sttp.client.emptyRequest
-        .post(uri)
+        .post(serverUri)
         .auth
         .basic(clientPassword.clientId.value, clientPassword.clientSecret.value)
         .body(Map("grant_type" -> "client_credentials"))

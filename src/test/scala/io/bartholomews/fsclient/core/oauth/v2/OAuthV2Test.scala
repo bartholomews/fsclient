@@ -10,8 +10,14 @@ import io.bartholomews.fsclient.client.ClientData.{
 }
 import io.bartholomews.fsclient.client.IdentityClient
 import io.bartholomews.fsclient.core.FsClient
-import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, AuthorizationCodeGrant, ResponseHandler}
-import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
+import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{
+  AccessToken,
+  AuthorizationCodeGrant,
+  ClientCredentialsGrant,
+  ImplicitGrant,
+  ResponseHandler
+}
+import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication, NonRefreshableTokenSigner}
 import io.bartholomews.fsclient.wiremock.WiremockServer
 import org.scalatest.Inside
 import org.scalatest.matchers.should.Matchers
@@ -110,7 +116,7 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
 
         val response = AuthorizationCodeGrant
           .accessTokenRequest(
-            uri = uri"$wiremockBaseUri/authorization-server/authorize",
+            serverUri = uri"$wiremockBaseUri/authorization-server/authorize",
             sampleAuthorizationCode,
             Some(sampleRedirectUri),
             sampleClientPassword
@@ -143,7 +149,7 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
 
         val response = AuthorizationCodeGrant
           .refreshTokenRequest(
-            uri = uri"$wiremockBaseUri/authorization-server/refresh",
+            serverUri = uri"$wiremockBaseUri/authorization-server/refresh",
             sampleRefreshToken,
             scopes = List.empty,
             sampleClientPassword
@@ -152,6 +158,94 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
 
         inside(response.body) { case Right(accessTokenSigner) =>
           accessTokenSigner.accessToken shouldBe AccessToken("some-access-token")
+        }
+      }
+    }
+
+    "ImplicitGrant" should {
+
+      val authorizationTokenRequest = AuthorizationTokenRequest(
+        clientId = client.signer.clientPassword.clientId,
+        redirectUri = sampleRedirectUri,
+        state = None,
+        scopes = List.empty
+      )
+
+      val authorizationRequestUri: Uri =
+        ImplicitGrant.authorizationRequestUri(
+          authorizationTokenRequest,
+          serverUri = uri"$wiremockBaseUri/authorization-server/token"
+        )
+
+      "set the correct host and path" in {
+        authorizationRequestUri.copy(querySegments =
+          List.empty
+        ) shouldBe uri"$wiremockBaseUri/authorization-server/token"
+      }
+
+      "set the correct query params" in {
+        authorizationRequestUri.querySegments.toList shouldBe List(
+          KeyValue("redirect_uri", sampleRedirectUri.value.toString),
+          KeyValue("client_id", sampleClientPassword.clientId.value),
+          KeyValue("response_type", "token")
+        )
+      }
+
+      "return an error if user denies permissions" in {
+
+        val uriRedirect = sampleRedirectUri.value.querySegment(
+          QuerySegment.KeyValue("error", "temporarily_unavailable")
+        )
+
+        ImplicitGrant.accessTokenResponse(
+          request = authorizationTokenRequest,
+          redirectionUriResponse = uriRedirect
+        ) shouldBe Left("temporarily_unavailable")
+      }
+
+      "return the authorization code if user accepts permissions" in {
+
+        val uriRedirect = sampleRedirectUri.value.params(
+          ("access_token", "implicit-grant-access-token"),
+          ("token_type", "bearer"),
+          ("expires_in", "3600")
+        )
+
+        val response = ImplicitGrant.accessTokenResponse(
+          request = authorizationTokenRequest,
+          redirectionUriResponse = uriRedirect
+        )
+
+        inside(response) { case Right(nonRefreshableTokenSigner) =>
+          nonRefreshableTokenSigner.accessToken shouldBe AccessToken("implicit-grant-access-token")
+        }
+      }
+    }
+
+    "ClientCredentialsGrant" should {
+
+      implicit val handleResponse: ResponseHandler[NonRefreshableTokenSigner] =
+        asJson[NonRefreshableTokenSigner]
+
+      val accessTokenRequest =
+        ClientCredentialsGrant.accessTokenRequest(
+          serverUri = uri"$wiremockBaseUri/authorization-server/token",
+          sampleClientPassword
+        )
+
+      "return an access token" in {
+        stubFor(
+          post(urlMatching("/authorization-server/token"))
+            .withRequestBody(equalTo("grant_type=client_credentials"))
+            .willReturn(
+              aResponse()
+                .withStatus(200)
+                .withBodyFile("auth/client_credentials.json")
+            )
+        )
+
+        inside(accessTokenRequest.send().body) { case Right(nonRefreshableTokenSigner) =>
+          nonRefreshableTokenSigner.accessToken shouldBe AccessToken("some-access-token")
         }
       }
     }

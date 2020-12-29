@@ -1,7 +1,6 @@
-package io.bartholomews.fsclient
+package io.bartholomews.fsclient.samples.v2
 
 object AuthorizationCodeGrantExample extends App {
-
   import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
   import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RedirectUri}
@@ -75,7 +74,7 @@ object AuthorizationCodeGrantExample extends App {
   // 4. Get an access token
   val maybeToken: Either[ResponseError[io.circe.Error], AccessTokenSigner] = AuthorizationCodeGrant
     .accessTokenRequest(
-      uri = uri"https://some-authorization-server/token",
+      serverUri = uri"https://some-authorization-server/token",
       code = maybeAuthorizationCode.getOrElse(dealWithIt),
       maybeRedirectUri = Some(myRedirectUri),
       clientPassword = myClientPassword
@@ -86,7 +85,7 @@ object AuthorizationCodeGrantExample extends App {
   implicit val accessToken: AccessTokenSigner = maybeToken.getOrElse(dealWithIt)
 
   // 5. Use the access token
-  import io.bartholomews.fsclient.core.http.FsClientSttpExtensions._
+  import io.bartholomews.fsclient.core._
   // an empty request with client `User-Agent` header
   baseRequest(client)
     .get(uri"https://some-server/authenticated-endpoint")
@@ -96,7 +95,7 @@ object AuthorizationCodeGrantExample extends App {
   if (accessToken.isExpired() && accessToken.refreshToken.isDefined) {
     AuthorizationCodeGrant
       .refreshTokenRequest(
-        uri = uri"https://some-authorization-server/refresh",
+        serverUri = uri"https://some-authorization-server/refresh",
         accessToken.refreshToken.getOrElse(dealWithIt),
         scopes = accessToken.scope.values,
         clientPassword = myClientPassword
