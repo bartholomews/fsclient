@@ -26,11 +26,12 @@ scalacOptions ++= Compiler.tpolecatOptions
 scalacOptions ++= Seq(Compiler.unchecked, Compiler.deprecation)
 
 testOptions in Test ++= TestSettings.options
-coverageMinimum := 34 // FIXME
+coverageMinimum := 60 // FIXME
 coverageFailOnMinimum := true
 
 // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
 logBuffered in Test := false
+parallelExecution in Test := false
 
 addCommandAlias("test-coverage", ";clean ;coverage ;test ;coverageReport")
 addCommandAlias("test-fast", "testOnly * -- -l org.scalatest.tags.Slow")

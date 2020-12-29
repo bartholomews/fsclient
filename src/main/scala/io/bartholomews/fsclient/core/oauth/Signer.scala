@@ -8,10 +8,10 @@ import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod
 import io.bartholomews.fsclient.core.oauth.v1.Signatures.{authorization, makeOAuthParams}
 import io.bartholomews.fsclient.core.oauth.v1.{Signatures, TemporaryCredentials}
 import io.bartholomews.fsclient.core.oauth.v2.ClientPassword
-import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, RefreshToken}
+import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, RedirectUri, RefreshToken}
 import io.circe.{Decoder, HCursor}
 import sttp.client.{emptyRequest, DeserializationError, Request, Response, ResponseError, SttpBackend}
-import sttp.model.Uri
+import sttp.model.{Method, Uri}
 
 import scala.concurrent.duration.{Duration, DurationInt}
 
@@ -50,21 +50,21 @@ object ClientCredentials {
   )
 }
 
-case class CallbackUri(value: Uri) extends AnyVal
 case class ResourceOwnerAuthorizationUri(value: Uri) extends AnyVal
 
 // https://tools.ietf.org/html/rfc5849#page-9
 // it returns a `TemporaryCredentials`
 final case class TemporaryCredentialsRequest(
   consumer: Consumer,
-  callbackUri: CallbackUri,
+  redirectUri: RedirectUri,
   signatureMethod: SignatureMethod
 ) extends SignerV1 {
 
   override private[fsclient] val maybeToken: Option[Token] = None
 
   def send[F[_], S <: SignerV1](
-    temporaryCredentialsRequestUri: Uri,
+    method: Method,
+    serverUri: Uri,
     userAgent: UserAgent,
     resourceOwnerAuthorizationUri: ResourceOwnerAuthorizationUri
   )(implicit
@@ -74,7 +74,7 @@ final case class TemporaryCredentialsRequest(
       TemporaryCredentials.responseMapping(consumer, resourceOwnerAuthorizationUri)
 
     emptyRequest
-      .get(temporaryCredentialsRequestUri)
+      .method(method, serverUri)
       .sign(this)
       .userAgent(userAgent)
       .response(mapInto[String, TemporaryCredentials])
@@ -83,10 +83,10 @@ final case class TemporaryCredentialsRequest(
 }
 
 object TemporaryCredentialsRequest {
-  def apply(consumer: Consumer, callbackUri: CallbackUri): TemporaryCredentialsRequest =
+  def apply(consumer: Consumer, redirectUri: RedirectUri): TemporaryCredentialsRequest =
     new TemporaryCredentialsRequest(
       consumer,
-      callbackUri,
+      redirectUri,
       SignatureMethod.SHA1
     )
 }
@@ -110,29 +110,29 @@ final case class RequestTokenCredentials(
 
 object RequestTokenCredentials {
   /*
-   callbackUri MUST be updated and have oauth_token and oauth_verifier
+   redirectUri MUST be updated and have oauth_token and oauth_verifier
    parameters as per https://tools.ietf.org/html/rfc5849#section-2.2
    */
-  def apply(
-    callbackUri: CallbackUri,
+  def validate(
+    redirectUri: RedirectUri,
     temporaryCredentials: TemporaryCredentials
-  ): Either[DeserializationError[Exception], RequestTokenCredentials] = apply(
-    callbackUri,
+  ): Either[DeserializationError[Exception], RequestTokenCredentials] = validate(
+    redirectUri,
     temporaryCredentials,
     SignatureMethod.SHA1
   )
 
   /*
-   callbackUri MUST be updated and have oauth_token and oauth_verifier
+   redirectUri MUST be updated and have oauth_token and oauth_verifier
    parameters as per https://tools.ietf.org/html/rfc5849#section-2.2
    */
-  def apply(
-    callbackUri: CallbackUri,
+  def validate(
+    redirectUri: RedirectUri,
     temporaryCredentials: TemporaryCredentials,
     signatureMethod: SignatureMethod
   ): Either[DeserializationError[Exception], RequestTokenCredentials] = {
 
-    val queryParams = callbackUri.value.paramsSeq
+    val queryParams = redirectUri.value.paramsSeq
     val callbackResponse: Either[String, String] = queryParams
       .collectFirst({
         case ("denied", _) => Left("permission_denied")

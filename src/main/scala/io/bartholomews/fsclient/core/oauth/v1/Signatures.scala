@@ -49,7 +49,7 @@ object Signatures {
     ) ++ (signer match {
       case _: ClientCredentials => List.empty
       case c: TemporaryCredentialsRequest =>
-        List(("oauth_callback", encode(c.callbackUri.value.toString())))
+        List(("oauth_callback", encode(c.redirectUri.value.toString())))
       case c: TokenCredentials =>
         Tuple2("oauth_token", c.token.value) ::
           c.tokenVerifier.toList.map(verifier => ("oauth_verifier", verifier))

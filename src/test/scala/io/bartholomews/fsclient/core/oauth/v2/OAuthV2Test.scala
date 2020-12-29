@@ -51,13 +51,11 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
       val authorizationRequestUri: Uri =
         AuthorizationCodeGrant.authorizationRequestUri(
           authorizationCodeRequest,
-          serverUri = uri"$wiremockBaseUri/authorization-server/code"
+          serverUri = uri"$wiremockBaseUri/oauth/code"
         )
 
       "set the correct host and path" in {
-        authorizationRequestUri.copy(querySegments =
-          List.empty
-        ) shouldBe uri"$wiremockBaseUri/authorization-server/code"
+        authorizationRequestUri.copy(querySegments = List.empty) shouldBe uri"$wiremockBaseUri/oauth/code"
       }
 
       "set the correct query params" in {
@@ -105,7 +103,7 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
         ).mkString("&")
 
         stubFor(
-          post(urlMatching("/authorization-server/authorize"))
+          post(urlMatching("/oauth/authorize"))
             .withRequestBody(equalTo(expectedRequestBody))
             .willReturn(
               aResponse()
@@ -116,7 +114,7 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
 
         val response = AuthorizationCodeGrant
           .accessTokenRequest(
-            serverUri = uri"$wiremockBaseUri/authorization-server/authorize",
+            serverUri = uri"$wiremockBaseUri/oauth/authorize",
             sampleAuthorizationCode,
             Some(sampleRedirectUri),
             sampleClientPassword
@@ -138,7 +136,7 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
         ).mkString("&")
 
         stubFor(
-          post(urlMatching("/authorization-server/refresh"))
+          post(urlMatching("/oauth/refresh"))
             .withRequestBody(equalTo(expectedRequestBody))
             .willReturn(
               aResponse()
@@ -149,7 +147,7 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
 
         val response = AuthorizationCodeGrant
           .refreshTokenRequest(
-            serverUri = uri"$wiremockBaseUri/authorization-server/refresh",
+            serverUri = uri"$wiremockBaseUri/oauth/refresh",
             sampleRefreshToken,
             scopes = List.empty,
             sampleClientPassword
@@ -174,13 +172,11 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
       val authorizationRequestUri: Uri =
         ImplicitGrant.authorizationRequestUri(
           authorizationTokenRequest,
-          serverUri = uri"$wiremockBaseUri/authorization-server/token"
+          serverUri = uri"$wiremockBaseUri/oauth/token"
         )
 
       "set the correct host and path" in {
-        authorizationRequestUri.copy(querySegments =
-          List.empty
-        ) shouldBe uri"$wiremockBaseUri/authorization-server/token"
+        authorizationRequestUri.copy(querySegments = List.empty) shouldBe uri"$wiremockBaseUri/oauth/token"
       }
 
       "set the correct query params" in {
@@ -229,13 +225,13 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
 
       val accessTokenRequest =
         ClientCredentialsGrant.accessTokenRequest(
-          serverUri = uri"$wiremockBaseUri/authorization-server/token",
+          serverUri = uri"$wiremockBaseUri/oauth/token",
           sampleClientPassword
         )
 
       "return an access token" in {
         stubFor(
-          post(urlMatching("/authorization-server/token"))
+          post(urlMatching("/oauth/token"))
             .withRequestBody(equalTo("grant_type=client_credentials"))
             .willReturn(
               aResponse()
