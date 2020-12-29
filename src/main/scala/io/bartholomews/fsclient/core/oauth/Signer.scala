@@ -7,7 +7,8 @@ import io.bartholomews.fsclient.core.http.ResponseMapping
 import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod, Token}
 import io.bartholomews.fsclient.core.oauth.v1.Signatures.{authorization, makeOAuthParams}
 import io.bartholomews.fsclient.core.oauth.v1.{Signatures, TemporaryCredentials}
-import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, ClientPassword, RefreshToken}
+import io.bartholomews.fsclient.core.oauth.v2.ClientPassword
+import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, RefreshToken}
 import io.circe.{Decoder, HCursor}
 import sttp.client.{emptyRequest, DeserializationError, Request, Response, ResponseError, SttpBackend}
 import sttp.model.Uri
@@ -181,13 +182,13 @@ object AccessTokenCredentials {
 sealed trait SignerV2 extends OAuthSigner
 
 // https://tools.ietf.org/html/rfc6749#section-7.1
-final case class ClientPasswordBasicAuthenticationV2(clientPassword: ClientPassword) extends SignerV2 {
+final case class ClientPasswordAuthentication(clientPassword: ClientPassword) extends SignerV2 {
   override def sign[T, S](request: Request[T, S]): Request[T, S] =
     request.auth.basic(clientPassword.clientId.value, clientPassword.clientSecret.value)
 }
 
 // https://tools.ietf.org/html/rfc6749#section-5.1
-sealed trait AccessTokenSignerV2 extends SignerV2 {
+sealed trait TokenSignerV2 extends SignerV2 {
   def generatedAt: Long
   def accessToken: AccessToken
   // https://tools.ietf.org/html/rfc6749#section-7.1
@@ -224,24 +225,24 @@ object Scope {
  * https://tools.ietf.org/html/rfc6749#section-4.1.2
  * Refreshable user-level token
  */
-final case class AuthorizationCode(
+final case class AccessTokenSigner(
   generatedAt: Long,
   accessToken: AccessToken,
   tokenType: String,
   expiresIn: Long,
   refreshToken: Option[RefreshToken],
   scope: Scope
-) extends AccessTokenSignerV2
+) extends TokenSignerV2
 
-object AuthorizationCode {
-  implicit val decoder: Decoder[AuthorizationCode] = (c: HCursor) =>
+object AccessTokenSigner {
+  implicit val decoder: Decoder[AccessTokenSigner] = (c: HCursor) =>
     for {
       accessToken <- c.downField("access_token").as[AccessToken]
       tokenType <- c.downField("token_type").as[String]
       expiresIn <- c.downField("expires_in").as[Long]
       refreshToken <- c.downField("refresh_token").as[Option[RefreshToken]]
       scope <- c.downField("scope").as[Scope]
-    } yield AuthorizationCode(
+    } yield AccessTokenSigner(
       generatedAt = System.currentTimeMillis(),
       accessToken,
       tokenType,
@@ -256,24 +257,24 @@ object AuthorizationCode {
  *  user-level implicit grant (https://tools.ietf.org/html/rfc6749#section-4.2.2)
  *  server-level client credentials (https://tools.ietf.org/html/rfc6749#section-4.4.3)
  */
-final case class NonRefreshableToken(
+final case class NonRefreshableTokenSigner(
   generatedAt: Long,
   accessToken: AccessToken,
   tokenType: String,
   expiresIn: Long,
   scope: Scope
-) extends AccessTokenSignerV2 {
+) extends TokenSignerV2 {
   override val refreshToken: Option[RefreshToken] = None
 }
 
-object NonRefreshableToken {
-  implicit val decoder: Decoder[NonRefreshableToken] = (c: HCursor) =>
+object NonRefreshableTokenSigner {
+  implicit val decoder: Decoder[NonRefreshableTokenSigner] = (c: HCursor) =>
     for {
       accessToken <- c.downField("access_token").as[AccessToken]
       tokenType <- c.downField("token_type").as[String]
       expiresIn <- c.downField("expires_in").as[Long]
       scope <- c.downField("scope").as[Scope]
-    } yield NonRefreshableToken(
+    } yield NonRefreshableTokenSigner(
       generatedAt = System.currentTimeMillis(),
       accessToken,
       tokenType,

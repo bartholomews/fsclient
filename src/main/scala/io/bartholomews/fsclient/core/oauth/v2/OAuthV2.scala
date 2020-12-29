@@ -1,10 +1,10 @@
 package io.bartholomews.fsclient.core.oauth.v2
 
-import io.bartholomews.fsclient.core.oauth.{AuthorizationCode, NonRefreshableToken}
+import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, NonRefreshableTokenSigner}
 import io.circe.generic.extras.semiauto.deriveUnwrappedDecoder
 import io.circe.{Decoder, Error}
 import sttp.client.{Identity, RequestT, ResponseAs, ResponseError}
-import sttp.model.{QueryParams, Uri}
+import sttp.model.Uri
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
@@ -17,9 +17,6 @@ object OAuthV2 {
 
   sealed trait SignerType
 
-  case class ClientId(value: String) extends AnyVal
-  case class ClientSecret(value: String) extends AnyVal
-
   case class AccessToken(value: String) extends AnyVal
   object AccessToken { implicit val decoder: Decoder[AccessToken] = deriveUnwrappedDecoder }
 
@@ -29,99 +26,82 @@ object OAuthV2 {
   // https://tools.ietf.org/html/rfc6749#section-3.1.2
   case class RedirectUri(value: Uri)
 
-  // https://tools.ietf.org/html/rfc6749#section-2.3.1
-  case class ClientPassword(clientId: ClientId, clientSecret: ClientSecret) {
-    def authorizationBasic[U[_], T](request: RequestT[U, T, Nothing]): RequestT[U, T, Nothing] =
-      request.auth.basic(clientId.value, clientSecret.value)
-    //    lazy val authorizationBasic: Header = FsHeaders.authorizationBasic(s"${clientId.value}:${clientSecret.value}")
-  }
-
-  private def authorizationUri(
-    responseType: String,
-    clientId: ClientId,
-    redirectUri: Uri,
-    state: Option[String],
-    scopes: List[String]
-  )(serverUri: Uri): Uri = {
-    val requiredQueryParams: List[(String, String)] = List(
-      ("client_id", clientId.value),
-      ("response_type", responseType),
-      ("redirect_uri", redirectUri.toString())
-    )
-
-    val optionalQueryParams = List(
-      state.map(value => ("state", value)),
-      if (scopes.isEmpty) None else Some(scopes.mkString(" ")).map(value => ("scope", value))
-    ).flatten
-
-    serverUri
-      .params(QueryParams.fromSeq(requiredQueryParams ++ optionalQueryParams))
-  }
-
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   //  Authorization Code Grant
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // https://tools.ietf.org/html/rfc6749#section-4.1
   case object AuthorizationCodeGrant extends SignerType {
     // https://tools.ietf.org/html/rfc6749#section-4.1.1
-    def authorizationCodeUri(clientId: ClientId, redirectUri: Uri, state: Option[String], scope: List[String])(
-      serverUri: Uri
-    ): Uri = authorizationUri(responseType = "code", clientId, redirectUri, state, scope)(serverUri)
+    def authorizationRequestUri(request: AuthorizationCodeRequest, serverUri: Uri): Uri =
+      request.uri(serverUri)
+
+    // https://tools.ietf.org/html/rfc6749#section-4.1.2
+    // TODO: `AuthorizationError` type
+    def authorizationResponse(
+      request: AuthorizationCodeRequest,
+      redirectionUriResponse: Uri
+    ): Either[String, AuthorizationCode] = {
+      val responseParams = redirectionUriResponse.paramsSeq
+
+      val maybeCode: Either[String, AuthorizationCode] = responseParams
+        .collectFirst({
+          case ("code", code)   => Right(AuthorizationCode(code))
+          case ("error", error) => Left(error)
+        })
+        .toRight("missing_required_query_parameters")
+        .joinRight
+
+      request.state.fold(maybeCode) { stateRequest =>
+        responseParams
+          .collectFirst({ case ("state", stateResponse) =>
+            if (stateRequest == stateResponse) maybeCode
+            else Left("state_parameter_mismatch")
+          })
+          .getOrElse(Left("missing_required_state_parameter"))
+      }
+    }
 
     // https://tools.ietf.org/html/rfc6749#section-4.1.3
     def accessTokenRequest(
       uri: Uri,
-      code: String,
+      code: AuthorizationCode,
       maybeRedirectUri: Option[RedirectUri],
       clientPassword: ClientPassword
-    )(implicit handleResponse: ResponseHandler[AuthorizationCode]): RequestT[Identity, Either[
+    )(implicit handleResponse: ResponseHandler[AccessTokenSigner]): RequestT[Identity, Either[
       ResponseError[Error],
-      AuthorizationCode
-    ], Nothing] = { // extends UrlFormRequest.Post[AuthorizationCode] {
+      AccessTokenSigner
+    ], Nothing] = {
 
       val requestBody: Map[String, String] = Map(
         "grant_type" -> "authorization_code",
-        "code" -> code
+        "code" -> code.value
       ) ++ maybeRedirectUri
-        .map(redirectUri => Map("redirect_uri" -> redirectUri.value.toString()))
+        .map(redirectUri => Map("redirect_uri" -> redirectUri.value.toString))
         .getOrElse(Map.empty)
 
-      val req = sttp.client.emptyRequest
+      sttp.client.emptyRequest
         .post(uri)
         .auth
         .basic(clientPassword.clientId.value, clientPassword.clientSecret.value)
         .body(requestBody)
         .response(handleResponse)
-
-      println(req.toCurl)
-      req
     }
 
     // https://tools.ietf.org/html/rfc6749#section-6
-    def refreshTokenRequest(uri: Uri, refreshToken: RefreshToken, scope: List[String], clientPassword: ClientPassword)(
-      implicit handleResponse: ResponseHandler[AuthorizationCode]
-    ): RequestT[Identity, Either[ResponseError[Error], AuthorizationCode], Nothing] = {
-      // extends UrlFormRequest.Post[AuthorizationCode] {
-      //      override val headers: Headers = Headers.of(FsHeaders.contentType(ContentType.APPLICATION_FORM_URLENCODED))
-      //      println(refreshToken)
-      //      println(scope)
-
+    def refreshTokenRequest(uri: Uri, refreshToken: RefreshToken, scopes: List[String], clientPassword: ClientPassword)(
+      implicit handleResponse: ResponseHandler[AccessTokenSigner]
+    ): RequestT[Identity, Either[ResponseError[Error], AccessTokenSigner], Nothing] = {
       val requestBody: Map[String, String] = Map(
         "grant_type" -> "refresh_token",
         "refresh_token" -> refreshToken.value
-      ) ++ (if (scope.isEmpty) Map.empty else Map("scope" -> scope.mkString(",")))
+      ) ++ (if (scopes.isEmpty) Map.empty else Map("scope" -> scopes.mkString(",")))
 
-      println(uri)
-
-      val req = sttp.client.emptyRequest
+      sttp.client.emptyRequest
         .post(uri)
         .auth
         .basic(clientPassword.clientId.value, clientPassword.clientSecret.value)
         .body(requestBody)
         .response(handleResponse)
-
-      println(req.toCurl)
-      req
     }
   }
 
@@ -131,9 +111,8 @@ object OAuthV2 {
   // https://tools.ietf.org/html/rfc6749#section-4.2
   case object ImplicitGrant extends SignerType {
     // https://tools.ietf.org/html/rfc6749#section-4.2.1
-    def authorizationTokenUri(clientId: ClientId, redirectUri: Uri, state: Option[String], scopes: List[String])(
-      serverUri: Uri
-    ): Uri = authorizationUri(responseType = "token", clientId, redirectUri, state, scopes)(serverUri)
+    def authorizationRequestUri(request: AuthorizationTokenRequest, serverUri: Uri): Uri =
+      request.uri(serverUri)
   }
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -143,16 +122,16 @@ object OAuthV2 {
   case object ClientCredentialsGrant extends SignerType {
     // https://tools.ietf.org/html/rfc6749#section-4.4.2
     def accessTokenRequest(uri: Uri, clientPassword: ClientPassword)(implicit
-      handleResponse: ResponseHandler[NonRefreshableToken]
-    ): RequestT[Identity, Either[ResponseError[Error], NonRefreshableToken], Nothing] = { // extends UrlFormRequest.Post[NonRefreshableToken] {
-      val requestBody = Map("grant_type" -> "client_credentials")
+      handleResponse: ResponseHandler[NonRefreshableTokenSigner]
+    ): RequestT[Identity, Either[
+      ResponseError[Error],
+      NonRefreshableTokenSigner
+    ], Nothing] = // extends UrlFormRequest.Post[NonRefreshableToken] {
       sttp.client.emptyRequest
         .post(uri)
         .auth
         .basic(clientPassword.clientId.value, clientPassword.clientSecret.value)
-        .body(requestBody)
+        .body(Map("grant_type" -> "client_credentials"))
         .response(handleResponse)
-//      override val headers: Headers = Headers.of(FsHeaders.contentType(ContentType.APPLICATION_FORM_URLENCODED))
-    }
   }
 }

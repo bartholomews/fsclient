@@ -25,7 +25,7 @@ trait FsClientSttpExtensions {
 
   def baseRequest[F[_], S <: Signer](client: FsClient[F, S]): RequestT[Empty, Either[String, String], Nothing] =
     emptyRequest
-      .userAgent(client.appConfig.userAgent)
+      .userAgent(client.userAgent)
 
   def asUnit: ResponseAs[Either[HttpError, Unit], Nothing] =
     fromMetadata[Either[HttpError, Unit], Nothing] { meta: ResponseMetadata =>
@@ -34,7 +34,7 @@ trait FsClientSttpExtensions {
     }
 
   def mapInto[A, B](implicit
-                    responseMapping: ResponseMapping[A, B]
+    responseMapping: ResponseMapping[A, B]
   ): ResponseAs[Either[ResponseError[Exception], B], Nothing] = responseMapping.responseAs
 
   implicit class UriExtensions(uri: Uri) {
@@ -75,7 +75,7 @@ trait FsClientSttpExtensions {
     }
 
     def sign[F[_], Auth <: Signer](client: FsClient[F, Auth]): Request[T, S] =
-      sign(client.appConfig.signer)
+      sign(client.signer)
   }
 }
 
