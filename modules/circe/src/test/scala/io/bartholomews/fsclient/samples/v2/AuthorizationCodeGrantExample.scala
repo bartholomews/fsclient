@@ -1,7 +1,5 @@
 package io.bartholomews.fsclient.samples.v2
 
-import io.circe
-
 object AuthorizationCodeGrantExample extends App {
   import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
@@ -14,12 +12,12 @@ object AuthorizationCodeGrantExample extends App {
     ClientSecret
   }
   import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
-  import sttp.client.{HttpURLConnectionBackend, Identity, NothingT, ResponseError, SttpBackend, UriContext}
+  import sttp.client3.{HttpURLConnectionBackend, Identity, ResponseException, SttpBackend, UriContext}
   import sttp.model.Uri
 
   def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
-  implicit val backend: SttpBackend[Identity, Nothing, NothingT] = HttpURLConnectionBackend()
+  implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
 
   val userAgent = UserAgent(
     appName = "SAMPLE_APP_NAME",
@@ -68,15 +66,18 @@ object AuthorizationCodeGrantExample extends App {
   import io.bartholomews.fsclient.circe._
 
   // 4. Get an access token
-  val maybeToken: Either[ResponseError[io.circe.Error], AccessTokenSigner] = AuthorizationCodeGrant
-    .accessTokenRequest[circe.Error](
-      serverUri = uri"https://some-authorization-server/token",
-      code = maybeAuthorizationCode.getOrElse(dealWithIt),
-      maybeRedirectUri = Some(myRedirectUri),
-      clientPassword = myClientPassword
-    )
-    .send()
-    .body
+  val maybeToken: Either[ResponseException[String, io.circe.Error], AccessTokenSigner] =
+    backend
+      .send(
+        AuthorizationCodeGrant
+          .accessTokenRequest[io.circe.Error](
+            serverUri = uri"https://some-authorization-server/token",
+            code = maybeAuthorizationCode.getOrElse(dealWithIt),
+            maybeRedirectUri = Some(myRedirectUri),
+            clientPassword = myClientPassword
+          )
+      )
+      .body
 
   implicit val accessToken: AccessTokenSigner = maybeToken.getOrElse(dealWithIt)
 
@@ -89,13 +90,14 @@ object AuthorizationCodeGrantExample extends App {
 
   // 6. Get a refresh token
   if (accessToken.isExpired() && accessToken.refreshToken.isDefined) {
-    AuthorizationCodeGrant
-      .refreshTokenRequest(
-        serverUri = uri"https://some-authorization-server/refresh",
-        accessToken.refreshToken.getOrElse(dealWithIt),
-        scopes = accessToken.scope.values,
-        clientPassword = myClientPassword
-      )
-      .send()
+    backend.send(
+      AuthorizationCodeGrant
+        .refreshTokenRequest(
+          serverUri = uri"https://some-authorization-server/refresh",
+          accessToken.refreshToken.getOrElse(dealWithIt),
+          scopes = accessToken.scope.values,
+          clientPassword = myClientPassword
+        )
+    )
   }
 }

@@ -1,7 +1,7 @@
 package io.bartholomews.fsclient.core.oauth.v2
 
 import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, NonRefreshableTokenSigner, Scope}
-import sttp.client.{Identity, RequestT, ResponseAs, ResponseError}
+import sttp.client3.{emptyRequest, Identity, RequestT, ResponseAs, ResponseException}
 import sttp.model.Uri
 
 import scala.util.Try
@@ -13,7 +13,7 @@ import scala.util.Try
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // https://tools.ietf.org/html/rfc6749
 object OAuthV2 {
-  type ResponseHandler[+E, T] = ResponseAs[Either[ResponseError[E], T], Nothing]
+  type ResponseHandler[+E, T] = ResponseAs[Either[ResponseException[String, E], T], Any]
 
   sealed trait SignerType
 
@@ -60,15 +60,15 @@ object OAuthV2 {
     }
 
     // https://tools.ietf.org/html/rfc6749#section-4.1.3
-    def accessTokenRequest[E](
+    def accessTokenRequest[DE](
       serverUri: Uri,
       code: AuthorizationCode,
       maybeRedirectUri: Option[RedirectUri],
       clientPassword: ClientPassword
-    )(implicit handleResponse: ResponseHandler[E, AccessTokenSigner]): RequestT[Identity, Either[
-      ResponseError[E],
+    )(implicit handleResponse: ResponseHandler[DE, AccessTokenSigner]): RequestT[Identity, Either[
+      ResponseException[String, DE],
       AccessTokenSigner
-    ], Nothing] = {
+    ], Any] = {
 
       val requestBody: Map[String, String] = Map(
         "grant_type" -> "authorization_code",
@@ -77,7 +77,7 @@ object OAuthV2 {
         .map(redirectUri => Map("redirect_uri" -> redirectUri.value.toString))
         .getOrElse(Map.empty)
 
-      sttp.client.emptyRequest
+      emptyRequest
         .post(serverUri)
         .auth
         .basic(clientPassword.clientId.value, clientPassword.clientSecret.value)
@@ -86,20 +86,20 @@ object OAuthV2 {
     }
 
     // https://tools.ietf.org/html/rfc6749#section-6
-    def refreshTokenRequest[E](
+    def refreshTokenRequest[DE](
       serverUri: Uri,
       refreshToken: RefreshToken,
       scopes: List[String],
       clientPassword: ClientPassword
     )(implicit
-      handleResponse: ResponseHandler[E, AccessTokenSigner]
-    ): RequestT[Identity, Either[ResponseError[E], AccessTokenSigner], Nothing] = {
+      handleResponse: ResponseHandler[DE, AccessTokenSigner]
+    ): RequestT[Identity, Either[ResponseException[String, DE], AccessTokenSigner], Any] = {
       val requestBody: Map[String, String] = Map(
         "grant_type" -> "refresh_token",
         "refresh_token" -> refreshToken.value
       ) ++ (if (scopes.isEmpty) Map.empty else Map("scope" -> scopes.mkString(",")))
 
-      sttp.client.emptyRequest
+      emptyRequest
         .post(serverUri)
         .auth
         .basic(clientPassword.clientId.value, clientPassword.clientSecret.value)
@@ -161,13 +161,13 @@ object OAuthV2 {
   // https://tools.ietf.org/html/rfc6749#section-4.4
   case object ClientCredentialsGrant extends SignerType {
     // https://tools.ietf.org/html/rfc6749#section-4.4.2
-    def accessTokenRequest[E](serverUri: Uri, clientPassword: ClientPassword)(implicit
-      handleResponse: ResponseHandler[E, NonRefreshableTokenSigner]
+    def accessTokenRequest[DE](serverUri: Uri, clientPassword: ClientPassword)(implicit
+      handleResponse: ResponseHandler[DE, NonRefreshableTokenSigner]
     ): RequestT[Identity, Either[
-      ResponseError[E],
+      ResponseException[String, DE],
       NonRefreshableTokenSigner
-    ], Nothing] = // extends UrlFormRequest.Post[NonRefreshableToken] {
-      sttp.client.emptyRequest
+    ], Any] = // extends UrlFormRequest.Post[NonRefreshableToken] {
+      emptyRequest
         .post(serverUri)
         .auth
         .basic(clientPassword.clientId.value, clientPassword.clientSecret.value)

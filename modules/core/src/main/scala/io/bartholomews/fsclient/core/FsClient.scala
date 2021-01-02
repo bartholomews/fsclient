@@ -5,9 +5,9 @@ import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.Consumer
 import io.bartholomews.fsclient.core.oauth.{ClientCredentials, ClientPasswordAuthentication, Signer, SignerV1}
 import pureconfig.ConfigReader.Result
 import pureconfig.ConfigSource
-import sttp.client.SttpBackend
+import sttp.client3.SttpBackend
 
-case class FsClient[F[_], S <: Signer](userAgent: UserAgent, signer: S, backend: SttpBackend[F, Nothing, Nothing])
+case class FsClient[F[_], S <: Signer](userAgent: UserAgent, signer: S, backend: SttpBackend[F, Any])
 
 object FsClient {
 
@@ -42,12 +42,12 @@ object FsClient {
     import pureconfig.generic.auto._
 
     def clientCredentials[F[_]](userAgent: UserAgent, consumer: Consumer)(implicit
-      backend: SttpBackend[F, Nothing, Nothing]
+      backend: SttpBackend[F, Any]
     ): FsClient[F, SignerV1] = FsClient(userAgent, ClientCredentials(consumer), backend)
 
     def clientCredentials[F[_]](
       consumerNamespace: String
-    )(implicit backend: SttpBackend[F, Nothing, Nothing]): Result[FsClient[F, SignerV1]] =
+    )(implicit backend: SttpBackend[F, Any]): Result[FsClient[F, SignerV1]] =
       for {
         consumer <-
           ConfigSource.default
@@ -64,7 +64,7 @@ object FsClient {
     def clientPassword[F[_]](
       userAgent: UserAgent,
       clientPasswordAuthentication: ClientPasswordAuthentication
-    )(implicit backend: SttpBackend[F, Nothing, Nothing]): FsClient[F, ClientPasswordAuthentication] =
+    )(implicit backend: SttpBackend[F, Any]): FsClient[F, ClientPasswordAuthentication] =
       FsClient(userAgent = userAgent, signer = clientPasswordAuthentication, backend)
   }
 }

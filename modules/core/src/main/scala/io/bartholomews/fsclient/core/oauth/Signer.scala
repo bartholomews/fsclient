@@ -8,7 +8,7 @@ import io.bartholomews.fsclient.core.oauth.v1.Signatures.{authorization, makeOAu
 import io.bartholomews.fsclient.core.oauth.v1.{Signatures, TemporaryCredentials}
 import io.bartholomews.fsclient.core.oauth.v2.ClientPassword
 import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, RedirectUri, RefreshToken}
-import sttp.client.{emptyRequest, DeserializationError, Request, Response, ResponseError, SttpBackend}
+import sttp.client3.{emptyRequest, DeserializationException, Request, Response, ResponseException, SttpBackend}
 import sttp.model.{Method, Uri}
 
 import scala.concurrent.duration.{Duration, DurationInt}
@@ -66,17 +66,18 @@ final case class TemporaryCredentialsRequest(
     userAgent: UserAgent,
     resourceOwnerAuthorizationUri: ResourceOwnerAuthorizationUri
   )(implicit
-    backend: SttpBackend[F, Nothing, Nothing]
-  ): F[Response[Either[ResponseError[Exception], TemporaryCredentials]]] = {
+    backend: SttpBackend[F, Any]
+  ): F[Response[Either[ResponseException[String, Exception], TemporaryCredentials]]] = {
     implicit val responseMapping: ResponseMapping[String, Exception, TemporaryCredentials] =
       TemporaryCredentials.responseMapping(consumer, resourceOwnerAuthorizationUri)
 
-    emptyRequest
-      .method(method, serverUri)
-      .sign(this)
-      .userAgent(userAgent)
-      .response(mapInto[String, Exception, TemporaryCredentials])
-      .send()
+    backend.send(
+      emptyRequest
+        .method(method, serverUri)
+        .sign(this)
+        .userAgent(userAgent)
+        .response(mapInto[String, Exception, TemporaryCredentials])
+    )
   }
 }
 
@@ -115,7 +116,7 @@ object RequestTokenCredentials {
     resourceOwnerAuthorizationUriResponse: Uri,
     temporaryCredentials: TemporaryCredentials,
     signatureMethod: SignatureMethod = SignatureMethod.SHA1
-  ): Either[DeserializationError[Exception], RequestTokenCredentials] = {
+  ): Either[DeserializationException[Exception], RequestTokenCredentials] = {
 
     val queryParams = resourceOwnerAuthorizationUriResponse.paramsSeq
     val callbackResponse: Either[String, String] = queryParams
@@ -134,7 +135,9 @@ object RequestTokenCredentials {
 
     callbackResponse.fold(
       errorMsg =>
-        Left(DeserializationError(errorMsg, new Exception("Callback uri cannot be used to request the access token"))),
+        Left(
+          DeserializationException(errorMsg, new Exception("Callback uri cannot be used to request the access token"))
+        ),
       verifier =>
         Right(
           RequestTokenCredentials(temporaryCredentials.token, verifier, temporaryCredentials.consumer, signatureMethod)
@@ -158,7 +161,7 @@ object AccessTokenCredentials {
       case s"oauth_token=$token&oauth_token_secret=$secret" =>
         Right(AccessTokenCredentials(Token(token, secret), consumer, signatureMethod))
       case other =>
-        Left(DeserializationError(other, new Exception("Unexpected response")))
+        Left(DeserializationException(other, new Exception("Unexpected response")))
     }
 }
 

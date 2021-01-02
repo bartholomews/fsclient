@@ -13,7 +13,7 @@ import io.bartholomews.fsclient.wiremock.WiremockServer
 import org.scalatest.Inside
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import sttp.client.{Identity, Response, ResponseError, UriContext}
+import sttp.client3.{Identity, Response, ResponseException, UriContext}
 import sttp.model.Method
 
 class OAuthV1Test extends AnyWordSpec with IdentityClient with WiremockServer with Matchers with Inside {
@@ -27,7 +27,8 @@ class OAuthV1Test extends AnyWordSpec with IdentityClient with WiremockServer wi
     )
 
     // 1. Retrieve a request token
-    def maybeTemporaryCredentials: Identity[Response[Either[ResponseError[Exception], TemporaryCredentials]]] =
+    def maybeTemporaryCredentials
+      : Identity[Response[Either[ResponseException[String, Exception], TemporaryCredentials]]] =
       temporaryCredentialsRequest.send(
         Method.POST,
         serverUri = uri"$wiremockBaseUri/oauth/request-token",
@@ -70,7 +71,7 @@ class OAuthV1Test extends AnyWordSpec with IdentityClient with WiremockServer wi
         )
 
       val maybeRequestTokenCredentials = RequestTokenCredentials.fetchRequestTokenCredentials(
-        sampleRedirectUri.value.params(
+        sampleRedirectUri.value.withParams(
           ("oauth_token", "AAA"),
           ("oauth_verifier", "ZZZ")
         ),

@@ -3,7 +3,7 @@ package io.bartholomews.fsclient.core.oauth.v1
 import io.bartholomews.fsclient.core.http.FsClientSttpExtensions.mapInto
 import io.bartholomews.fsclient.core.http.ResponseMapping
 import io.bartholomews.fsclient.core.oauth.AccessTokenCredentials
-import sttp.client.{emptyRequest, Identity, RequestT, ResponseError}
+import sttp.client3.{emptyRequest, Identity, RequestT, ResponseException}
 import sttp.model.Uri
 
 object OAuthV1 {
@@ -25,14 +25,14 @@ object OAuthV1 {
   }
 
   // https://tools.ietf.org/html/rfc5849#section-2.2
-  def accessTokenRequest[E](
+  def accessTokenRequest[DE](
     uri: Uri
   )(implicit
-    responseMapping: ResponseMapping[String, E, AccessTokenCredentials]
-  ): RequestT[Identity, Either[ResponseError[E], AccessTokenCredentials], Nothing] =
+    responseMapping: ResponseMapping[String, DE, AccessTokenCredentials]
+  ): RequestT[Identity, Either[ResponseException[String, DE], AccessTokenCredentials], Nothing] =
     emptyRequest
       .post(uri)
-      .response(mapInto[String, E, AccessTokenCredentials])
+      .response(mapInto[String, DE, AccessTokenCredentials])
 
   /** Representation of a Consumer key and secret */
   final case class Consumer(key: String, secret: String)

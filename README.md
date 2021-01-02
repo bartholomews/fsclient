@@ -18,13 +18,13 @@ libraryDependencies += "io.bartholomews" %% "fsclient-core" % "0.1.0"
 ```
 
 
-http client wrapping [sttp](https://sttp.softwaremill.com/en/stable) 
+http client wrapping [sttp](https://sttp.softwaremill.com/en/latest) 
 and providing OAuth signatures and other utils
 
 ```scala
   import io.bartholomews.fsclient.core._
   import io.bartholomews.fsclient.core.oauth.Signer
-  import sttp.client._
+  import sttp.client3._
 
   implicit val signer: Signer = ???
 
@@ -54,14 +54,13 @@ and providing OAuth signatures and other utils
     ResourceOwnerAuthorizationUri,
     TemporaryCredentialsRequest
   }
-  import sttp.client.{
+  import sttp.client3.{
     emptyRequest,
-    DeserializationError,
+    DeserializationException,
     HttpURLConnectionBackend,
     Identity,
-    NothingT,
     Response,
-    ResponseError,
+    ResponseException,
     SttpBackend,
     UriContext
   }
@@ -71,7 +70,7 @@ and providing OAuth signatures and other utils
 
   def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
-  implicit val backend: SttpBackend[Identity, Nothing, NothingT] = HttpURLConnectionBackend()
+  implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
 
   val userAgent = UserAgent(
     appName = "SAMPLE_APP_NAME",
@@ -95,7 +94,7 @@ and providing OAuth signatures and other utils
   )
 
   // 2. Retrieve temporary credentials
-  val maybeTemporaryCredentials: F[Response[Either[ResponseError[Exception], TemporaryCredentials]]] =
+  val maybeTemporaryCredentials: F[Response[Either[ResponseException[String, Exception], TemporaryCredentials]]] =
     temporaryCredentialsRequest.send(
       Method.POST,
       // https://tools.ietf.org/html/rfc5849#section-2.1
@@ -107,10 +106,10 @@ and providing OAuth signatures and other utils
 
   // a successful `resourceOwnerAuthorizationUriResponse` will have the token in the query parameters:
   val resourceOwnerAuthorizationUriResponse =
-    sampleRedirectUri.value.params(("oauth_token", "AAA"), ("oauth_verifier", "ZZZ"))
+    sampleRedirectUri.value.withParams(("oauth_token", "AAA"), ("oauth_verifier", "ZZZ"))
 
   // 3. Get the Token Credentials
-  val maybeRequestTokenCredentials: Either[DeserializationError[Exception], RequestTokenCredentials] =
+  val maybeRequestTokenCredentials: Either[DeserializationException[Exception], RequestTokenCredentials] =
     RequestTokenCredentials.fetchRequestTokenCredentials(
       resourceOwnerAuthorizationUriResponse,
       maybeTemporaryCredentials.body.getOrElse(dealWithIt),
@@ -124,6 +123,7 @@ and providing OAuth signatures and other utils
   emptyRequest
     .get(uri"https://some-server/authenticated-endpoint")
     .sign // sign with the implicit token provided
+}
 ```
 
 ### [OAuth 2.0](https://tools.ietf.org/html/rfc6749)
@@ -135,11 +135,11 @@ and providing OAuth signatures and other utils
   import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.ClientCredentialsGrant
   import io.bartholomews.fsclient.core.oauth.v2.{ClientId, ClientPassword, ClientSecret}
   import io.circe
-  import sttp.client.{HttpURLConnectionBackend, Identity, NothingT, Response, ResponseError, SttpBackend, UriContext}
+  import sttp.client3.{HttpURLConnectionBackend, Identity, Response, ResponseException, SttpBackend, UriContext}
 
   type F[X] = Identity[X]
 
-  implicit val backend: SttpBackend[F, Nothing, NothingT] = HttpURLConnectionBackend()
+  implicit val backend: SttpBackend[F, Any] = HttpURLConnectionBackend()
 
   // using fsclient-circe codecs
   import io.bartholomews.fsclient.circe._
@@ -150,13 +150,14 @@ and providing OAuth signatures and other utils
     clientSecret = ClientSecret("APP_CLIENT_SECRET")
   )
 
-  val accessTokenRequest: F[Response[Either[ResponseError[circe.Error], NonRefreshableTokenSigner]]] =
-    ClientCredentialsGrant
-      .accessTokenRequest(
-        serverUri = uri"https://some-authorization-server/token",
-        myClientPassword
-      )
-      .send()
+  val accessTokenRequest: F[Response[Either[ResponseException[String, circe.Error], NonRefreshableTokenSigner]]] =
+    backend.send(
+      ClientCredentialsGrant
+        .accessTokenRequest(
+          serverUri = uri"https://some-authorization-server/token",
+          myClientPassword
+        )
+    )
 ```
 
 #### Implicit grant
@@ -164,16 +165,16 @@ and providing OAuth signatures and other utils
 ```scala
   import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
-  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.OAuthV2.{ImplicitGrant, RedirectUri}
-  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.{AuthorizationTokenRequest, ClientId, ClientPassword, ClientSecret}
-  import sttp.client.{emptyRequest, HttpURLConnectionBackend, Identity, NothingT, SttpBackend, UriContext}
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{ImplicitGrant, RedirectUri}
+  import io.bartholomews.fsclient.core.oauth.v2.{AuthorizationTokenRequest, ClientId, ClientPassword, ClientSecret}
+  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
+  import sttp.client3.{emptyRequest, HttpURLConnectionBackend, Identity, SttpBackend, UriContext}
   import sttp.model.Uri
 
   def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
-  implicit val backend: SttpBackend[Identity, Nothing, NothingT] = HttpURLConnectionBackend()
-  
+  implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
+
   val userAgent: UserAgent = UserAgent(
     appName = "SAMPLE_APP_NAME",
     appVersion = Some("SAMPLE_APP_VERSION"),
@@ -240,12 +241,12 @@ and providing OAuth signatures and other utils
     ClientSecret
   }
   import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
-  import sttp.client.{HttpURLConnectionBackend, Identity, NothingT, ResponseError, SttpBackend, UriContext}
+  import sttp.client3.{HttpURLConnectionBackend, Identity, ResponseException, SttpBackend, UriContext}
   import sttp.model.Uri
 
   def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
-  implicit val backend: SttpBackend[Identity, Nothing, NothingT] = HttpURLConnectionBackend()
+  implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
 
   val userAgent = UserAgent(
     appName = "SAMPLE_APP_NAME",
@@ -294,15 +295,18 @@ and providing OAuth signatures and other utils
   import io.bartholomews.fsclient.circe._
 
   // 4. Get an access token
-  val maybeToken: Either[ResponseError[io.circe.Error], AccessTokenSigner] = AuthorizationCodeGrant
-    .accessTokenRequest[circe.Error](
-      serverUri = uri"https://some-authorization-server/token",
-      code = maybeAuthorizationCode.getOrElse(dealWithIt),
-      maybeRedirectUri = Some(myRedirectUri),
-      clientPassword = myClientPassword
-    )
-    .send()
-    .body
+  val maybeToken: Either[ResponseException[String, io.circe.Error], AccessTokenSigner] =
+    backend
+      .send(
+        AuthorizationCodeGrant
+          .accessTokenRequest[io.circe.Error](
+            serverUri = uri"https://some-authorization-server/token",
+            code = maybeAuthorizationCode.getOrElse(dealWithIt),
+            maybeRedirectUri = Some(myRedirectUri),
+            clientPassword = myClientPassword
+          )
+      )
+      .body
 
   implicit val accessToken: AccessTokenSigner = maybeToken.getOrElse(dealWithIt)
 
@@ -315,14 +319,15 @@ and providing OAuth signatures and other utils
 
   // 6. Get a refresh token
   if (accessToken.isExpired() && accessToken.refreshToken.isDefined) {
-    AuthorizationCodeGrant
-      .refreshTokenRequest(
-        serverUri = uri"https://some-authorization-server/refresh",
-        accessToken.refreshToken.getOrElse(dealWithIt),
-        scopes = accessToken.scope.values,
-        clientPassword = myClientPassword
-      )
-      .send()
+    backend.send(
+      AuthorizationCodeGrant
+        .refreshTokenRequest(
+          serverUri = uri"https://some-authorization-server/refresh",
+          accessToken.refreshToken.getOrElse(dealWithIt),
+          scopes = accessToken.scope.values,
+          clientPassword = myClientPassword
+        )
+    )
   }
 ```
 

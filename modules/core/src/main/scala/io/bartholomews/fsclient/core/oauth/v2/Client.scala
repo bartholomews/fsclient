@@ -1,6 +1,6 @@
 package io.bartholomews.fsclient.core.oauth.v2
 
-import sttp.client.RequestT
+import sttp.client3.RequestT
 
 // https://tools.ietf.org/html/rfc6749#section-2.2
 case class ClientId(value: String) extends AnyVal

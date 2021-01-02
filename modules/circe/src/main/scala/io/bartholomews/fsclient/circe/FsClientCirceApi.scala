@@ -4,7 +4,7 @@ import io.bartholomews.fsclient.circe.oauth.CirceOAuthCodecs
 import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.ResponseHandler
 import io.circe
 import io.circe.{Codec, Decoder, Encoder}
-import sttp.client.circe.SttpCirceApi
+import sttp.client3.circe.SttpCirceApi
 import sttp.model.Uri
 
 trait FsClientCirceApi extends SttpCirceApi with CirceOAuthCodecs {

@@ -22,9 +22,9 @@ import io.circe
 import org.scalatest.Inside
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import sttp.client.{Identity, UriContext}
+import sttp.client3.{Identity, UriContext}
 import sttp.model.Uri
-import sttp.model.Uri.QuerySegment
+import sttp.model.Uri.{QuerySegment, QuerySegmentEncoding}
 import sttp.model.Uri.QuerySegment.KeyValue
 
 class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer with Matchers with Inside {
@@ -61,15 +61,15 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
 
       "set the correct query params" in {
         authorizationRequestUri.querySegments.toList shouldBe List(
-          KeyValue("redirect_uri", sampleRedirectUri.value.toString),
           KeyValue("client_id", sampleClientPassword.clientId.value),
-          KeyValue("response_type", "code")
+          KeyValue("response_type", "code"),
+          KeyValue("redirect_uri", sampleRedirectUri.value.toString)
         )
       }
 
       "return an error if user denies permissions" in {
 
-        val uriRedirect = sampleRedirectUri.value.querySegment(
+        val uriRedirect = sampleRedirectUri.value.addQuerySegment(
           QuerySegment.KeyValue("error", "temporarily_unavailable")
         )
 
@@ -81,7 +81,7 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
 
       "return the authorization code if user accepts permissions" in {
 
-        val uriRedirect = sampleRedirectUri.value.querySegment(
+        val uriRedirect = sampleRedirectUri.value.addQuerySegment(
           QuerySegment.KeyValue("code", sampleAuthorizationCode.value)
         )
 
@@ -111,14 +111,15 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
             )
         )
 
-        val response = AuthorizationCodeGrant
-          .accessTokenRequest[circe.Error](
-            serverUri = uri"$wiremockBaseUri/oauth/authorize",
-            sampleAuthorizationCode,
-            Some(sampleRedirectUri),
-            sampleClientPassword
-          )
-          .send()
+        val response = sttpIdentityBackend.send(
+          AuthorizationCodeGrant
+            .accessTokenRequest[circe.Error](
+              serverUri = uri"$wiremockBaseUri/oauth/authorize",
+              sampleAuthorizationCode,
+              Some(sampleRedirectUri),
+              sampleClientPassword
+            )
+        )
 
         inside(response.body) { case Right(accessTokenSigner) =>
           accessTokenSigner.accessToken shouldBe AccessToken("some-access-token")
@@ -142,14 +143,15 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
             )
         )
 
-        val response = AuthorizationCodeGrant
-          .refreshTokenRequest[circe.Error](
-            serverUri = uri"$wiremockBaseUri/oauth/refresh",
-            sampleRefreshToken,
-            scopes = List.empty,
-            sampleClientPassword
-          )
-          .send()
+        val response = sttpIdentityBackend.send(
+          AuthorizationCodeGrant
+            .refreshTokenRequest[circe.Error](
+              serverUri = uri"$wiremockBaseUri/oauth/refresh",
+              sampleRefreshToken,
+              scopes = List.empty,
+              sampleClientPassword
+            )
+        )
 
         inside(response.body) { case Right(accessTokenSigner) =>
           accessTokenSigner.accessToken shouldBe AccessToken("some-access-token")
@@ -178,16 +180,16 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
       }
 
       "set the correct query params" in {
-        authorizationRequestUri.querySegments.toList shouldBe List(
-          KeyValue("redirect_uri", sampleRedirectUri.value.toString),
+        authorizationRequestUri.querySegments.toList shouldEqual List(
           KeyValue("client_id", sampleClientPassword.clientId.value),
-          KeyValue("response_type", "token")
+          KeyValue("response_type", "token", QuerySegmentEncoding.Standard),
+          KeyValue("redirect_uri", sampleRedirectUri.value.toString)
         )
       }
 
       "return an error if user denies permissions" in {
 
-        val uriRedirect = sampleRedirectUri.value.querySegment(
+        val uriRedirect = sampleRedirectUri.value.addQuerySegment(
           QuerySegment.KeyValue("error", "temporarily_unavailable")
         )
 
@@ -199,7 +201,7 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
 
       "return the authorization code if user accepts permissions" in {
 
-        val uriRedirect = sampleRedirectUri.value.params(
+        val uriRedirect = sampleRedirectUri.value.addParams(
           ("access_token", "implicit-grant-access-token"),
           ("token_type", "bearer"),
           ("expires_in", "3600")
@@ -235,7 +237,7 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
             )
         )
 
-        inside(accessTokenRequest.send().body) { case Right(nonRefreshableTokenSigner) =>
+        inside(sttpIdentityBackend.send(accessTokenRequest).body) { case Right(nonRefreshableTokenSigner) =>
           nonRefreshableTokenSigner.accessToken shouldBe AccessToken("some-access-token")
         }
       }

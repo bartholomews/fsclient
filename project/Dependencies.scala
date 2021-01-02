@@ -12,7 +12,7 @@ object Versions {
   // https://github.com/scalatest/scalatest/releases
   val scalaTest = "3.2.3"
   // https://github.com/softwaremill/sttp/releases
-  val sttp = "2.2.9"
+  val sttp = "3.0.0-RC13"
   // https://github.com/tomakehurst/wiremock/releases
   val wiremock = "2.27.2"
 }
@@ -26,12 +26,12 @@ object Dependencies {
 
   lazy val coreDependencies: Seq[ModuleID] = Seq(
     "com.github.pureconfig" %% "pureconfig" % Versions.pureConfig,
-    "com.softwaremill.sttp.client" %% "core" % Versions.sttp
+    "com.softwaremill.sttp.client3" %% "core" % Versions.sttp
   ) ++ logback
 
   val circeDependencies: Seq[ModuleID] = Seq(
     "io.circe" %% "circe-generic-extras" % Versions.circe_generic_extras,
-    "com.softwaremill.sttp.client" %% "circe" % Versions.sttp,
+    "com.softwaremill.sttp.client3" %% "circe" % Versions.sttp,
     "com.beachape" %% "enumeratum-circe" % Versions.enumeratum_circe
   )
 

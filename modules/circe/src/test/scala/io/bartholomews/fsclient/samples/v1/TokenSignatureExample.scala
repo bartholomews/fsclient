@@ -11,14 +11,13 @@ object TokenSignatureExample extends App {
     ResourceOwnerAuthorizationUri,
     TemporaryCredentialsRequest
   }
-  import sttp.client.{
+  import sttp.client3.{
     emptyRequest,
-    DeserializationError,
+    DeserializationException,
     HttpURLConnectionBackend,
     Identity,
-    NothingT,
     Response,
-    ResponseError,
+    ResponseException,
     SttpBackend,
     UriContext
   }
@@ -28,7 +27,7 @@ object TokenSignatureExample extends App {
 
   def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
-  implicit val backend: SttpBackend[Identity, Nothing, NothingT] = HttpURLConnectionBackend()
+  implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
 
   val userAgent = UserAgent(
     appName = "SAMPLE_APP_NAME",
@@ -52,7 +51,7 @@ object TokenSignatureExample extends App {
   )
 
   // 2. Retrieve temporary credentials
-  val maybeTemporaryCredentials: F[Response[Either[ResponseError[Exception], TemporaryCredentials]]] =
+  val maybeTemporaryCredentials: F[Response[Either[ResponseException[String, Exception], TemporaryCredentials]]] =
     temporaryCredentialsRequest.send(
       Method.POST,
       // https://tools.ietf.org/html/rfc5849#section-2.1
@@ -64,10 +63,10 @@ object TokenSignatureExample extends App {
 
   // a successful `resourceOwnerAuthorizationUriResponse` will have the token in the query parameters:
   val resourceOwnerAuthorizationUriResponse =
-    sampleRedirectUri.value.params(("oauth_token", "AAA"), ("oauth_verifier", "ZZZ"))
+    sampleRedirectUri.value.withParams(("oauth_token", "AAA"), ("oauth_verifier", "ZZZ"))
 
   // 3. Get the Token Credentials
-  val maybeRequestTokenCredentials: Either[DeserializationError[Exception], RequestTokenCredentials] =
+  val maybeRequestTokenCredentials: Either[DeserializationException[Exception], RequestTokenCredentials] =
     RequestTokenCredentials.fetchRequestTokenCredentials(
       resourceOwnerAuthorizationUriResponse,
       maybeTemporaryCredentials.body.getOrElse(dealWithIt),

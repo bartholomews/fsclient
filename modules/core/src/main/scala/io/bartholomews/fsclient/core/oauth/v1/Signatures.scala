@@ -6,7 +6,7 @@ import io.bartholomews.fsclient.core.http.FsClientSttpExtensions
 import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.SignatureMethod
 import io.bartholomews.fsclient.core.oauth.{ClientCredentials, SignerV1, TemporaryCredentialsRequest, TokenCredentials}
 import javax.crypto
-import sttp.client.{Request, StringBody}
+import sttp.client3.{Request, StringBody}
 import sttp.model.internal.Rfc3986
 import sttp.model.internal.Rfc3986.Unreserved
 import sttp.model.{Header, MediaType}

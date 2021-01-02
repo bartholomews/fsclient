@@ -8,9 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - *No changes*
 ### Removed
-- Most of - *No changes*
-### Changed
 - *No changes*
+### Changed
+- Migrated to sttp v3
 ### Fixed 
 - *No changes*
 

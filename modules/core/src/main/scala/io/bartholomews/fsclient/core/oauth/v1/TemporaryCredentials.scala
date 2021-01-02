@@ -3,7 +3,7 @@ package io.bartholomews.fsclient.core.oauth.v1
 import io.bartholomews.fsclient.core.http.ResponseMapping
 import io.bartholomews.fsclient.core.oauth.ResourceOwnerAuthorizationUri
 import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, Token}
-import sttp.client.DeserializationError
+import sttp.client3.DeserializationException
 import sttp.model.Uri
 import sttp.model.Uri.QuerySegment
 
@@ -16,7 +16,7 @@ case class TemporaryCredentials(
   private val resourceOwnerAuthorizationUri: ResourceOwnerAuthorizationUri
 ) {
   final val resourceOwnerAuthorizationRequest: Uri =
-    resourceOwnerAuthorizationUri.value.querySegment(QuerySegment.KeyValue("oauth_token", token.value))
+    resourceOwnerAuthorizationUri.value.addQuerySegment(QuerySegment.KeyValue("oauth_token", token.value))
 }
 
 object TemporaryCredentials {
@@ -36,7 +36,7 @@ object TemporaryCredentials {
         )
 
       case other =>
-        Left(DeserializationError(other, new Exception("Unexpected response")))
+        Left(DeserializationException(other, new Exception("Unexpected response")))
     }
 
 }
