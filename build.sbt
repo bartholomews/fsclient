@@ -1,7 +1,8 @@
-import Dependencies.{dependencies, testDependencies}
+import Dependencies.{circeDependencies, coreDependencies, testDependencies}
+import sbt.Keys.{parallelExecution, scalacOptions}
+import scoverage.ScoverageKeys.coverageFailOnMinimum
 
-name := "fsclient"
-scalaVersion := "2.13.3"
+ThisBuild / scalaVersion := "2.13.3"
 
 inThisBuild(
   List(
@@ -19,19 +20,39 @@ inThisBuild(
   )
 )
 
-resolvers += "Sonatype OSS Snapshots".at("https://oss.sonatype.org/content/repositories/snapshots")
-libraryDependencies ++= dependencies ++ testDependencies
+val commonSettings = Seq(
+  scalacOptions ++= Compiler.tpolecatOptions,
+  scalacOptions ++= Seq(Compiler.unchecked, Compiler.deprecation),
+  // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
+  logBuffered in Test := false,
+  parallelExecution in Test := false,
+  testOptions in Test ++= TestSettings.options
+)
 
-scalacOptions ++= Compiler.tpolecatOptions
-scalacOptions ++= Seq(Compiler.unchecked, Compiler.deprecation)
+lazy val core = (project in file("modules/core"))
+  .settings(commonSettings)
+  .settings(
+    name := "fsclient-core",
+    libraryDependencies ++= coreDependencies ++ testDependencies
+  )
 
-testOptions in Test ++= TestSettings.options
-coverageMinimum := 60 // FIXME
-coverageFailOnMinimum := true
+lazy val circe = (project in file("modules/circe"))
+  .dependsOn(core)
+  .settings(commonSettings)
+  .settings(
+    name := "fsclient-circe",
+    libraryDependencies ++= circeDependencies ++ testDependencies,
+    coverageMinimum := 60, // FIXME
+    coverageFailOnMinimum := true
+  )
 
-// http://www.scalatest.org/user_guide/using_scalatest_with_sbt
-logBuffered in Test := false
-parallelExecution in Test := false
+// https://www.scala-sbt.org/1.x/docs/Multi-Project.html
+lazy val root = (project in file("."))
+  .settings(skip in publish := true)
+  .aggregate(core, circe)
+
+resolvers += "Sonatype OSS Snapshots"
+  .at("https://oss.sonatype.org/content/repositories/snapshots")
 
 addCommandAlias("test-coverage", ";clean ;coverage ;test ;coverageReport")
 addCommandAlias("test-fast", "testOnly * -- -l org.scalatest.tags.Slow")

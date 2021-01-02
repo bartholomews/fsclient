@@ -2,7 +2,6 @@
 [![codecov](https://codecov.io/gh/bartholomews/fsclient/branch/master/graph/badge.svg)](https://codecov.io/gh/bartholomews/fsclient)
 [![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAMAAAARSr4IAAAAVFBMVEUAAACHjojlOy5NWlrKzcYRKjGFjIbp293YycuLa3pYY2LSqql4f3pCUFTgSjNodYRmcXUsPD/NTTbjRS+2jomhgnzNc223cGvZS0HaSD0XLjbaSjElhIr+AAAAAXRSTlMAQObYZgAAAHlJREFUCNdNyosOwyAIhWHAQS1Vt7a77/3fcxxdmv0xwmckutAR1nkm4ggbyEcg/wWmlGLDAA3oL50xi6fk5ffZ3E2E3QfZDCcCN2YtbEWZt+Drc6u6rlqv7Uk0LdKqqr5rk2UCRXOk0vmQKGfc94nOJyQjouF9H/wCc9gECEYfONoAAAAASUVORK5CYII=)](https://scala-steward.org)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-black.svg)](http://unlicense.org/)
-<a href="https://typelevel.org/cats/"><img src="https://typelevel.org/cats/img/cats-badge.svg" height="40px" align="right" alt="Cats friendly" /></a>
 
 # fsclient
 
@@ -37,10 +36,10 @@ and providing OAuth signatures and other utils
 
 ```scala
   import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
-  import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RedirectUri
-  import io.bartholomews.fsclient.core.oauth.{
+  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
+  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v1.TemporaryCredentials
+  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.OAuthV2.RedirectUri
+  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.{
     RequestTokenCredentials,
     ResourceOwnerAuthorizationUri,
     TemporaryCredentialsRequest
@@ -90,10 +89,10 @@ and providing OAuth signatures and other utils
     temporaryCredentialsRequest.send(
       Method.POST,
       // https://tools.ietf.org/html/rfc5849#section-2.1
-      serverUri = uri"https://some-authorization-server/oauth/request-token",
+      serverUri = uri"https://some-authorization-server/io.bartholomews.fsclient.circe.oauth/request-token",
       userAgent,
       // https://tools.ietf.org/html/rfc5849#section-2.2
-      ResourceOwnerAuthorizationUri(uri"https://some-server/oauth/authorize")
+      ResourceOwnerAuthorizationUri(uri"https://some-server/io.bartholomews.fsclient.circe.oauth/authorize")
     )
 
   // a successful `redirectionUriResponse` will have the token in the query parameters:
@@ -122,9 +121,9 @@ and providing OAuth signatures and other utils
 #### Client credentials
 
 ```scala
-  import io.bartholomews.fsclient.core.oauth.NonRefreshableTokenSigner
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.ClientCredentialsGrant
-  import io.bartholomews.fsclient.core.oauth.v2.{ClientId, ClientPassword, ClientSecret, OAuthV2}
+  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.NonRefreshableTokenSigner
+  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.OAuthV2.ClientCredentialsGrant
+  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.{ClientId, ClientPassword, ClientSecret, OAuthV2}
   import io.circe
   import sttp.client.{HttpURLConnectionBackend, Identity, NothingT, Response, ResponseError, SttpBackend, UriContext}
 
@@ -160,9 +159,9 @@ and providing OAuth signatures and other utils
 ```scala
   import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{ImplicitGrant, RedirectUri}
-  import io.bartholomews.fsclient.core.oauth.v2.{AuthorizationTokenRequest, ClientId, ClientPassword, ClientSecret}
+  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
+  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.OAuthV2.{ImplicitGrant, RedirectUri}
+  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.{AuthorizationTokenRequest, ClientId, ClientPassword, ClientSecret}
   import sttp.client.{emptyRequest, HttpURLConnectionBackend, Identity, NothingT, SttpBackend, UriContext}
   import sttp.model.Uri
 
@@ -227,8 +226,8 @@ and providing OAuth signatures and other utils
 ```scala
   import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RedirectUri}
-  import io.bartholomews.fsclient.core.oauth.v2.{
+  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RedirectUri}
+  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.{
     AuthorizationCode,
     AuthorizationCodeRequest,
     ClientId,
@@ -236,7 +235,7 @@ and providing OAuth signatures and other utils
     ClientSecret,
     OAuthV2
   }
-  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
+  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
   import sttp.client.{HttpURLConnectionBackend, Identity, NothingT, ResponseError, SttpBackend, UriContext}
   import sttp.model.Uri
 
