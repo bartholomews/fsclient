@@ -14,7 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed 
 - *No changes*
 
-## [0.1.0]
+## [0.1.1] - 2021-01-02
+### Changed
+- Switched to multi-project setup: `fsclient-core` and `fsclient-circe`
+
+## [0.1.0] - 2020-12-29
 ### Removed
 - Most of the implementation, which has been migrated to sttp
 ### Changed
@@ -45,7 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - This is the first release of `fsclient`.
 
-[Unreleased]: https://github.com/bartholomews/fsclient/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/bartholomews/fsclient/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/bartholomews/fsclient/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/bartholomews/fsclient/compare/v0.0.3...v0.1.0
 [0.0.3]: https://github.com/bartholomews/fsclient/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/bartholomews/fsclient/compare/v0.0.1...v0.0.2

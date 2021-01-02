@@ -5,11 +5,18 @@
 
 # fsclient
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13
 
 ```
-libraryDependencies += "io.bartholomews" %% "fsclient" % "0.1.0"
+libraryDependencies += "io.bartholomews" %% "fsclient-circe" % "0.1.1"
 ```
+
+You can also just use the core version, in that case you might need to provide your own codecs
+(e.g. to decode an OAuth2 token response):
+```
+libraryDependencies += "io.bartholomews" %% "fsclient-core" % "0.1.1"
+```
+
 
 http client wrapping [sttp](https://sttp.softwaremill.com/en/stable) 
 and providing OAuth signatures and other utils
@@ -124,9 +131,9 @@ and providing OAuth signatures and other utils
 #### Client credentials
 
 ```scala
-  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.NonRefreshableTokenSigner
-  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.OAuthV2.ClientCredentialsGrant
-  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.{ClientId, ClientPassword, ClientSecret, OAuthV2}
+  import io.bartholomews.fsclient.core.oauth.NonRefreshableTokenSigner
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.ClientCredentialsGrant
+  import io.bartholomews.fsclient.core.oauth.v2.{ClientId, ClientPassword, ClientSecret}
   import io.circe
   import sttp.client.{HttpURLConnectionBackend, Identity, NothingT, Response, ResponseError, SttpBackend, UriContext}
 
@@ -134,13 +141,8 @@ and providing OAuth signatures and other utils
 
   implicit val backend: SttpBackend[F, Nothing, NothingT] = HttpURLConnectionBackend()
 
-  /*
-  Trying to move out from circe as default and have multi-modules json libs instead,
-  which would provide these implicits out of the box for their own codecs,
-  so for now you need to explicitly provide one
-   */
-  implicit val handleResponse: OAuthV2.ResponseHandler[NonRefreshableTokenSigner] =
-    sttp.client.circe.asJson[NonRefreshableTokenSigner]
+  // using fsclient-circe codecs
+  import io.bartholomews.fsclient.circe._
 
   // you probably want to load this from config
   val myClientPassword = ClientPassword(
