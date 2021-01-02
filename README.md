@@ -5,13 +5,13 @@
 
 # fsclient
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13)
 
 ```
 libraryDependencies += "io.bartholomews" %% "fsclient-circe" % "0.1.1"
 ```
 
-You can also just use the core version, in that case you might need to provide your own codecs
+You can also just use the core version, in that case you might need to provide your own codecs  
 (e.g. to decode an OAuth2 token response):
 ```
 libraryDependencies += "io.bartholomews" %% "fsclient-core" % "0.1.1"
