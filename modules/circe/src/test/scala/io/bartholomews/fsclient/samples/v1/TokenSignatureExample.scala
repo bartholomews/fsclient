@@ -62,14 +62,14 @@ object TokenSignatureExample extends App {
       ResourceOwnerAuthorizationUri(uri"https://some-server/oauth/authorize")
     )
 
-  // a successful `redirectionUriResponse` will have the token in the query parameters:
-  val redirectionUriResponseApproved =
-    RedirectUri(sampleRedirectUri.value.params(("oauth_token", "AAA"), ("oauth_verifier", "ZZZ")))
+  // a successful `resourceOwnerAuthorizationUriResponse` will have the token in the query parameters:
+  val resourceOwnerAuthorizationUriResponse =
+    sampleRedirectUri.value.params(("oauth_token", "AAA"), ("oauth_verifier", "ZZZ"))
 
   // 3. Get the Token Credentials
   val maybeRequestTokenCredentials: Either[DeserializationError[Exception], RequestTokenCredentials] =
-    RequestTokenCredentials.validate(
-      redirectionUriResponseApproved,
+    RequestTokenCredentials.fetchRequestTokenCredentials(
+      resourceOwnerAuthorizationUriResponse,
       maybeTemporaryCredentials.body.getOrElse(dealWithIt),
       SignatureMethod.PLAINTEXT
     )

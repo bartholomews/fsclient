@@ -22,8 +22,10 @@ and providing OAuth signatures and other utils
   implicit val signer: Signer = ???
 
   /*
-    Sign the sttp request with `Signer`, which might be
-    an OAuth v1 signature, or OAuth v2 basic / bearer, or a custom `Authorization` header.
+    Sign the sttp request with `Signer`, which might be one of:
+    - an OAuth v1 signature
+    - an OAuth v2 basic / bearer
+    - a custom `Authorization` header
    */
   emptyRequest
     .get(uri"https://some-server/authenticated-endpoint")
@@ -35,11 +37,12 @@ and providing OAuth signatures and other utils
 #### Token Credentials
 
 ```scala
+  import io.bartholomews.fsclient.client.ClientData.sampleRedirectUri
   import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
-  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v1.TemporaryCredentials
-  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.OAuthV2.RedirectUri
-  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.{
+  import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
+  import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RedirectUri
+  import io.bartholomews.fsclient.core.oauth.{
     RequestTokenCredentials,
     ResourceOwnerAuthorizationUri,
     TemporaryCredentialsRequest
@@ -89,20 +92,20 @@ and providing OAuth signatures and other utils
     temporaryCredentialsRequest.send(
       Method.POST,
       // https://tools.ietf.org/html/rfc5849#section-2.1
-      serverUri = uri"https://some-authorization-server/io.bartholomews.fsclient.circe.oauth/request-token",
+      serverUri = uri"https://some-authorization-server/oauth/request-token",
       userAgent,
       // https://tools.ietf.org/html/rfc5849#section-2.2
-      ResourceOwnerAuthorizationUri(uri"https://some-server/io.bartholomews.fsclient.circe.oauth/authorize")
+      ResourceOwnerAuthorizationUri(uri"https://some-server/oauth/authorize")
     )
 
-  // a successful `redirectionUriResponse` will have the token in the query parameters:
-  val redirectionUriResponseApproved =
-    RedirectUri(myRedirectUri.value.params(("oauth_token", "AAA"), ("oauth_verifier", "ZZZ")))
+  // a successful `resourceOwnerAuthorizationUriResponse` will have the token in the query parameters:
+  val resourceOwnerAuthorizationUriResponse =
+    sampleRedirectUri.value.params(("oauth_token", "AAA"), ("oauth_verifier", "ZZZ"))
 
   // 3. Get the Token Credentials
   val maybeRequestTokenCredentials: Either[DeserializationError[Exception], RequestTokenCredentials] =
-    RequestTokenCredentials.validate(
-      redirectionUriResponseApproved,
+    RequestTokenCredentials.fetchRequestTokenCredentials(
+      resourceOwnerAuthorizationUriResponse,
       maybeTemporaryCredentials.body.getOrElse(dealWithIt),
       SignatureMethod.PLAINTEXT
     )
@@ -226,16 +229,15 @@ and providing OAuth signatures and other utils
 ```scala
   import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RedirectUri}
-  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.v2.{
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RedirectUri}
+  import io.bartholomews.fsclient.core.oauth.v2.{
     AuthorizationCode,
     AuthorizationCodeRequest,
     ClientId,
     ClientPassword,
-    ClientSecret,
-    OAuthV2
+    ClientSecret
   }
-  import io.bartholomews.fsclient.core.io.bartholomews.fsclient.circe.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
+  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
   import sttp.client.{HttpURLConnectionBackend, Identity, NothingT, ResponseError, SttpBackend, UriContext}
   import sttp.model.Uri
 
@@ -286,17 +288,12 @@ and providing OAuth signatures and other utils
     redirectionUriResponse = redirectionUriResponseApproved
   )
 
-  /*
-    Trying to move out from circe as default and have multi-modules json libs instead,
-    which would provide these implicits out of the box for their own codecs,
-    so for now you need to explicitly provide one
-   */
-  implicit val handleResponse: OAuthV2.ResponseHandler[AccessTokenSigner] =
-    sttp.client.circe.asJson[AccessTokenSigner]
+  // using fsclient-circe codecs
+  import io.bartholomews.fsclient.circe._
 
   // 4. Get an access token
   val maybeToken: Either[ResponseError[io.circe.Error], AccessTokenSigner] = AuthorizationCodeGrant
-    .accessTokenRequest(
+    .accessTokenRequest[circe.Error](
       serverUri = uri"https://some-authorization-server/token",
       code = maybeAuthorizationCode.getOrElse(dealWithIt),
       maybeRedirectUri = Some(myRedirectUri),

@@ -1,11 +1,22 @@
 package io.bartholomews.fsclient.core.oauth.v2
 
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalTo, post, stubFor, urlMatching}
-import io.bartholomews.fsclient.client.ClientData.{sampleAuthorizationCode, sampleClientPassword, sampleRedirectUri, sampleRefreshToken, sampleUserAgent}
+import io.bartholomews.fsclient.client.ClientData.{
+  sampleAuthorizationCode,
+  sampleClientPassword,
+  sampleRedirectUri,
+  sampleRefreshToken,
+  sampleUserAgent
+}
 import io.bartholomews.fsclient.client.IdentityClient
 import io.bartholomews.fsclient.core.FsClient
 import io.bartholomews.fsclient.core.oauth.ClientPasswordAuthentication
-import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, AuthorizationCodeGrant, ClientCredentialsGrant, ImplicitGrant}
+import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{
+  AccessToken,
+  AuthorizationCodeGrant,
+  ClientCredentialsGrant,
+  ImplicitGrant
+}
 import io.bartholomews.fsclient.wiremock.WiremockServer
 import io.circe
 import org.scalatest.Inside

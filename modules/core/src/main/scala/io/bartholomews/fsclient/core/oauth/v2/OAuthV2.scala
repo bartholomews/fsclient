@@ -118,7 +118,6 @@ object OAuthV2 {
       request.uri(serverUri)
 
     // https://tools.ietf.org/html/rfc6749#section-4.2.2
-    // TODO: `AuthorizationError` type
     def accessTokenResponse(
       request: AuthorizationTokenRequest,
       redirectionUriResponse: Uri

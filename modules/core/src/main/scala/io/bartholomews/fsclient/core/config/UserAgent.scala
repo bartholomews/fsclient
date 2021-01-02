@@ -1,6 +1,6 @@
 package io.bartholomews.fsclient.core.config
 
-case class UserAgent(appName: String, appVersion: Option[String], appUrl: Option[String]) {
+final case class UserAgent(appName: String, appVersion: Option[String], appUrl: Option[String]) {
 
   private val version = appVersion.map(version => s"/$version").getOrElse("")
   private val url = appUrl.map(url => s" (+$url)").getOrElse("")

@@ -108,29 +108,16 @@ final case class RequestTokenCredentials(
 
 object RequestTokenCredentials {
   /*
-   redirectUri MUST be updated and have oauth_token and oauth_verifier
+   resourceOwnerAuthorizationUriResponse MUST have oauth_token and oauth_verifier
    parameters as per https://tools.ietf.org/html/rfc5849#section-2.2
    */
-  def validate(
-    redirectUri: RedirectUri,
-    temporaryCredentials: TemporaryCredentials
-  ): Either[DeserializationError[Exception], RequestTokenCredentials] = validate(
-    redirectUri,
-    temporaryCredentials,
-    SignatureMethod.SHA1
-  )
-
-  /*
-   redirectUri MUST be updated and have oauth_token and oauth_verifier
-   parameters as per https://tools.ietf.org/html/rfc5849#section-2.2
-   */
-  def validate(
-    redirectUri: RedirectUri,
+  def fetchRequestTokenCredentials(
+    resourceOwnerAuthorizationUriResponse: Uri,
     temporaryCredentials: TemporaryCredentials,
-    signatureMethod: SignatureMethod
+    signatureMethod: SignatureMethod = SignatureMethod.SHA1
   ): Either[DeserializationError[Exception], RequestTokenCredentials] = {
 
-    val queryParams = redirectUri.value.paramsSeq
+    val queryParams = resourceOwnerAuthorizationUriResponse.paramsSeq
     val callbackResponse: Either[String, String] = queryParams
       .collectFirst({
         case ("denied", _) => Left("permission_denied")

@@ -4,7 +4,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, post, stubFor
 import io.bartholomews.fsclient.client.ClientData.{sampleConsumer, sampleRedirectUri, sampleUserAgent}
 import io.bartholomews.fsclient.client.IdentityClient
 import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{SignatureMethod, Token}
-import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RedirectUri
 import io.bartholomews.fsclient.core.oauth.{
   RequestTokenCredentials,
   ResourceOwnerAuthorizationUri,
@@ -70,12 +69,10 @@ class OAuthV1Test extends AnyWordSpec with IdentityClient with WiremockServer wi
           ResourceOwnerAuthorizationUri(uri"https://some-server/oauth/authorize")
         )
 
-      val maybeRequestTokenCredentials = RequestTokenCredentials.validate(
-        RedirectUri(
-          sampleRedirectUri.value.params(
-            ("oauth_token", "AAA"),
-            ("oauth_verifier", "ZZZ")
-          )
+      val maybeRequestTokenCredentials = RequestTokenCredentials.fetchRequestTokenCredentials(
+        sampleRedirectUri.value.params(
+          ("oauth_token", "AAA"),
+          ("oauth_verifier", "ZZZ")
         ),
         temporaryCredentials,
         SignatureMethod.PLAINTEXT

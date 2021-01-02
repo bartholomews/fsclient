@@ -90,7 +90,7 @@ object AuthorizationCodeGrantExample extends App {
   // 6. Get a refresh token
   if (accessToken.isExpired() && accessToken.refreshToken.isDefined) {
     AuthorizationCodeGrant
-      .refreshTokenRequest[circe.Error](
+      .refreshTokenRequest(
         serverUri = uri"https://some-authorization-server/refresh",
         accessToken.refreshToken.getOrElse(dealWithIt),
         scopes = accessToken.scope.values,
