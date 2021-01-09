@@ -26,7 +26,7 @@ sealed trait AuthorizationRequest {
       requiredQueryParams ++ optionalQueryParams
     }
 
-    serverUri.withParams(queryParams: _*)
+    serverUri.addParams(queryParams: _*)
   }
 }
 
