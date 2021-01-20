@@ -12,7 +12,7 @@ trait WiremockServer extends BeforeAndAfterAll {
 
   private val server: WireMockServer = new WireMockServer(
     new WireMockConfiguration()
-      .withRootDirectory("modules/circe/src/test/resources")
+      .withRootDirectory("modules/core/src/test/resources")
   )
 
   override def beforeAll(): Unit =

@@ -12,7 +12,7 @@ object ClientCredentialsExample extends App {
   implicit val backend: SttpBackend[F, Any] = HttpURLConnectionBackend()
 
   // using fsclient-circe codecs
-  import io.bartholomews.fsclient.circe._
+  import io.bartholomews.fsclient.circe.codecs._
 
   // you probably want to load this from config
   val myClientPassword = ClientPassword(

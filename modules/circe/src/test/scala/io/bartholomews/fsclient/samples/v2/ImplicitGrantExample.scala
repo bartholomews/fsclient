@@ -3,9 +3,9 @@ package io.bartholomews.fsclient.samples.v2
 object ImplicitGrantExample extends App {
   import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
+  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
   import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{ImplicitGrant, RedirectUri}
   import io.bartholomews.fsclient.core.oauth.v2.{AuthorizationTokenRequest, ClientId, ClientPassword, ClientSecret}
-  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
   import sttp.client3.{emptyRequest, HttpURLConnectionBackend, Identity, SttpBackend, UriContext}
   import sttp.model.Uri
 
@@ -58,8 +58,10 @@ object ImplicitGrantExample extends App {
       redirectionUriResponse = redirectionUriResponseApproved
     )
 
-  // 5. Use the access token
+  // import `FsClientSttpExtensions` in http package to use `sign`
   import io.bartholomews.fsclient.core._
+
+  // 5. Use the access token
   emptyRequest
     .get(uri"https://some-server/authenticated-endpoint")
     .sign(maybeToken.getOrElse(dealWithIt)) // sign with the implicit token provided

@@ -1,8 +1,8 @@
 package io.bartholomews.fsclient.samples.v2
 
 object AuthorizationCodeGrantExample extends App {
-  import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
+  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
   import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RedirectUri}
   import io.bartholomews.fsclient.core.oauth.v2.{
     AuthorizationCode,
@@ -11,9 +11,9 @@ object AuthorizationCodeGrantExample extends App {
     ClientPassword,
     ClientSecret
   }
-  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
   import sttp.client3.{HttpURLConnectionBackend, Identity, ResponseException, SttpBackend, UriContext}
   import sttp.model.Uri
+  import io.bartholomews.fsclient.core._
 
   def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
@@ -63,7 +63,7 @@ object AuthorizationCodeGrantExample extends App {
   )
 
   // using fsclient-circe codecs
-  import io.bartholomews.fsclient.circe._
+  import io.bartholomews.fsclient.circe.codecs._
 
   // 4. Get an access token
   val maybeToken: Either[ResponseException[String, io.circe.Error], AccessTokenSigner] =
@@ -82,7 +82,6 @@ object AuthorizationCodeGrantExample extends App {
   implicit val accessToken: AccessTokenSigner = maybeToken.getOrElse(dealWithIt)
 
   // 5. Use the access token
-  import io.bartholomews.fsclient.core._
   // an empty request with client `User-Agent` header
   baseRequest(client)
     .get(uri"https://some-server/authenticated-endpoint")

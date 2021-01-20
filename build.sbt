@@ -33,21 +33,25 @@ lazy val core = (project in file("modules/core"))
   .settings(commonSettings)
   .settings(
     name := "fsclient-core",
-    libraryDependencies ++= coreDependencies ++ testDependencies
+    libraryDependencies ++= coreDependencies ++ testDependencies,
+    coverageMinimum := 58, // FIXME
+    coverageFailOnMinimum := true
   )
 
 lazy val circe = (project in file("modules/circe"))
-  .dependsOn(core)
+  .dependsOn(core % "test->test; compile->compile")
   .settings(commonSettings)
   .settings(
     name := "fsclient-circe",
     libraryDependencies ++= circeDependencies ++ testDependencies,
-    coverageMinimum := 60, // FIXME
+    coverageMinimum := 92, // FIXME
     coverageFailOnMinimum := true
   )
 
 // https://www.scala-sbt.org/1.x/docs/Multi-Project.html
-lazy val root = (project in file("."))
+lazy val fsclient = (project in file("."))
+  .settings(commonSettings)
+  .settings(addCommandAlias("test", ";core/test;circe/test"): _*)
   .settings(skip in publish := true)
   .aggregate(core, circe)
 

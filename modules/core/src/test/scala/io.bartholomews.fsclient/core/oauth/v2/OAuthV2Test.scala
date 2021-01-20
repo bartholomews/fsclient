@@ -1,6 +1,7 @@
 package io.bartholomews.fsclient.core.oauth.v2
 
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalTo, post, stubFor, urlMatching}
+import io.bartholomews.fsclient.ServerBehaviours
 import io.bartholomews.fsclient.client.ClientData.{
   sampleAuthorizationCode,
   sampleClientPassword,
@@ -10,26 +11,32 @@ import io.bartholomews.fsclient.client.ClientData.{
 }
 import io.bartholomews.fsclient.client.IdentityClient
 import io.bartholomews.fsclient.core.FsClient
-import io.bartholomews.fsclient.core.oauth.ClientPasswordAuthentication
 import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{
   AccessToken,
   AuthorizationCodeGrant,
   ClientCredentialsGrant,
   ImplicitGrant
 }
+import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication, NonRefreshableTokenSigner}
 import io.bartholomews.fsclient.wiremock.WiremockServer
-import io.circe
 import org.scalatest.Inside
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import sttp.client3.{Identity, UriContext}
 import sttp.model.Uri
-import sttp.model.Uri.{QuerySegment, QuerySegmentEncoding}
 import sttp.model.Uri.QuerySegment.KeyValue
+import sttp.model.Uri.{QuerySegment, QuerySegmentEncoding}
 
-class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer with Matchers with Inside {
+abstract class OAuthV2Test[E[_], D[_], DE]
+    extends AnyWordSpec
+    with ServerBehaviours[E, D, DE]
+    with IdentityClient
+    with WiremockServer
+    with Matchers
+    with Inside {
 
-  import io.bartholomews.fsclient.circe._
+  implicit def accessTokenSignerDecoder: D[AccessTokenSigner]
+  implicit def nonRefreshableTokenSignerDecoder: D[NonRefreshableTokenSigner]
 
   "OAuthV2" when {
 
@@ -113,7 +120,7 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
 
         val response = sttpIdentityBackend.send(
           AuthorizationCodeGrant
-            .accessTokenRequest[circe.Error](
+            .accessTokenRequest[DE](
               serverUri = uri"$wiremockBaseUri/oauth/authorize",
               sampleAuthorizationCode,
               Some(sampleRedirectUri),
@@ -145,7 +152,7 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
 
         val response = sttpIdentityBackend.send(
           AuthorizationCodeGrant
-            .refreshTokenRequest[circe.Error](
+            .refreshTokenRequest[DE](
               serverUri = uri"$wiremockBaseUri/oauth/refresh",
               sampleRefreshToken,
               scopes = List.empty,
@@ -221,7 +228,7 @@ class OAuthV2Test extends AnyWordSpec with IdentityClient with WiremockServer wi
     "ClientCredentialsGrant" should {
 
       val accessTokenRequest =
-        ClientCredentialsGrant.accessTokenRequest[circe.Error](
+        ClientCredentialsGrant.accessTokenRequest[DE](
           serverUri = uri"$wiremockBaseUri/oauth/token",
           sampleClientPassword
         )

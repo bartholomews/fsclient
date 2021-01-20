@@ -44,16 +44,15 @@ and providing OAuth signatures and other utils
 #### Token Credentials
 
 ```scala
-  import io.bartholomews.fsclient.client.ClientData.sampleRedirectUri
-  import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
-  import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RedirectUri
   import io.bartholomews.fsclient.core.oauth.{
     RequestTokenCredentials,
     ResourceOwnerAuthorizationUri,
     TemporaryCredentialsRequest
   }
+  import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
+  import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RedirectUri
+  import io.bartholomews.fsclient.client.ClientData.sampleRedirectUri
   import sttp.client3.{
     emptyRequest,
     DeserializationException,
@@ -64,6 +63,7 @@ and providing OAuth signatures and other utils
     SttpBackend,
     UriContext
   }
+  import io.bartholomews.fsclient.core.config.UserAgent
   import sttp.model.Method
 
   type F[X] = Identity[X]
@@ -118,8 +118,10 @@ and providing OAuth signatures and other utils
 
   implicit val requestToken: RequestTokenCredentials = maybeRequestTokenCredentials.getOrElse(dealWithIt)
 
-  // 4. Use the Token Credentials
+  // import `FsClientSttpExtensions` in http package to use `sign`
   import io.bartholomews.fsclient.core._
+
+  // 4. Use the Token Credentials
   emptyRequest
     .get(uri"https://some-server/authenticated-endpoint")
     .sign // sign with the implicit token provided
@@ -142,7 +144,7 @@ and providing OAuth signatures and other utils
   implicit val backend: SttpBackend[F, Any] = HttpURLConnectionBackend()
 
   // using fsclient-circe codecs
-  import io.bartholomews.fsclient.circe._
+  import io.bartholomews.fsclient.circe.codecs._
 
   // you probably want to load this from config
   val myClientPassword = ClientPassword(
@@ -165,9 +167,9 @@ and providing OAuth signatures and other utils
 ```scala
   import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
+  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
   import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{ImplicitGrant, RedirectUri}
   import io.bartholomews.fsclient.core.oauth.v2.{AuthorizationTokenRequest, ClientId, ClientPassword, ClientSecret}
-  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
   import sttp.client3.{emptyRequest, HttpURLConnectionBackend, Identity, SttpBackend, UriContext}
   import sttp.model.Uri
 
@@ -220,8 +222,10 @@ and providing OAuth signatures and other utils
       redirectionUriResponse = redirectionUriResponseApproved
     )
 
-  // 5. Use the access token
+  // import `FsClientSttpExtensions` in http package to use `sign`
   import io.bartholomews.fsclient.core._
+
+  // 5. Use the access token
   emptyRequest
     .get(uri"https://some-server/authenticated-endpoint")
     .sign(maybeToken.getOrElse(dealWithIt)) // sign with the implicit token provided
@@ -230,8 +234,8 @@ and providing OAuth signatures and other utils
 #### Authorization code grant
 
 ```scala
-  import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
+  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
   import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RedirectUri}
   import io.bartholomews.fsclient.core.oauth.v2.{
     AuthorizationCode,
@@ -240,9 +244,9 @@ and providing OAuth signatures and other utils
     ClientPassword,
     ClientSecret
   }
-  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
   import sttp.client3.{HttpURLConnectionBackend, Identity, ResponseException, SttpBackend, UriContext}
   import sttp.model.Uri
+  import io.bartholomews.fsclient.core._
 
   def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
@@ -292,7 +296,7 @@ and providing OAuth signatures and other utils
   )
 
   // using fsclient-circe codecs
-  import io.bartholomews.fsclient.circe._
+  import io.bartholomews.fsclient.circe.codecs._
 
   // 4. Get an access token
   val maybeToken: Either[ResponseException[String, io.circe.Error], AccessTokenSigner] =
@@ -311,7 +315,6 @@ and providing OAuth signatures and other utils
   implicit val accessToken: AccessTokenSigner = maybeToken.getOrElse(dealWithIt)
 
   // 5. Use the access token
-  import io.bartholomews.fsclient.core._
   // an empty request with client `User-Agent` header
   baseRequest(client)
     .get(uri"https://some-server/authenticated-endpoint")

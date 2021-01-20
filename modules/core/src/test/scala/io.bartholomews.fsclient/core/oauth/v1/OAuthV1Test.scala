@@ -3,7 +3,7 @@ package io.bartholomews.fsclient.core.oauth.v1
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, post, stubFor, urlMatching}
 import io.bartholomews.fsclient.client.ClientData.{sampleConsumer, sampleRedirectUri, sampleUserAgent}
 import io.bartholomews.fsclient.client.IdentityClient
-import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{SignatureMethod, Token}
+import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.SignatureMethod
 import io.bartholomews.fsclient.core.oauth.{
   RequestTokenCredentials,
   ResourceOwnerAuthorizationUri,
@@ -53,7 +53,7 @@ class OAuthV1Test extends AnyWordSpec with IdentityClient with WiremockServer wi
       inside(maybeTemporaryCredentials.body) { case Right(temporaryCredentials) =>
         temporaryCredentials shouldBe TemporaryCredentials(
           consumer = sampleConsumer,
-          token = Token("AAA", "BBB"),
+          token = OAuthV1.Token("AAA", "BBB"),
           callbackConfirmed = true,
           ResourceOwnerAuthorizationUri(uri"https://some-server/oauth/authorize")
         )
@@ -65,7 +65,7 @@ class OAuthV1Test extends AnyWordSpec with IdentityClient with WiremockServer wi
       val temporaryCredentials =
         TemporaryCredentials(
           consumer = sampleConsumer,
-          token = Token("AAA", "BBB"),
+          token = OAuthV1.Token("AAA", "BBB"),
           callbackConfirmed = true,
           ResourceOwnerAuthorizationUri(uri"https://some-server/oauth/authorize")
         )

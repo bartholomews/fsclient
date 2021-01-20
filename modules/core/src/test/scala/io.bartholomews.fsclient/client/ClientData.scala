@@ -2,8 +2,8 @@ package io.bartholomews.fsclient.client
 
 import io.bartholomews.fsclient.core.config.UserAgent
 import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.Consumer
-import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{RedirectUri, RefreshToken}
 import io.bartholomews.fsclient.core.oauth.v2.{AuthorizationCode, ClientId, ClientPassword, ClientSecret}
+import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{RedirectUri, RefreshToken}
 import sttp.client3.UriContext
 
 object ClientData {

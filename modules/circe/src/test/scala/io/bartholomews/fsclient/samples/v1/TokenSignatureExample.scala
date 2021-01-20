@@ -1,16 +1,15 @@
 package io.bartholomews.fsclient.samples.v1
 
 object TokenSignatureExample extends App {
-  import io.bartholomews.fsclient.client.ClientData.sampleRedirectUri
-  import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
-  import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RedirectUri
   import io.bartholomews.fsclient.core.oauth.{
     RequestTokenCredentials,
     ResourceOwnerAuthorizationUri,
     TemporaryCredentialsRequest
   }
+  import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
+  import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RedirectUri
+  import io.bartholomews.fsclient.client.ClientData.sampleRedirectUri
   import sttp.client3.{
     emptyRequest,
     DeserializationException,
@@ -21,6 +20,7 @@ object TokenSignatureExample extends App {
     SttpBackend,
     UriContext
   }
+  import io.bartholomews.fsclient.core.config.UserAgent
   import sttp.model.Method
 
   type F[X] = Identity[X]
@@ -75,8 +75,10 @@ object TokenSignatureExample extends App {
 
   implicit val requestToken: RequestTokenCredentials = maybeRequestTokenCredentials.getOrElse(dealWithIt)
 
-  // 4. Use the Token Credentials
+  // import `FsClientSttpExtensions` in http package to use `sign`
   import io.bartholomews.fsclient.core._
+
+  // 4. Use the Token Credentials
   emptyRequest
     .get(uri"https://some-server/authenticated-endpoint")
     .sign // sign with the implicit token provided
