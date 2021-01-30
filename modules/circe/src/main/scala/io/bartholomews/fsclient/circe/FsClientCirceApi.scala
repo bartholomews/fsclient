@@ -30,7 +30,7 @@ trait FsClientCirceApi extends SttpCirceApi {
       refreshToken <- c.downField("refresh_token").as[Option[RefreshToken]]
       scope <- c.downField("scope").as[Scope]
     } yield AccessTokenSigner(
-      generatedAt = System.currentTimeMillis(),
+      generatedAt = System.nanoTime(),
       accessToken,
       tokenType,
       expiresIn,
@@ -50,7 +50,7 @@ trait FsClientCirceApi extends SttpCirceApi {
       expiresIn <- c.downField("expires_in").as[Long]
       scope <- c.downField("scope").as[Scope]
     } yield NonRefreshableTokenSigner(
-      generatedAt = System.currentTimeMillis(),
+      generatedAt = System.nanoTime(),
       accessToken,
       tokenType,
       expiresIn,

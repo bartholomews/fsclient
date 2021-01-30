@@ -136,7 +136,7 @@ object OAuthV2 {
               }
               scopes <- Right(params.get("scope").toList.flatMap(_.split(" ")))
             } yield NonRefreshableTokenSigner.apply(
-              generatedAt = System.currentTimeMillis(),
+              generatedAt = System.nanoTime(),
               accessToken = AccessToken(accessToken),
               tokenType = tokenType,
               expiresIn = expiresIn,

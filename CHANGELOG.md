@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Migrated to sttp v3
 - Removed implicit sttp backend, it needs to be passed explicitly now
+- `AccessTokenSigner` using `nanoTime` instead of `currentTimeMillis`
 ### Fixed
 - `AuthorizationRequest` preserving given query parameters
 
