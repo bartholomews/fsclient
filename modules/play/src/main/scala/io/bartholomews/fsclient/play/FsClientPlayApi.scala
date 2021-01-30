@@ -14,7 +14,7 @@ import sttp.model.Uri
 
 trait FsClientPlayApi {
   // https://www.playframework.com/documentation/latest/ScalaJsonAutomated
-  implicit val config: Aux[Json.MacroOptions] = JsonConfiguration(SnakeCase)
+  private[fsclient] implicit val config: Aux[Json.MacroOptions] = JsonConfiguration(SnakeCase)
 
   implicit def responseHandler[T](implicit decoder: Reads[T]): ResponseHandler[JsError, T] =
     asJson[T]
