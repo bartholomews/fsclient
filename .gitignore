@@ -1,6 +1,7 @@
 *.class
 *.log
 *.idea
+*.iml
 .bsp
 .bloop
 .metals
@@ -9,3 +10,4 @@ project/metals.sbt
 project/project
 project/target
 target
+

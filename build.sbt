@@ -1,4 +1,4 @@
-import Dependencies.{circeDependencies, coreDependencies, testDependencies}
+import Dependencies.{circeDependencies, coreDependencies, playDependencies, testDependencies}
 import sbt.Keys.{parallelExecution, scalacOptions}
 import scoverage.ScoverageKeys.coverageFailOnMinimum
 
@@ -48,12 +48,22 @@ lazy val circe = (project in file("modules/circe"))
     coverageFailOnMinimum := true
   )
 
+lazy val play = (project in file("modules/play"))
+  .dependsOn(core % "test->test; compile->compile")
+  .settings(commonSettings)
+  .settings(
+    name := "fsclient-play",
+    libraryDependencies ++= playDependencies ++ testDependencies,
+    coverageMinimum := 83, // FIXME
+    coverageFailOnMinimum := true
+  )
+
 // https://www.scala-sbt.org/1.x/docs/Multi-Project.html
 lazy val fsclient = (project in file("."))
   .settings(commonSettings)
-  .settings(addCommandAlias("test", ";core/test;circe/test"): _*)
+  .settings(addCommandAlias("test", ";core/test;circe/test;play/test"): _*)
   .settings(skip in publish := true)
-  .aggregate(core, circe)
+  .aggregate(core, circe, play)
 
 resolvers += "Sonatype OSS Snapshots"
   .at("https://oss.sonatype.org/content/repositories/snapshots")
