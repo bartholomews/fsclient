@@ -12,18 +12,19 @@ import pureconfig.error.ConfigReaderFailures
 class FsClientTest extends AsyncFunSuite with IdentityClient with Matchers with Inside {
 
   test("v1.clientCredentials with valid config") {
-    FsClient.v1.clientCredentials(consumerNamespace = "mock-app") shouldBe Right(
+    FsClient.v1.clientCredentials(consumerNamespace = "mock-app")(backend) shouldBe Right(
       FsClient(
         userAgent = UserAgent(appName = "mock-app", appVersion = Some("0.0.1"), appUrl = None),
         signer = ClientCredentials(Consumer(key = "mock-consumer-key", secret = "mock-consumer-secret")),
-        backend = sttpIdentityBackend
+        backend = backend
       )
     )
   }
 
   test("v1.clientCredentials with invalid config") {
-    inside(FsClient.v1.clientCredentials(consumerNamespace = "unknown-key")) { case Left(ConfigReaderFailures(error)) =>
-      error.description shouldBe "Key not found: 'unknown-key'."
+    inside(FsClient.v1.clientCredentials(consumerNamespace = "unknown-key")(backend)) {
+      case Left(ConfigReaderFailures(error)) =>
+        error.description shouldBe "Key not found: 'unknown-key'."
     }
   }
 

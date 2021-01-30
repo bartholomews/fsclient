@@ -45,7 +45,7 @@ abstract class OAuthV2Test[E[_], D[_], DE]
     val client: FsClient[Identity, ClientPasswordAuthentication] = FsClient.v2.clientPassword(
       sampleUserAgent,
       signer
-    )
+    )(backend)
 
     "AuthorizationCodeGrant" should {
 
@@ -118,7 +118,7 @@ abstract class OAuthV2Test[E[_], D[_], DE]
             )
         )
 
-        val response = sttpIdentityBackend.send(
+        val response = backend.send(
           AuthorizationCodeGrant
             .accessTokenRequest[DE](
               serverUri = uri"$wiremockBaseUri/oauth/authorize",
@@ -150,7 +150,7 @@ abstract class OAuthV2Test[E[_], D[_], DE]
             )
         )
 
-        val response = sttpIdentityBackend.send(
+        val response = backend.send(
           AuthorizationCodeGrant
             .refreshTokenRequest[DE](
               serverUri = uri"$wiremockBaseUri/oauth/refresh",
@@ -244,7 +244,7 @@ abstract class OAuthV2Test[E[_], D[_], DE]
             )
         )
 
-        inside(sttpIdentityBackend.send(accessTokenRequest).body) { case Right(nonRefreshableTokenSigner) =>
+        inside(backend.send(accessTokenRequest).body) { case Right(nonRefreshableTokenSigner) =>
           nonRefreshableTokenSigner.accessToken shouldBe AccessToken("some-access-token")
         }
       }

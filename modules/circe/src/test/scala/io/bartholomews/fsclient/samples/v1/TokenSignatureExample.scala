@@ -27,7 +27,7 @@ object TokenSignatureExample extends App {
 
   def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
-  implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
+  val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
 
   val userAgent = UserAgent(
     appName = "SAMPLE_APP_NAME",
@@ -59,7 +59,7 @@ object TokenSignatureExample extends App {
       userAgent,
       // https://tools.ietf.org/html/rfc5849#section-2.2
       ResourceOwnerAuthorizationUri(uri"https://some-server/oauth/authorize")
-    )
+    )(backend)
 
   // a successful `resourceOwnerAuthorizationUriResponse` will have the token in the query parameters:
   val resourceOwnerAuthorizationUriResponse =

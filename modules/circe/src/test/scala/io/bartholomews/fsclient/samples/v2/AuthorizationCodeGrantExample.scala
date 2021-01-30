@@ -17,7 +17,7 @@ object AuthorizationCodeGrantExample extends App {
 
   def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
-  implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
+  val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
 
   val userAgent = UserAgent(
     appName = "SAMPLE_APP_NAME",
@@ -33,7 +33,7 @@ object AuthorizationCodeGrantExample extends App {
 
   val myRedirectUri = RedirectUri(uri"https://my-app/callback")
 
-  val client = FsClient.v2.clientPassword(userAgent, ClientPasswordAuthentication(myClientPassword))
+  val client = FsClient.v2.clientPassword(userAgent, ClientPasswordAuthentication(myClientPassword))(backend)
 
   // 1. Prepare an authorization code request
   val authorizationCodeRequest = AuthorizationCodeRequest(

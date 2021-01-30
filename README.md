@@ -70,7 +70,7 @@ and providing OAuth signatures and other utils
 
   def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
-  implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
+  val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
 
   val userAgent = UserAgent(
     appName = "SAMPLE_APP_NAME",
@@ -102,7 +102,7 @@ and providing OAuth signatures and other utils
       userAgent,
       // https://tools.ietf.org/html/rfc5849#section-2.2
       ResourceOwnerAuthorizationUri(uri"https://some-server/oauth/authorize")
-    )
+    )(backend)
 
   // a successful `resourceOwnerAuthorizationUriResponse` will have the token in the query parameters:
   val resourceOwnerAuthorizationUriResponse =
@@ -125,7 +125,6 @@ and providing OAuth signatures and other utils
   emptyRequest
     .get(uri"https://some-server/authenticated-endpoint")
     .sign // sign with the implicit token provided
-}
 ```
 
 ### [OAuth 2.0](https://tools.ietf.org/html/rfc6749)
@@ -141,7 +140,7 @@ and providing OAuth signatures and other utils
 
   type F[X] = Identity[X]
 
-  implicit val backend: SttpBackend[F, Any] = HttpURLConnectionBackend()
+  val backend: SttpBackend[F, Any] = HttpURLConnectionBackend()
 
   // using fsclient-circe codecs
   import io.bartholomews.fsclient.circe.codecs._
@@ -175,7 +174,7 @@ and providing OAuth signatures and other utils
 
   def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
-  implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
+  val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
 
   val userAgent: UserAgent = UserAgent(
     appName = "SAMPLE_APP_NAME",
@@ -250,7 +249,7 @@ and providing OAuth signatures and other utils
 
   def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
-  implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
+  val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
 
   val userAgent = UserAgent(
     appName = "SAMPLE_APP_NAME",
@@ -266,7 +265,7 @@ and providing OAuth signatures and other utils
 
   val myRedirectUri = RedirectUri(uri"https://my-app/callback")
 
-  val client = FsClient.v2.clientPassword(userAgent, ClientPasswordAuthentication(myClientPassword))
+  val client = FsClient.v2.clientPassword(userAgent, ClientPasswordAuthentication(myClientPassword))(backend)
 
   // 1. Prepare an authorization code request
   val authorizationCodeRequest = AuthorizationCodeRequest(

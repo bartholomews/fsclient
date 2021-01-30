@@ -9,7 +9,7 @@ object ClientCredentialsExample extends App {
 
   type F[X] = Identity[X]
 
-  implicit val backend: SttpBackend[F, Any] = HttpURLConnectionBackend()
+  val backend: SttpBackend[F, Any] = HttpURLConnectionBackend()
 
   // using fsclient-circe codecs
   import io.bartholomews.fsclient.circe.codecs._

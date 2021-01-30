@@ -41,13 +41,13 @@ object FsClient {
 
     import pureconfig.generic.auto._
 
-    def clientCredentials[F[_]](userAgent: UserAgent, consumer: Consumer)(implicit
+    def clientCredentials[F[_]](userAgent: UserAgent, consumer: Consumer)(
       backend: SttpBackend[F, Any]
     ): FsClient[F, SignerV1] = FsClient(userAgent, ClientCredentials(consumer), backend)
 
     def clientCredentials[F[_]](
       consumerNamespace: String
-    )(implicit backend: SttpBackend[F, Any]): Result[FsClient[F, SignerV1]] =
+    )(backend: SttpBackend[F, Any]): Result[FsClient[F, SignerV1]] =
       for {
         consumer <-
           ConfigSource.default
@@ -57,14 +57,14 @@ object FsClient {
 
         userAgent <- ConfigSource.default.at(namespace = "user-agent").load[UserAgent]
 
-      } yield clientCredentials(userAgent, consumer)
+      } yield clientCredentials(userAgent, consumer)(backend)
   }
 
   object v2 {
     def clientPassword[F[_]](
       userAgent: UserAgent,
       clientPasswordAuthentication: ClientPasswordAuthentication
-    )(implicit backend: SttpBackend[F, Any]): FsClient[F, ClientPasswordAuthentication] =
+    )(backend: SttpBackend[F, Any]): FsClient[F, ClientPasswordAuthentication] =
       FsClient(userAgent = userAgent, signer = clientPasswordAuthentication, backend)
   }
 }

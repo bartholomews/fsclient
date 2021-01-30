@@ -34,7 +34,7 @@ class OAuthV1Test extends AnyWordSpec with IdentityClient with WiremockServer wi
         serverUri = uri"$wiremockBaseUri/oauth/request-token",
         sampleUserAgent,
         ResourceOwnerAuthorizationUri(uri"https://some-server/oauth/authorize")
-      )
+      )(backend)
 
     "get temporary credentials" in {
 

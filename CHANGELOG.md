@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - *No changes*
 ### Changed
 - Migrated to sttp v3
+- Removed implicit sttp backend, it needs to be passed explicitly now
 ### Fixed 
 - *No changes*
 
