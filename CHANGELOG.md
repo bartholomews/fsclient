@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Migrated to sttp v3
 - Removed implicit sttp backend, it needs to be passed explicitly now
-### Fixed 
-- *No changes*
+### Fixed
+- `AuthorizationRequest` preserving given query parameters
 
 ## [0.1.0] - 2021-01-02
 ### Changed
