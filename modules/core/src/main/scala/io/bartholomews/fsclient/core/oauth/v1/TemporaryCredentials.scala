@@ -13,7 +13,7 @@ case class TemporaryCredentials(
   consumer: Consumer,
   token: Token,
   callbackConfirmed: Boolean,
-  private val resourceOwnerAuthorizationUri: ResourceOwnerAuthorizationUri
+  private[fsclient] val resourceOwnerAuthorizationUri: ResourceOwnerAuthorizationUri
 ) {
   final val resourceOwnerAuthorizationRequest: Uri =
     resourceOwnerAuthorizationUri.value.addQuerySegment(QuerySegment.KeyValue("oauth_token", token.value))

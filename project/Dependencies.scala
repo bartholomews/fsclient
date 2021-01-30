@@ -26,7 +26,8 @@ object Dependencies {
 
   lazy val coreDependencies: Seq[ModuleID] = Seq(
     "com.github.pureconfig" %% "pureconfig" % Versions.pureConfig,
-    "com.softwaremill.sttp.client3" %% "core" % Versions.sttp
+    "com.softwaremill.sttp.client3" %% "core" % Versions.sttp,
+    "com.beachape" %% "enumeratum" % Versions.enumeratum
   ) ++ logback
 
   lazy val circeDependencies: Seq[ModuleID] = Seq(
