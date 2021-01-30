@@ -4,22 +4,29 @@ import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod
 import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
 import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, RefreshToken, ResponseHandler}
 import io.bartholomews.fsclient.core.oauth.v2.{ClientId, ClientPassword, ClientSecret}
-import io.bartholomews.fsclient.core.oauth.{AccessTokenCredentials, AccessTokenSigner, ClientPasswordAuthentication, NonRefreshableTokenSigner, ResourceOwnerAuthorizationUri, Scope}
+import io.bartholomews.fsclient.core.oauth.{
+  AccessTokenCredentials,
+  AccessTokenSigner,
+  ClientPasswordAuthentication,
+  NonRefreshableTokenSigner,
+  ResourceOwnerAuthorizationUri,
+  Scope
+}
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.JsonConfiguration.Aux
 import play.api.libs.json.JsonNaming.SnakeCase
-import play.api.libs.json.{JsError, Json, JsonConfiguration, Reads}
 import sttp.client3.playJson.asJson
 import sttp.model.Uri
 
 trait FsClientPlayApi {
+
+  import play.api.libs.json._
+
   // https://www.playframework.com/documentation/latest/ScalaJsonAutomated
-  private[fsclient] implicit val config: Aux[Json.MacroOptions] = JsonConfiguration(SnakeCase)
+  implicit val config: Aux[Json.MacroOptions] = JsonConfiguration(SnakeCase)
 
   implicit def responseHandler[T](implicit decoder: Reads[T]): ResponseHandler[JsError, T] =
     asJson[T]
-
-  import play.api.libs.json._
 
   implicit val accessTokenEncoder: Writes[AccessToken] = Json.valueWrites[AccessToken]
   implicit val accessTokenDecoder: Reads[AccessToken] = Json.valueReads[AccessToken]
