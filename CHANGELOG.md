@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 ### Removed
 ### Changed
+- `AccessTokenSigner` using `currentTimeMillis` instead of `nanoTime`
 ### Fixed
 
 ## [0.1.1] - 2021-01-30
