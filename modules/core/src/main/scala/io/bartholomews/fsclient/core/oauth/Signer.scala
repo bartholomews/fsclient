@@ -178,7 +178,6 @@ final case class ClientPasswordAuthentication(clientPassword: ClientPassword) ex
 }
 
 // https://tools.ietf.org/html/rfc6749#section-5.1
-// `generatedAt` must be in nanoseconds
 sealed trait TokenSignerV2 extends SignerV2 {
   def generatedAt: Long
   def accessToken: AccessToken
@@ -188,7 +187,7 @@ sealed trait TokenSignerV2 extends SignerV2 {
   def refreshToken: Option[RefreshToken]
   def scope: Scope
   final def isExpired(threshold: Duration = 1.minute): Boolean =
-    (System.nanoTime() + threshold.toNanos) > generatedAt + (expiresIn * 1_000_000_000)
+    (System.currentTimeMillis() + threshold.toMillis) > generatedAt + (expiresIn * 1000)
 
   final override def sign[T, S](request: Request[T, S]): Request[T, S] =
     tokenType.toUpperCase match {

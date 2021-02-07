@@ -48,7 +48,7 @@ trait FsClientPlayApi {
   private val tokenCommonFieldsJsonPath =
     (JsPath \ "generated_at")
       .read[Long]
-      .orElse(Reads.pure(System.nanoTime()))
+      .orElse(Reads.pure(System.currentTimeMillis()))
       .and((JsPath \ "access_token").read[AccessToken])
       .and((JsPath \ "token_type").read[String])
       .and((JsPath \ "expires_in").read[Long])
