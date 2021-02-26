@@ -2,7 +2,7 @@ import Dependencies.{circeDependencies, coreDependencies, playDependencies, test
 import sbt.Keys.{parallelExecution, scalacOptions}
 import scoverage.ScoverageKeys.coverageFailOnMinimum
 
-ThisBuild / scalaVersion := "2.13.3"
+ThisBuild / scalaVersion := "2.13.5"
 
 inThisBuild(
   List(
