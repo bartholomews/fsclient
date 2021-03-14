@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 ### Removed
+- `FsApiClient`
 ### Changed
 - `AccessTokenSigner` using `currentTimeMillis` instead of `nanoTime`, and has `refreshToken` required
 - `baseRequest` taking an `userAgent` instead of `client`
