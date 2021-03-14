@@ -88,12 +88,12 @@ object AuthorizationCodeGrantExample extends App {
     .sign // sign with the implicit token provided
 
   // 6. Get a refresh token
-  if (accessToken.isExpired() && accessToken.refreshToken.isDefined) {
+  if (accessToken.isExpired()) {
     backend.send(
       AuthorizationCodeGrant
         .refreshTokenRequest(
           serverUri = uri"https://some-authorization-server/refresh",
-          accessToken.refreshToken.getOrElse(dealWithIt),
+          accessToken.refreshToken,
           scopes = accessToken.scope.values,
           clientPassword = myClientPassword
         )

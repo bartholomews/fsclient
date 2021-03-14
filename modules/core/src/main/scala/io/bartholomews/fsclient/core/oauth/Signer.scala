@@ -184,7 +184,6 @@ sealed trait TokenSignerV2 extends SignerV2 {
   // https://tools.ietf.org/html/rfc6749#section-7.1
   def tokenType: String
   def expiresIn: Long
-  def refreshToken: Option[RefreshToken]
   def scope: Scope
   final def isExpired(threshold: Duration = 1.minute): Boolean =
     (System.currentTimeMillis() + threshold.toMillis) > generatedAt + (expiresIn * 1000)
@@ -216,7 +215,7 @@ final case class AccessTokenSigner(
   accessToken: AccessToken,
   tokenType: String,
   expiresIn: Long,
-  refreshToken: Option[RefreshToken],
+  refreshToken: RefreshToken,
   scope: Scope
 ) extends TokenSignerV2
 
@@ -231,6 +230,4 @@ final case class NonRefreshableTokenSigner(
   tokenType: String,
   expiresIn: Long,
   scope: Scope
-) extends TokenSignerV2 {
-  override val refreshToken: Option[RefreshToken] = None
-}
+) extends TokenSignerV2
