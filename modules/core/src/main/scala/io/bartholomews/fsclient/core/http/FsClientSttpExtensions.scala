@@ -18,9 +18,8 @@ import sttp.model.Uri.QuerySegment
 import sttp.model.{Header, HeaderNames, MediaType, Uri}
 
 trait FsClientSttpExtensions {
-  def baseRequest[F[_], S <: Signer](client: FsClient[F, S]): RequestT[Empty, Either[String, String], Any] =
-    emptyRequest
-      .userAgent(client.userAgent)
+  def baseRequest(userAgent: UserAgent): RequestT[Empty, Either[String, String], Any] =
+    emptyRequest.userAgent(userAgent)
 
   import sttp.client3.asEither
   def asUnit[R]: ResponseAs[Either[ResponseException[String, Nothing], Unit], R] =

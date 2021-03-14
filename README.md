@@ -313,7 +313,7 @@ and providing OAuth signatures and other utils
 
   // 5. Use the access token
   // an empty request with client `User-Agent` header
-  baseRequest(client)
+  baseRequest(userAgent)
     .get(uri"https://some-server/authenticated-endpoint")
     .sign // sign with the implicit token provided
 

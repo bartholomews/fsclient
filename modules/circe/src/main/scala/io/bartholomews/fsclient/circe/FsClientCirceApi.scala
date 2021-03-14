@@ -105,6 +105,7 @@ trait FsClientCirceApi extends SttpCirceApi {
       "callback_confirmed",
       "resource_owner_authorization_uri"
     )(tc => (tc.consumer, tc.token, tc.callbackConfirmed, tc.resourceOwnerAuthorizationUri))
+
   implicit val temporaryCredentialsCodec: Decoder[TemporaryCredentials] = (c: HCursor) =>
     for {
       consumer <- c.downField("consumer").as[Consumer]
