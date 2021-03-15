@@ -56,7 +56,7 @@ trait FsClientPlayApi {
   implicit val accessTokenSignerEncoder: Writes[AccessTokenSigner] = Json.writes[AccessTokenSigner]
   implicit val accessTokenSignerDecoder: Reads[AccessTokenSigner] =
     tokenCommonFieldsJsonPath
-      .and((JsPath \ "refresh_token").read[RefreshToken])
+      .and((JsPath \ "refresh_token").readNullable[RefreshToken])
       .and(scopeJsonPath)(AccessTokenSigner.apply _)
 
   implicit val nonRefreshableTokenSignerEncoder: Writes[NonRefreshableTokenSigner] =

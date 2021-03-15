@@ -1,5 +1,7 @@
 package io.bartholomews.fsclient.samples.v2
 
+import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RefreshToken
+
 object AuthorizationCodeGrantExample extends App {
   import io.bartholomews.fsclient.core.config.UserAgent
   import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
@@ -79,7 +81,7 @@ object AuthorizationCodeGrantExample extends App {
       )
       .body
 
-  implicit val accessToken: AccessTokenSigner = maybeToken.getOrElse(dealWithIt)
+  implicit val accessTokenSigner: AccessTokenSigner = maybeToken.getOrElse(dealWithIt)
 
   // 5. Use the access token
   // an empty request with client `User-Agent` header
@@ -88,13 +90,18 @@ object AuthorizationCodeGrantExample extends App {
     .sign // sign with the implicit token provided
 
   // 6. Get a refresh token
-  if (accessToken.isExpired()) {
+  if (accessTokenSigner.isExpired()) {
     backend.send(
       AuthorizationCodeGrant
         .refreshTokenRequest(
           serverUri = uri"https://some-authorization-server/refresh",
-          accessToken.refreshToken,
-          scopes = accessToken.scope.values,
+          accessTokenSigner.refreshToken.getOrElse(
+            RefreshToken(
+              "Refresh token is optional: some implementations (e.g. Spotify) only give you a refresh token " +
+                "with the first `accessTokenSigner` authorization response, so you might need to store and use that."
+            )
+          ),
+          scopes = accessTokenSigner.scope.values,
           clientPassword = myClientPassword
         )
     )

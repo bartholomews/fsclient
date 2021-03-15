@@ -215,7 +215,7 @@ final case class AccessTokenSigner(
   accessToken: AccessToken,
   tokenType: String,
   expiresIn: Long,
-  refreshToken: RefreshToken,
+  refreshToken: Option[RefreshToken],
   scope: Scope
 ) extends TokenSignerV2
 

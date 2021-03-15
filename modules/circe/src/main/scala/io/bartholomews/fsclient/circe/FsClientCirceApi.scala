@@ -57,7 +57,7 @@ trait FsClientCirceApi extends SttpCirceApi {
       accessToken,
       tokenType,
       expiresIn,
-      refreshToken,
+      Some(refreshToken),
       scope
     )
 

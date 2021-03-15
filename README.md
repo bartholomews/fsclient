@@ -309,7 +309,7 @@ and providing OAuth signatures and other utils
       )
       .body
 
-  implicit val accessToken: AccessTokenSigner = maybeToken.getOrElse(dealWithIt)
+  implicit val accessTokenSigner: AccessTokenSigner = maybeToken.getOrElse(dealWithIt)
 
   // 5. Use the access token
   // an empty request with client `User-Agent` header
@@ -318,13 +318,18 @@ and providing OAuth signatures and other utils
     .sign // sign with the implicit token provided
 
   // 6. Get a refresh token
-  if (accessToken.isExpired()) {
+  if (accessTokenSigner.isExpired()) {
     backend.send(
       AuthorizationCodeGrant
         .refreshTokenRequest(
           serverUri = uri"https://some-authorization-server/refresh",
-          accessToken.refreshToken,
-          scopes = accessToken.scope.values,
+          accessTokenSigner.refreshToken.getOrElse(
+            RefreshToken(
+              "Refresh token is optional: some implementations (e.g. Spotify) only give you a refresh token " +
+                "with the first `accessTokenSigner` authorization response, so you might need to store and use that." 
+            )
+          ),
+          scopes = accessTokenSigner.scope.values,
           clientPassword = myClientPassword
         )
     )
