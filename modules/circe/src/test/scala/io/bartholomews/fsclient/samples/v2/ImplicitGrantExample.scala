@@ -1,15 +1,14 @@
 package io.bartholomews.fsclient.samples.v2
 
 object ImplicitGrantExample extends App {
+
   import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
   import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{ImplicitGrant, RedirectUri}
   import io.bartholomews.fsclient.core.oauth.v2.{AuthorizationTokenRequest, ClientId, ClientPassword, ClientSecret}
-  import sttp.client3.{emptyRequest, HttpURLConnectionBackend, Identity, SttpBackend, UriContext}
+  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
+  import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, UriContext, emptyRequest}
   import sttp.model.Uri
-
-  def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
   val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
 
@@ -40,7 +39,7 @@ object ImplicitGrantExample extends App {
   /*
      2. Send the user to `authorizationRequestUri`,
      where they will accept/deny permissions for our client app to access their data;
-     they will be then redirected to `authorizationCodeRequest.redirectUri`
+     they will be then redirected to `AuthorizationTokenRequest.redirectUri`
    */
   val authorizationRequestUri: Uri = ImplicitGrant.authorizationRequestUri(
     request = authorizationTokenRequest,
@@ -58,11 +57,13 @@ object ImplicitGrantExample extends App {
       redirectionUriResponse = redirectionUriResponseApproved
     )
 
-  // import `FsClientSttpExtensions` in http package to use `sign`
-  import io.bartholomews.fsclient.core._
+  maybeToken.map(token => {
+    // import `FsClientSttpExtensions` in http package to use `sign`
+    import io.bartholomews.fsclient.core._
 
-  // 5. Use the access token
-  emptyRequest
-    .get(uri"https://some-server/authenticated-endpoint")
-    .sign(maybeToken.getOrElse(dealWithIt)) // sign with the implicit token provided
+    // 5. Use the access token
+    emptyRequest
+      .get(uri"https://some-server/authenticated-endpoint")
+      .sign(token) // sign with the token provided
+  })
 }

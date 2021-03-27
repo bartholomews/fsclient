@@ -11,7 +11,7 @@ object ClientCredentialsExample extends App {
 
   val backend: SttpBackend[F, Any] = HttpURLConnectionBackend()
 
-  // using fsclient-circe codecs
+  // using fsclient-circe codecs, you could also use play-json or provide your own
   import io.bartholomews.fsclient.circe.codecs._
 
   // you probably want to load this from config

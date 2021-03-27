@@ -1,23 +1,13 @@
 package io.bartholomews.fsclient.samples.v2
 
-import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RefreshToken
-
 object AuthorizationCodeGrantExample extends App {
-  import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RedirectUri}
-  import io.bartholomews.fsclient.core.oauth.v2.{
-    AuthorizationCode,
-    AuthorizationCodeRequest,
-    ClientId,
-    ClientPassword,
-    ClientSecret
-  }
-  import sttp.client3.{HttpURLConnectionBackend, Identity, ResponseException, SttpBackend, UriContext}
-  import sttp.model.Uri
   import io.bartholomews.fsclient.core._
-
-  def dealWithIt = throw new Exception("¯x--(ツ)--x")
+  import io.bartholomews.fsclient.core.config.UserAgent
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RedirectUri, RefreshToken}
+  import io.bartholomews.fsclient.core.oauth.v2._
+  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
+  import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, UriContext}
+  import sttp.model.Uri
 
   val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
 
@@ -68,42 +58,45 @@ object AuthorizationCodeGrantExample extends App {
   import io.bartholomews.fsclient.circe.codecs._
 
   // 4. Get an access token
-  val maybeToken: Either[ResponseException[String, io.circe.Error], AccessTokenSigner] =
-    backend
-      .send(
+  val maybeToken: Either[String, AccessTokenSigner] =
+    maybeAuthorizationCode.flatMap { authorizationCode =>
+      backend
+        .send(
+          AuthorizationCodeGrant
+            .accessTokenRequest(
+              serverUri = uri"https://some-authorization-server/token",
+              code = authorizationCode,
+              maybeRedirectUri = Some(myRedirectUri),
+              clientPassword = myClientPassword
+            )
+        )
+        .body
+        .left
+        .map(_.getMessage)
+    }
+
+  maybeToken.map { accessTokenSigner =>
+    // 5. Use the access token
+    baseRequest(userAgent)
+      .get(uri"https://some-server/authenticated-endpoint")
+      .sign(accessTokenSigner) // sign with the token signer
+
+    // 6. Get a refresh token
+    if (accessTokenSigner.isExpired()) {
+      backend.send(
         AuthorizationCodeGrant
-          .accessTokenRequest[io.circe.Error](
-            serverUri = uri"https://some-authorization-server/token",
-            code = maybeAuthorizationCode.getOrElse(dealWithIt),
-            maybeRedirectUri = Some(myRedirectUri),
+          .refreshTokenRequest(
+            serverUri = uri"https://some-authorization-server/refresh",
+            accessTokenSigner.refreshToken.getOrElse(
+              RefreshToken(
+                "Refresh token is optional: some implementations (e.g. Spotify) only give you a refresh token " +
+                  "with the first `accessTokenSigner` authorization response, so you might need to store and use that."
+              )
+            ),
+            scopes = accessTokenSigner.scope.values,
             clientPassword = myClientPassword
           )
       )
-      .body
-
-  implicit val accessTokenSigner: AccessTokenSigner = maybeToken.getOrElse(dealWithIt)
-
-  // 5. Use the access token
-  // an empty request with client `User-Agent` header
-  baseRequest(userAgent)
-    .get(uri"https://some-server/authenticated-endpoint")
-    .sign // sign with the implicit token provided
-
-  // 6. Get a refresh token
-  if (accessTokenSigner.isExpired()) {
-    backend.send(
-      AuthorizationCodeGrant
-        .refreshTokenRequest(
-          serverUri = uri"https://some-authorization-server/refresh",
-          accessTokenSigner.refreshToken.getOrElse(
-            RefreshToken(
-              "Refresh token is optional: some implementations (e.g. Spotify) only give you a refresh token " +
-                "with the first `accessTokenSigner` authorization response, so you might need to store and use that."
-            )
-          ),
-          scopes = accessTokenSigner.scope.values,
-          clientPassword = myClientPassword
-        )
-    )
+    }
   }
 }

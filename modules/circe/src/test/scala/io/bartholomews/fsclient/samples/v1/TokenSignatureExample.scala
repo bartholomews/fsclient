@@ -1,18 +1,18 @@
 package io.bartholomews.fsclient.samples.v1
 
 object TokenSignatureExample extends App {
+  import io.bartholomews.fsclient.client.ClientData.sampleRedirectUri
+  import io.bartholomews.fsclient.core.config.UserAgent
+  import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
+  import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RedirectUri
   import io.bartholomews.fsclient.core.oauth.{
     RequestTokenCredentials,
     ResourceOwnerAuthorizationUri,
     TemporaryCredentialsRequest
   }
-  import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
-  import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RedirectUri
-  import io.bartholomews.fsclient.client.ClientData.sampleRedirectUri
   import sttp.client3.{
     emptyRequest,
-    DeserializationException,
     HttpURLConnectionBackend,
     Identity,
     Response,
@@ -20,14 +20,12 @@ object TokenSignatureExample extends App {
     SttpBackend,
     UriContext
   }
-  import io.bartholomews.fsclient.core.config.UserAgent
   import sttp.model.Method
 
+  // Choose your effect / sttp backend
   type F[X] = Identity[X]
 
-  def dealWithIt = throw new Exception("¯x--(ツ)--x")
-
-  val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
+  val backend: SttpBackend[F, Any] = HttpURLConnectionBackend()
 
   val userAgent = UserAgent(
     appName = "SAMPLE_APP_NAME",
@@ -65,21 +63,23 @@ object TokenSignatureExample extends App {
   val resourceOwnerAuthorizationUriResponse =
     sampleRedirectUri.value.withParams(("oauth_token", "AAA"), ("oauth_verifier", "ZZZ"))
 
-  // 3. Get the Token Credentials
-  val maybeRequestTokenCredentials: Either[DeserializationException[Exception], RequestTokenCredentials] =
-    RequestTokenCredentials.fetchRequestTokenCredentials(
-      resourceOwnerAuthorizationUriResponse,
-      maybeTemporaryCredentials.body.getOrElse(dealWithIt),
-      SignatureMethod.PLAINTEXT
-    )
+  // 3. Extract the Token Credentials
+  val maybeRequestTokenCredentials: Either[ResponseException[String, Exception], RequestTokenCredentials] =
+    maybeTemporaryCredentials.body.flatMap { temporaryCredentials =>
+      RequestTokenCredentials.fetchRequestTokenCredentials(
+        resourceOwnerAuthorizationUriResponse,
+        temporaryCredentials,
+        SignatureMethod.PLAINTEXT
+      )
+    }
 
-  implicit val requestToken: RequestTokenCredentials = maybeRequestTokenCredentials.getOrElse(dealWithIt)
+  maybeRequestTokenCredentials.map { implicit token =>
+    // import `FsClientSttpExtensions` in http package to use `sign`
+    import io.bartholomews.fsclient.core._
 
-  // import `FsClientSttpExtensions` in http package to use `sign`
-  import io.bartholomews.fsclient.core._
-
-  // 4. Use the Token Credentials
-  emptyRequest
-    .get(uri"https://some-server/authenticated-endpoint")
-    .sign // sign with the implicit token provided
+    // 4. Use the Token Credentials
+    emptyRequest
+      .get(uri"https://some-server/authenticated-endpoint")
+      .sign // sign with the implicit token provided
+  }
 }

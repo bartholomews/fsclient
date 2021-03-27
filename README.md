@@ -5,7 +5,7 @@
 
 # fsclient
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient_2.13)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient-core_2.13/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.bartholomews/fsclient-core_2.13)
 
 ```
 // circe codecs
@@ -42,18 +42,18 @@ and providing OAuth signatures and other utils
 #### Token Credentials
 
 ```scala
+  import io.bartholomews.fsclient.client.ClientData.sampleRedirectUri
+  import io.bartholomews.fsclient.core.config.UserAgent
+  import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
+  import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RedirectUri
   import io.bartholomews.fsclient.core.oauth.{
     RequestTokenCredentials,
     ResourceOwnerAuthorizationUri,
     TemporaryCredentialsRequest
   }
-  import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
-  import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RedirectUri
-  import io.bartholomews.fsclient.client.ClientData.sampleRedirectUri
   import sttp.client3.{
     emptyRequest,
-    DeserializationException,
     HttpURLConnectionBackend,
     Identity,
     Response,
@@ -61,14 +61,12 @@ and providing OAuth signatures and other utils
     SttpBackend,
     UriContext
   }
-  import io.bartholomews.fsclient.core.config.UserAgent
   import sttp.model.Method
 
+  // Choose your effect / sttp backend
   type F[X] = Identity[X]
 
-  def dealWithIt = throw new Exception("¯x--(ツ)--x")
-
-  val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
+  val backend: SttpBackend[F, Any] = HttpURLConnectionBackend()
 
   val userAgent = UserAgent(
     appName = "SAMPLE_APP_NAME",
@@ -106,23 +104,25 @@ and providing OAuth signatures and other utils
   val resourceOwnerAuthorizationUriResponse =
     sampleRedirectUri.value.withParams(("oauth_token", "AAA"), ("oauth_verifier", "ZZZ"))
 
-  // 3. Get the Token Credentials
-  val maybeRequestTokenCredentials: Either[DeserializationException[Exception], RequestTokenCredentials] =
-    RequestTokenCredentials.fetchRequestTokenCredentials(
-      resourceOwnerAuthorizationUriResponse,
-      maybeTemporaryCredentials.body.getOrElse(dealWithIt),
-      SignatureMethod.PLAINTEXT
-    )
+  // 3. Extract the Token Credentials
+  val maybeRequestTokenCredentials: Either[ResponseException[String, Exception], RequestTokenCredentials] =
+    maybeTemporaryCredentials.body.flatMap { temporaryCredentials =>
+      RequestTokenCredentials.fetchRequestTokenCredentials(
+        resourceOwnerAuthorizationUriResponse,
+        temporaryCredentials,
+        SignatureMethod.PLAINTEXT
+      )
+    }
 
-  implicit val requestToken: RequestTokenCredentials = maybeRequestTokenCredentials.getOrElse(dealWithIt)
+  maybeRequestTokenCredentials.map { implicit token =>
+    // import `FsClientSttpExtensions` in http package to use `sign`
+    import io.bartholomews.fsclient.core._
 
-  // import `FsClientSttpExtensions` in http package to use `sign`
-  import io.bartholomews.fsclient.core._
-
-  // 4. Use the Token Credentials
-  emptyRequest
-    .get(uri"https://some-server/authenticated-endpoint")
-    .sign // sign with the implicit token provided
+    // 4. Use the Token Credentials
+    emptyRequest
+      .get(uri"https://some-server/authenticated-endpoint")
+      .sign // sign with the implicit token provided
+  }
 ```
 
 ### [OAuth 2.0](https://tools.ietf.org/html/rfc6749)
@@ -140,7 +140,7 @@ and providing OAuth signatures and other utils
 
   val backend: SttpBackend[F, Any] = HttpURLConnectionBackend()
 
-  // using fsclient-circe codecs
+  // using fsclient-circe codecs, you could also use play-json or provide your own
   import io.bartholomews.fsclient.circe.codecs._
 
   // you probably want to load this from config
@@ -164,13 +164,11 @@ and providing OAuth signatures and other utils
 ```scala
   import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
   import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{ImplicitGrant, RedirectUri}
   import io.bartholomews.fsclient.core.oauth.v2.{AuthorizationTokenRequest, ClientId, ClientPassword, ClientSecret}
-  import sttp.client3.{emptyRequest, HttpURLConnectionBackend, Identity, SttpBackend, UriContext}
+  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
+  import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, UriContext, emptyRequest}
   import sttp.model.Uri
-
-  def dealWithIt = throw new Exception("¯x--(ツ)--x")
 
   val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
 
@@ -188,7 +186,7 @@ and providing OAuth signatures and other utils
 
   val myRedirectUri = RedirectUri(uri"https://my-app/callback")
 
-  val client = FsClient.v2.clientPassword(userAgent, ClientPasswordAuthentication(myClientPassword))
+  val client = FsClient.v2.clientPassword(userAgent, ClientPasswordAuthentication(myClientPassword))(backend)
 
   // 1. Prepare an authorization token request
   val authorizationTokenRequest = AuthorizationTokenRequest(
@@ -201,7 +199,7 @@ and providing OAuth signatures and other utils
   /*
      2. Send the user to `authorizationRequestUri`,
      where they will accept/deny permissions for our client app to access their data;
-     they will be then redirected to `authorizationCodeRequest.redirectUri`
+     they will be then redirected to `AuthorizationTokenRequest.redirectUri`
    */
   val authorizationRequestUri: Uri = ImplicitGrant.authorizationRequestUri(
     request = authorizationTokenRequest,
@@ -219,33 +217,27 @@ and providing OAuth signatures and other utils
       redirectionUriResponse = redirectionUriResponseApproved
     )
 
-  // import `FsClientSttpExtensions` in http package to use `sign`
-  import io.bartholomews.fsclient.core._
+  maybeToken.map(token => {
+    // import `FsClientSttpExtensions` in http package to use `sign`
+    import io.bartholomews.fsclient.core._
 
-  // 5. Use the access token
-  emptyRequest
-    .get(uri"https://some-server/authenticated-endpoint")
-    .sign(maybeToken.getOrElse(dealWithIt)) // sign with the implicit token provided
+    // 5. Use the access token
+    emptyRequest
+      .get(uri"https://some-server/authenticated-endpoint")
+      .sign(token) // sign with the token provided
+  })
 ```
 
 #### Authorization code grant
 
 ```scala
-  import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RedirectUri}
-  import io.bartholomews.fsclient.core.oauth.v2.{
-    AuthorizationCode,
-    AuthorizationCodeRequest,
-    ClientId,
-    ClientPassword,
-    ClientSecret
-  }
-  import sttp.client3.{HttpURLConnectionBackend, Identity, ResponseException, SttpBackend, UriContext}
-  import sttp.model.Uri
   import io.bartholomews.fsclient.core._
-
-  def dealWithIt = throw new Exception("¯x--(ツ)--x")
+  import io.bartholomews.fsclient.core.config.UserAgent
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RedirectUri, RefreshToken}
+  import io.bartholomews.fsclient.core.oauth.v2._
+  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
+  import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, UriContext}
+  import sttp.model.Uri
 
   val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
 
@@ -296,43 +288,46 @@ and providing OAuth signatures and other utils
   import io.bartholomews.fsclient.circe.codecs._
 
   // 4. Get an access token
-  val maybeToken: Either[ResponseException[String, io.circe.Error], AccessTokenSigner] =
-    backend
-      .send(
+  val maybeToken: Either[String, AccessTokenSigner] =
+    maybeAuthorizationCode.flatMap { authorizationCode =>
+      backend
+        .send(
+          AuthorizationCodeGrant
+            .accessTokenRequest(
+              serverUri = uri"https://some-authorization-server/token",
+              code = authorizationCode,
+              maybeRedirectUri = Some(myRedirectUri),
+              clientPassword = myClientPassword
+            )
+        )
+        .body
+        .left
+        .map(_.getMessage)
+    }
+
+  maybeToken.map { accessTokenSigner =>
+    // 5. Use the access token
+    baseRequest(userAgent)
+      .get(uri"https://some-server/authenticated-endpoint")
+      .sign(accessTokenSigner) // sign with the token signer
+
+    // 6. Get a refresh token
+    if (accessTokenSigner.isExpired()) {
+      backend.send(
         AuthorizationCodeGrant
-          .accessTokenRequest[io.circe.Error](
-            serverUri = uri"https://some-authorization-server/token",
-            code = maybeAuthorizationCode.getOrElse(dealWithIt),
-            maybeRedirectUri = Some(myRedirectUri),
+          .refreshTokenRequest(
+            serverUri = uri"https://some-authorization-server/refresh",
+            accessTokenSigner.refreshToken.getOrElse(
+              RefreshToken(
+                "Refresh token is optional: some implementations (e.g. Spotify) only give you a refresh token " +
+                  "with the first `accessTokenSigner` authorization response, so you might need to store and use that."
+              )
+            ),
+            scopes = accessTokenSigner.scope.values,
             clientPassword = myClientPassword
           )
       )
-      .body
-
-  implicit val accessTokenSigner: AccessTokenSigner = maybeToken.getOrElse(dealWithIt)
-
-  // 5. Use the access token
-  // an empty request with client `User-Agent` header
-  baseRequest(userAgent)
-    .get(uri"https://some-server/authenticated-endpoint")
-    .sign // sign with the implicit token provided
-
-  // 6. Get a refresh token
-  if (accessTokenSigner.isExpired()) {
-    backend.send(
-      AuthorizationCodeGrant
-        .refreshTokenRequest(
-          serverUri = uri"https://some-authorization-server/refresh",
-          accessTokenSigner.refreshToken.getOrElse(
-            RefreshToken(
-              "Refresh token is optional: some implementations (e.g. Spotify) only give you a refresh token " +
-                "with the first `accessTokenSigner` authorization response, so you might need to store and use that." 
-            )
-          ),
-          scopes = accessTokenSigner.scope.values,
-          clientPassword = myClientPassword
-        )
-    )
+    }
   }
 ```
 
