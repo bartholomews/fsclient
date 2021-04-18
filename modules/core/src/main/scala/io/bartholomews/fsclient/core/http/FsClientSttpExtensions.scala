@@ -61,7 +61,7 @@ trait FsClientSttpExtensions {
   }
 
   implicit class RequestExtensions[T, -R](request: Request[T, R]) {
-    def sign(implicit signer: Signer): Request[T, R] = signer match {
+    def sign(signer: Signer): Request[T, R] = signer match {
       case AuthDisabled                      => request
       case signer: CustomAuthorizationHeader => signer.sign(request)
       // TODO: https://www.thepolyglotdeveloper.com/2014/11/understanding-request-signing-oauth-1-0a-providers/

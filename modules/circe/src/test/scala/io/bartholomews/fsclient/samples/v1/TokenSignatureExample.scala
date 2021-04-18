@@ -73,13 +73,13 @@ object TokenSignatureExample extends App {
       )
     }
 
-  maybeRequestTokenCredentials.map { implicit token =>
+  maybeRequestTokenCredentials.map { token =>
     // import `FsClientSttpExtensions` in http package to use `sign`
     import io.bartholomews.fsclient.core._
 
     // 4. Use the Token Credentials
     emptyRequest
       .get(uri"https://some-server/authenticated-endpoint")
-      .sign // sign with the implicit token provided
+      .sign(token)
   }
 }

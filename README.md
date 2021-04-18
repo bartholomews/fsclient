@@ -24,7 +24,7 @@ and providing OAuth signatures and other utils
   import io.bartholomews.fsclient.core.oauth.Signer
   import sttp.client3._
 
-  implicit val signer: Signer = ???
+  val token: Signer = ???
 
   /*
     Sign the sttp request with `Signer`, which might be one of:
@@ -34,7 +34,7 @@ and providing OAuth signatures and other utils
    */
   emptyRequest
     .get(uri"https://some-server/authenticated-endpoint")
-    .sign
+    .sign(token)
 ```
 
 ### [OAuth 1.0](https://tools.ietf.org/html/rfc5849)
@@ -114,14 +114,14 @@ and providing OAuth signatures and other utils
       )
     }
 
-  maybeRequestTokenCredentials.map { implicit token =>
+  maybeRequestTokenCredentials.map { token =>
     // import `FsClientSttpExtensions` in http package to use `sign`
     import io.bartholomews.fsclient.core._
 
     // 4. Use the Token Credentials
     emptyRequest
       .get(uri"https://some-server/authenticated-endpoint")
-      .sign // sign with the implicit token provided
+      .sign(token)
   }
 ```
 
