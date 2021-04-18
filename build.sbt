@@ -1,4 +1,4 @@
-import Dependencies.{circeDependencies, coreDependencies, playDependencies, testDependencies}
+import Dependencies.{circeDependencies, coreDependencies, exclusions, playDependencies, testDependencies}
 import sbt.Keys.{parallelExecution, scalacOptions}
 import scoverage.ScoverageKeys.coverageFailOnMinimum
 
@@ -44,6 +44,7 @@ lazy val circe = (project in file("modules/circe"))
   .settings(
     name := "fsclient-circe",
     libraryDependencies ++= circeDependencies ++ testDependencies,
+    excludeDependencies ++= exclusions,
     coverageMinimum := 75, // FIXME
     coverageFailOnMinimum := true
   )
@@ -54,6 +55,7 @@ lazy val play = (project in file("modules/play"))
   .settings(
     name := "fsclient-play",
     libraryDependencies ++= playDependencies ++ testDependencies,
+    excludeDependencies ++= exclusions,
     coverageMinimum := 69, // FIXME
     coverageFailOnMinimum := true
   )

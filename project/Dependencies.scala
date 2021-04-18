@@ -41,6 +41,12 @@ object Dependencies {
     "com.beachape" %% "enumeratum-play-json" % Versions.enumeratum
   )
 
+  // Dependencies of core which should be excluded by the other modules (which depends on core)
+  lazy val exclusions = Seq(
+    ExclusionRule(organization = "com.softwaremill.sttp.client3", name = "core"),
+    ExclusionRule(organization = "com.beachape", name = "enumeratum")
+  )
+
   lazy val testDependencies: Seq[ModuleID] = Seq(
     "org.scalactic" %% "scalactic" % Versions.scalaTest,
     // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
