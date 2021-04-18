@@ -1,13 +1,31 @@
 package io.bartholomews.scalatestudo.diff
 
 import com.softwaremill.diffx.scalatest.DiffMatcher
-import com.softwaremill.diffx.{Derived, Diff, DiffResult, DiffResultObject, Identical}
+import com.softwaremill.diffx.{Derived, Diff, DiffResult, DiffResultObject, DiffResultValue, FieldPath, Identical}
+import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, Token}
+import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
 import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, RefreshToken}
-import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, NonRefreshableTokenSigner, Scope}
+import io.bartholomews.fsclient.core.oauth.{
+  AccessTokenSigner,
+  NonRefreshableTokenSigner,
+  ResourceOwnerAuthorizationUri,
+  Scope
+}
 import sttp.model.Uri
 
 trait DiffDerivations extends DiffMatcher {
+
+  implicit val uriDiff: Diff[Uri] = Diff[String].contramap[Uri](_.toString)
+  implicit val booleanDiff: Diff[Boolean] =
+    (left: Boolean, right: Boolean, _: List[FieldPath]) =>
+      if (left == right) Identical(left) else DiffResultValue(left, right)
+
   implicit val accessTokenDiff: Diff[AccessToken] = Diff.derived[AccessToken]
+  implicit val consumerDiff: Diff[Consumer] = Diff.derived[Consumer]
+  implicit val resourceOwnerAuthorizationUriDiff: Diff[ResourceOwnerAuthorizationUri] =
+    Diff.derived[ResourceOwnerAuthorizationUri]
+  implicit val temporaryCredentialsDiff: Diff[TemporaryCredentials] = Diff.derived[TemporaryCredentials]
+  implicit val tokenDiff: Diff[Token] = Diff.derived[Token]
   implicit val refreshTokenDiff: Diff[RefreshToken] = Diff.derived[RefreshToken]
   implicit val scopeDiff: Diff[Scope] = Diff.derived[Scope]
 
@@ -43,8 +61,6 @@ trait DiffDerivations extends DiffMatcher {
     diffResultObject.fields.values
       .collectFirst({ case result if !result.isIdentical => diffResultObject })
       .getOrElse(Identical(value))
-
-  implicit val diffUri: Diff[Uri] = Diff[String].contramap[Uri](_.toString)
 }
 
 object DiffDerivations extends DiffDerivations
