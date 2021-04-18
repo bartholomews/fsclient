@@ -38,7 +38,7 @@ lazy val core = (project in file("modules/core"))
   .settings(commonSettings)
   .settings(
     name := "fsclient-core",
-    libraryDependencies ++= coreDependencies ++ testDependencies,
+    libraryDependencies ++= coreDependencies ++ testDependencies.map(_ % Test),
     coverageMinimum := 58, // FIXME
     coverageFailOnMinimum := true
   )
@@ -48,7 +48,7 @@ lazy val circe = (project in file("modules/circe"))
   .settings(commonSettings)
   .settings(
     name := "fsclient-circe",
-    libraryDependencies ++= circeDependencies ++ testDependencies,
+    libraryDependencies ++= circeDependencies ++ testDependencies.map(_ % Test),
     excludeDependencies ++= exclusions,
     coverageMinimum := 75, // FIXME
     coverageFailOnMinimum := true
@@ -59,7 +59,7 @@ lazy val play = (project in file("modules/play"))
   .settings(commonSettings)
   .settings(
     name := "fsclient-play",
-    libraryDependencies ++= playDependencies ++ testDependencies,
+    libraryDependencies ++= playDependencies ++ testDependencies.map(_ % Test),
     excludeDependencies ++= exclusions,
     coverageMinimum := 69, // FIXME
     coverageFailOnMinimum := true
@@ -69,7 +69,10 @@ lazy val play = (project in file("modules/play"))
 lazy val testudo = (project in file("modules/testudo"))
   .dependsOn(core % "compile->compile,test")
   .settings(compilerSettings)
-  .settings(name := "scalatestudo")
+  .settings(
+    name := "scalatestudo",
+    libraryDependencies ++= testDependencies
+  )
 
 // https://www.scala-sbt.org/1.x/docs/Multi-Project.html
 lazy val fsclient = (project in file("."))

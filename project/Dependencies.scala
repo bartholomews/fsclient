@@ -52,5 +52,5 @@ object Dependencies {
     // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
     "org.scalatest" %% "scalatest" % Versions.scalaTest,
     "com.github.tomakehurst" % "wiremock" % Versions.wiremock
-  ).map(_ % Test)
+  )
 }
