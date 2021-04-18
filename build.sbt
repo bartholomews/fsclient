@@ -2,7 +2,8 @@ import Dependencies.{circeDependencies, coreDependencies, exclusions, playDepend
 import sbt.Keys.{parallelExecution, scalacOptions}
 import scoverage.ScoverageKeys.coverageFailOnMinimum
 
-ThisBuild / scalaVersion := "2.13.3"
+// https://github.com/scala/scala
+ThisBuild / scalaVersion := "2.13.5"
 
 inThisBuild(
   List(
@@ -22,9 +23,9 @@ inThisBuild(
 
 val testSettings = Seq(
   // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
-  logBuffered in Test := false,
-  parallelExecution in Test := false,
-  testOptions in Test ++= TestSettings.options
+  Test / logBuffered := false,
+  Test / parallelExecution := false,
+  Test / testOptions ++= TestSettings.options
 )
 
 val compilerSettings = Seq(
@@ -74,7 +75,7 @@ lazy val testudo = (project in file("modules/testudo"))
 lazy val fsclient = (project in file("."))
   .settings(commonSettings)
   .settings(addCommandAlias("test", ";core/test;circe/test;play/test"): _*)
-  .settings(skip in publish := true)
+  .settings(publish / skip := true)
   .aggregate(core, circe, play, testudo)
 
 resolvers += "Sonatype OSS Snapshots"
