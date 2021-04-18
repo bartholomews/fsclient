@@ -7,7 +7,7 @@ import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod
 import io.bartholomews.fsclient.core.oauth.v1.Signatures.{authorization, makeOAuthParams}
 import io.bartholomews.fsclient.core.oauth.v1.{Signatures, TemporaryCredentials}
 import io.bartholomews.fsclient.core.oauth.v2.ClientPassword
-import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, RedirectUri, RefreshToken}
+import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, RefreshToken}
 import sttp.client3.{emptyRequest, DeserializationException, Request, Response, ResponseException, SttpBackend}
 import sttp.model.{Method, Uri}
 
@@ -48,7 +48,7 @@ object ClientCredentials {
   )
 }
 
-case class ResourceOwnerAuthorizationUri(value: Uri) extends AnyVal
+final case class ResourceOwnerAuthorizationUri(value: Uri) extends AnyVal
 
 // https://tools.ietf.org/html/rfc5849#page-9
 // it returns a `TemporaryCredentials`
@@ -231,3 +231,5 @@ final case class NonRefreshableTokenSigner(
   expiresIn: Long,
   scope: Scope
 ) extends TokenSignerV2
+
+final case class RedirectUri(value: Uri) extends AnyVal

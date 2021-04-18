@@ -1,10 +1,11 @@
 package io.bartholomews.fsclient.core.oauth.v1
 
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, post, stubFor, urlMatching}
-import io.bartholomews.fsclient.client.ClientData.{sampleConsumer, sampleRedirectUri, sampleUserAgent}
 import io.bartholomews.fsclient.client.IdentityClient
-import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.SignatureMethod
+import io.bartholomews.fsclient.core.config.UserAgent
+import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
 import io.bartholomews.fsclient.core.oauth.{
+  RedirectUri,
   RequestTokenCredentials,
   ResourceOwnerAuthorizationUri,
   TemporaryCredentialsRequest
@@ -17,6 +18,18 @@ import sttp.client3.{Identity, Response, ResponseException, UriContext}
 import sttp.model.Method
 
 class OAuthV1Test extends AnyWordSpec with IdentityClient with WiremockServer with Matchers with Inside {
+
+  val sampleUserAgent: UserAgent = UserAgent(
+    appName = "SAMPLE_APP_NAME",
+    appVersion = Some("SAMPLE_APP_VERSION"),
+    appUrl = Some("https://bartholomews.io/sample-app-url")
+  )
+
+  val sampleRedirectUri: RedirectUri = RedirectUri(uri"https://bartholomews.io/callback")
+  val sampleConsumer: Consumer = Consumer(
+    key = "SAMPLE_CONSUMER_KEY",
+    secret = "SAMPLE_CONSUMER_SECRET"
+  )
 
   "OAuthV1" should {
 

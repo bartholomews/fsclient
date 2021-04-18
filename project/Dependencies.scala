@@ -3,6 +3,8 @@ import sbt._
 object Versions {
   // https://github.com/circe/circe-generic-extras/releases
   val circe_generic_extras = "0.13.0"
+  // https://github.com/softwaremill/diffx
+  val diffx = "0.4.0"
   // https://github.com/lloydmeta/enumeratum/releases
   val enumeratum = "1.6.1"
   // https://github.com/qos-ch/logback/releases
@@ -48,9 +50,11 @@ object Dependencies {
   )
 
   lazy val testDependencies: Seq[ModuleID] = Seq(
-    "org.scalactic" %% "scalactic" % Versions.scalaTest,
     // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
+    // https://www.scalactic.org
+    "org.scalactic" %% "scalactic" % Versions.scalaTest,
     "org.scalatest" %% "scalatest" % Versions.scalaTest,
+    "com.softwaremill.diffx" %% "diffx-scalatest" % Versions.diffx,
     "com.github.tomakehurst" % "wiremock" % Versions.wiremock
   )
 }

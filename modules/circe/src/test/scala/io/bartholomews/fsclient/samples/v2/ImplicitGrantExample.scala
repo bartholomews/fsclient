@@ -4,9 +4,9 @@ object ImplicitGrantExample extends App {
 
   import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{ImplicitGrant, RedirectUri}
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.ImplicitGrant
   import io.bartholomews.fsclient.core.oauth.v2.{AuthorizationTokenRequest, ClientId, ClientPassword, ClientSecret}
-  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
+  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner, RedirectUri}
   import sttp.client3.{emptyRequest, HttpURLConnectionBackend, Identity, SttpBackend, UriContext}
   import sttp.model.Uri
 

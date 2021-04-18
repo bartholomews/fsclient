@@ -1,23 +1,24 @@
 package io.bartholomews.fsclient.core.oauth.v2
 
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalTo, post, stubFor, urlMatching}
-import io.bartholomews.fsclient.client.ClientData.{
-  sampleAuthorizationCode,
-  sampleClientPassword,
-  sampleRedirectUri,
-  sampleRefreshToken,
-  sampleUserAgent
-}
 import io.bartholomews.fsclient.client.IdentityClient
 import io.bartholomews.fsclient.core.FsClient
+import io.bartholomews.fsclient.core.config.UserAgent
 import io.bartholomews.fsclient.core.http.SttpResponses.ResponseHandler
 import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{
   AccessToken,
   AuthorizationCodeGrant,
   ClientCredentialsGrant,
-  ImplicitGrant
+  ImplicitGrant,
+  RefreshToken
 }
-import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication, NonRefreshableTokenSigner}
+import io.bartholomews.fsclient.core.oauth.{
+  AccessTokenSigner,
+  ClientPasswordAuthentication,
+  NonRefreshableTokenSigner,
+  RedirectUri,
+  Scope
+}
 import io.bartholomews.fsclient.wiremock.WiremockServer
 import org.scalatest.Inside
 import org.scalatest.matchers.should.Matchers
@@ -33,6 +34,32 @@ abstract class OAuthV2Test[Encoder[_], Decoder[_], DE]
     with WiremockServer
     with Matchers
     with Inside {
+
+  val sampleUserAgent: UserAgent = UserAgent(
+    appName = "SAMPLE_APP_NAME",
+    appVersion = Some("SAMPLE_APP_VERSION"),
+    appUrl = Some("https://bartholomews.io/sample-app-url")
+  )
+
+  val sampleRedirectUri: RedirectUri = RedirectUri(uri"https://bartholomews.io/callback")
+
+  val sampleClientId: ClientId = ClientId("SAMPLE_CLIENT_ID")
+  val sampleClientSecret: ClientSecret = ClientSecret("SAMPLE_CLIENT_SECRET")
+  val sampleClientPassword: ClientPassword = ClientPassword(sampleClientId, sampleClientSecret)
+  val sampleRefreshToken: RefreshToken = RefreshToken("SAMPLE_REFRESH_TOKEN")
+  val sampleAccessTokenKey: AccessToken = AccessToken(
+    "00000000000-0000000000000000000-0000000-0000000000000000000000000000000000000000001"
+  )
+
+  val sampleAuthorizationCode: AuthorizationCode = AuthorizationCode("SAMPLE_AUTHORIZATION_CODE")
+
+  val sampleNonRefreshableToken: NonRefreshableTokenSigner = NonRefreshableTokenSigner(
+    generatedAt = 21312L,
+    accessToken = sampleAccessTokenKey,
+    tokenType = "bearer",
+    expiresIn = 1000L,
+    scope = Scope(List.empty)
+  )
 
   implicit def responseHandler[T](implicit decoder: Decoder[T]): ResponseHandler[DE, T]
 

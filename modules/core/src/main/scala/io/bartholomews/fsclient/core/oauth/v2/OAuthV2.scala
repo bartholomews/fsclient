@@ -1,7 +1,7 @@
 package io.bartholomews.fsclient.core.oauth.v2
 
 import io.bartholomews.fsclient.core.http.SttpResponses.ResponseHandler
-import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, NonRefreshableTokenSigner, Scope}
+import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, NonRefreshableTokenSigner, RedirectUri, Scope}
 import sttp.client3.{emptyRequest, Identity, RequestT, ResponseException}
 import sttp.model.Uri
 
@@ -19,9 +19,6 @@ object OAuthV2 {
   case class AccessToken(value: String) extends AnyVal
 
   case class RefreshToken(value: String) extends AnyVal
-
-  // https://tools.ietf.org/html/rfc6749#section-3.1.2
-  case class RedirectUri(value: Uri)
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   //  Authorization Code Grant

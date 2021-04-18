@@ -3,9 +3,9 @@ package io.bartholomews.fsclient.samples.v2
 object AuthorizationCodeGrantExample extends App {
   import io.bartholomews.fsclient.core._
   import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RedirectUri, RefreshToken}
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RefreshToken}
   import io.bartholomews.fsclient.core.oauth.v2._
-  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
+  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication, RedirectUri}
   import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, UriContext}
   import sttp.model.Uri
 

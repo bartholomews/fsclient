@@ -1,6 +1,6 @@
 package io.bartholomews.fsclient.core.oauth.v2
 
-import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RedirectUri
+import io.bartholomews.fsclient.core.oauth.RedirectUri
 import sttp.model.Uri
 
 sealed trait AuthorizationRequest {

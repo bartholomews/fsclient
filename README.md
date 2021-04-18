@@ -42,12 +42,11 @@ and providing OAuth signatures and other utils
 #### Token Credentials
 
 ```scala
-  import io.bartholomews.fsclient.client.ClientData.sampleRedirectUri
   import io.bartholomews.fsclient.core.config.UserAgent
   import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod}
   import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.RedirectUri
   import io.bartholomews.fsclient.core.oauth.{
+    RedirectUri,
     RequestTokenCredentials,
     ResourceOwnerAuthorizationUri,
     TemporaryCredentialsRequest
@@ -102,7 +101,7 @@ and providing OAuth signatures and other utils
 
   // a successful `resourceOwnerAuthorizationUriResponse` will have the token in the query parameters:
   val resourceOwnerAuthorizationUriResponse =
-    sampleRedirectUri.value.withParams(("oauth_token", "AAA"), ("oauth_verifier", "ZZZ"))
+    myRedirectUri.value.withParams(("oauth_token", "AAA"), ("oauth_verifier", "ZZZ"))
 
   // 3. Extract the Token Credentials
   val maybeRequestTokenCredentials: Either[ResponseException[String, Exception], RequestTokenCredentials] =
@@ -164,10 +163,10 @@ and providing OAuth signatures and other utils
 ```scala
   import io.bartholomews.fsclient.core.FsClient
   import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{ImplicitGrant, RedirectUri}
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.ImplicitGrant
   import io.bartholomews.fsclient.core.oauth.v2.{AuthorizationTokenRequest, ClientId, ClientPassword, ClientSecret}
-  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
-  import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, UriContext, emptyRequest}
+  import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner, RedirectUri}
+  import sttp.client3.{emptyRequest, HttpURLConnectionBackend, Identity, SttpBackend, UriContext}
   import sttp.model.Uri
 
   val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
@@ -217,7 +216,7 @@ and providing OAuth signatures and other utils
       redirectionUriResponse = redirectionUriResponseApproved
     )
 
-  maybeToken.map(token => {
+  maybeToken.map { token =>
     // import `FsClientSttpExtensions` in http package to use `sign`
     import io.bartholomews.fsclient.core._
 
@@ -225,7 +224,7 @@ and providing OAuth signatures and other utils
     emptyRequest
       .get(uri"https://some-server/authenticated-endpoint")
       .sign(token) // sign with the token provided
-  })
+  }
 ```
 
 #### Authorization code grant
@@ -233,9 +232,9 @@ and providing OAuth signatures and other utils
 ```scala
   import io.bartholomews.fsclient.core._
   import io.bartholomews.fsclient.core.config.UserAgent
-  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RedirectUri, RefreshToken}
+  import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AuthorizationCodeGrant, RefreshToken}
   import io.bartholomews.fsclient.core.oauth.v2._
-  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication}
+  import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, ClientPasswordAuthentication, RedirectUri}
   import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, UriContext}
   import sttp.model.Uri
 
