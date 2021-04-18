@@ -1,8 +1,9 @@
 package io.bartholomews.fsclient.play
 
+import io.bartholomews.fsclient.core.http.SttpResponses.ResponseHandler
 import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod, Token}
 import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
-import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, RefreshToken, ResponseHandler}
+import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, RefreshToken}
 import io.bartholomews.fsclient.core.oauth.v2.{ClientId, ClientPassword, ClientSecret}
 import io.bartholomews.fsclient.core.oauth.{
   AccessTokenCredentials,

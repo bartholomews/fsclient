@@ -1,7 +1,8 @@
 package io.bartholomews.fsclient.core.oauth.v2
 
+import io.bartholomews.fsclient.core.http.SttpResponses.ResponseHandler
 import io.bartholomews.fsclient.core.oauth.{AccessTokenSigner, NonRefreshableTokenSigner, Scope}
-import sttp.client3.{emptyRequest, Identity, RequestT, ResponseAs, ResponseException}
+import sttp.client3.{emptyRequest, Identity, RequestT, ResponseException}
 import sttp.model.Uri
 
 import scala.util.Try
@@ -13,8 +14,6 @@ import scala.util.Try
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // https://tools.ietf.org/html/rfc6749
 object OAuthV2 {
-  type ResponseHandler[+E, T] = ResponseAs[Either[ResponseException[String, E], T], Any]
-
   sealed trait SignerType
 
   case class AccessToken(value: String) extends AnyVal

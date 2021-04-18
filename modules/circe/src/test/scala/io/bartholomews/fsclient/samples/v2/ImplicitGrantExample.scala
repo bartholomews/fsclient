@@ -7,7 +7,7 @@ object ImplicitGrantExample extends App {
   import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{ImplicitGrant, RedirectUri}
   import io.bartholomews.fsclient.core.oauth.v2.{AuthorizationTokenRequest, ClientId, ClientPassword, ClientSecret}
   import io.bartholomews.fsclient.core.oauth.{ClientPasswordAuthentication, NonRefreshableTokenSigner}
-  import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, UriContext, emptyRequest}
+  import sttp.client3.{emptyRequest, HttpURLConnectionBackend, Identity, SttpBackend, UriContext}
   import sttp.model.Uri
 
   val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
@@ -57,7 +57,7 @@ object ImplicitGrantExample extends App {
       redirectionUriResponse = redirectionUriResponseApproved
     )
 
-  maybeToken.map(token => {
+  maybeToken.map { token =>
     // import `FsClientSttpExtensions` in http package to use `sign`
     import io.bartholomews.fsclient.core._
 
@@ -65,5 +65,5 @@ object ImplicitGrantExample extends App {
     emptyRequest
       .get(uri"https://some-server/authenticated-endpoint")
       .sign(token) // sign with the token provided
-  })
+  }
 }

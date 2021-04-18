@@ -4,7 +4,7 @@ import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.bartholomews.fsclient.core.http.FsClientSttpExtensions.mapInto
 import io.bartholomews.fsclient.core.http.ResponseMapping
 import io.bartholomews.fsclient.core.oauth.AccessTokenCredentials
-import sttp.client3.{Identity, RequestT, ResponseException, emptyRequest}
+import sttp.client3.{emptyRequest, Identity, RequestT, ResponseException}
 import sttp.model.Uri
 
 object OAuthV1 {

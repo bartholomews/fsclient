@@ -20,14 +20,18 @@ inThisBuild(
   )
 )
 
-val commonSettings = Seq(
-  scalacOptions ++= Compiler.tpolecatOptions,
-  scalacOptions ++= Seq(Compiler.unchecked, Compiler.deprecation),
+val testSettings = Seq(
   // http://www.scalatest.org/user_guide/using_scalatest_with_sbt
   logBuffered in Test := false,
   parallelExecution in Test := false,
   testOptions in Test ++= TestSettings.options
 )
+
+val compilerSettings = Seq(
+  scalacOptions ++= Compiler.tpolecatOptions ++ Seq(Compiler.unchecked, Compiler.deprecation)
+)
+
+val commonSettings = compilerSettings ++ testSettings
 
 lazy val core = (project in file("modules/core"))
   .settings(commonSettings)
@@ -39,7 +43,7 @@ lazy val core = (project in file("modules/core"))
   )
 
 lazy val circe = (project in file("modules/circe"))
-  .dependsOn(core % "test->test; compile->compile")
+  .dependsOn(core % "compile->compile; test->test")
   .settings(commonSettings)
   .settings(
     name := "fsclient-circe",
@@ -50,7 +54,7 @@ lazy val circe = (project in file("modules/circe"))
   )
 
 lazy val play = (project in file("modules/play"))
-  .dependsOn(core % "test->test; compile->compile")
+  .dependsOn(core % "compile->compile; test->test")
   .settings(commonSettings)
   .settings(
     name := "fsclient-play",
@@ -60,12 +64,18 @@ lazy val play = (project in file("modules/play"))
     coverageFailOnMinimum := true
   )
 
+
+lazy val testudo = (project in file("modules/testudo"))
+  .dependsOn(core % "compile->compile,test")
+  .settings(compilerSettings)
+  .settings(name := "scalatestudo")
+
 // https://www.scala-sbt.org/1.x/docs/Multi-Project.html
 lazy val fsclient = (project in file("."))
   .settings(commonSettings)
   .settings(addCommandAlias("test", ";core/test;circe/test;play/test"): _*)
   .settings(skip in publish := true)
-  .aggregate(core, circe, play)
+  .aggregate(core, circe, play, testudo)
 
 resolvers += "Sonatype OSS Snapshots"
   .at("https://oss.sonatype.org/content/repositories/snapshots")

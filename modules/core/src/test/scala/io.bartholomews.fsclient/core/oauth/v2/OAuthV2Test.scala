@@ -1,7 +1,6 @@
 package io.bartholomews.fsclient.core.oauth.v2
 
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, equalTo, post, stubFor, urlMatching}
-import io.bartholomews.fsclient.ServerBehaviours
 import io.bartholomews.fsclient.client.ClientData.{
   sampleAuthorizationCode,
   sampleClientPassword,
@@ -11,6 +10,7 @@ import io.bartholomews.fsclient.client.ClientData.{
 }
 import io.bartholomews.fsclient.client.IdentityClient
 import io.bartholomews.fsclient.core.FsClient
+import io.bartholomews.fsclient.core.http.SttpResponses.ResponseHandler
 import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{
   AccessToken,
   AuthorizationCodeGrant,
@@ -27,16 +27,17 @@ import sttp.model.Uri
 import sttp.model.Uri.QuerySegment.KeyValue
 import sttp.model.Uri.{QuerySegment, QuerySegmentEncoding}
 
-abstract class OAuthV2Test[E[_], D[_], DE]
+abstract class OAuthV2Test[Encoder[_], Decoder[_], DE]
     extends AnyWordSpec
-    with ServerBehaviours[E, D, DE]
     with IdentityClient
     with WiremockServer
     with Matchers
     with Inside {
 
-  implicit def accessTokenSignerDecoder: D[AccessTokenSigner]
-  implicit def nonRefreshableTokenSignerDecoder: D[NonRefreshableTokenSigner]
+  implicit def responseHandler[T](implicit decoder: Decoder[T]): ResponseHandler[DE, T]
+
+  implicit def accessTokenSignerDecoder: Decoder[AccessTokenSigner]
+  implicit def nonRefreshableTokenSignerDecoder: Decoder[NonRefreshableTokenSigner]
 
   "OAuthV2" when {
 
