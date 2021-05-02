@@ -9,11 +9,11 @@
 
 ```
 // circe codecs
-libraryDependencies += "io.bartholomews" %% "fsclient-circe" % "0.1.1"
+libraryDependencies += "io.bartholomews" %% "fsclient-circe" % "0.1.2"
 // play-json codecs
-libraryDependencies += "io.bartholomews" %% "fsclient-play" % "0.1.1"
+libraryDependencies += "io.bartholomews" %% "fsclient-play" % "0.1.2"
 // no codecs
-libraryDependencies += "io.bartholomews" %% "fsclient-core" % "0.1.1"
+libraryDependencies += "io.bartholomews" %% "fsclient-core" % "0.1.2"
 ```
 
 http client wrapping [sttp](https://sttp.softwaremill.com/en/latest) 

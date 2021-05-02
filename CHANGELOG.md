@@ -7,13 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 ### Removed
+### Changed
+### Fixed
+
+## [0.1.2] - 2021-05-02
+### Added
+- `scalatestudo` module
+### Removed
 - `FsApiClient`
 ### Changed
 - `AccessTokenSigner` using `currentTimeMillis` instead of `nanoTime`
 - `baseRequest` taking an `userAgent` instead of `client`
 - `signer` needs to be passed explicitly
 - `RedirectUri` moved up from `oauth.v2` to `oauth` package
-### Fixed
 
 ## [0.1.1] - 2021-01-30
 ### Added
@@ -61,7 +67,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - This is the first release of `fsclient`.
 
-[Unreleased]: https://github.com/bartholomews/fsclient/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/bartholomews/fsclient/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/bartholomews/fsclient/compare/v0.0.3...v0.1.2
 [0.1.1]: https://github.com/bartholomews/fsclient/compare/v0.0.3...v0.1.1
 [0.1.0]: https://github.com/bartholomews/fsclient/compare/v0.0.3...v0.1.0
 [0.0.3]: https://github.com/bartholomews/fsclient/compare/v0.0.2...v0.0.3
