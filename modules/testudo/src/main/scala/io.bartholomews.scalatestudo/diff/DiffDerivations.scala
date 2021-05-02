@@ -24,7 +24,21 @@ trait DiffDerivations extends DiffMatcher {
   implicit val consumerDiff: Diff[Consumer] = Diff.derived[Consumer]
   implicit val resourceOwnerAuthorizationUriDiff: Diff[ResourceOwnerAuthorizationUri] =
     Diff.derived[ResourceOwnerAuthorizationUri]
-  implicit val temporaryCredentialsDiff: Diff[TemporaryCredentials] = Diff.derived[TemporaryCredentials]
+  implicit val temporaryCredentialsDiff: Diff[TemporaryCredentials] = {
+    (left: TemporaryCredentials, right: TemporaryCredentials, _) =>
+      fromObject(
+        left,
+        DiffResultObject(
+          name = "TemporaryCredentials",
+          fields = Map(
+            "consumer" -> Diff[Consumer].apply(left.consumer, right.consumer),
+            "token" -> Diff[Token].apply(left.token, right.token),
+            "callbackConfirmed" -> Diff[Boolean].apply(left.callbackConfirmed, right.callbackConfirmed)
+          )
+        )
+      )
+  }
+
   implicit val tokenDiff: Diff[Token] = Diff.derived[Token]
   implicit val refreshTokenDiff: Diff[RefreshToken] = Diff.derived[RefreshToken]
   implicit val scopeDiff: Diff[Scope] = Diff.derived[Scope]
