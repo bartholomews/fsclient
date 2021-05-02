@@ -4,7 +4,7 @@ object Versions {
   // https://github.com/circe/circe-generic-extras/releases
   val circe_generic_extras = "0.13.0"
   // https://github.com/softwaremill/diffx
-  val diffx = "0.4.0"
+  val diffx = "0.4.5"
   // https://github.com/lloydmeta/enumeratum/releases
   val enumeratum = "1.6.1"
   // https://github.com/qos-ch/logback/releases
