@@ -21,7 +21,7 @@ import sttp.client3.circe.SttpCirceApi
 import sttp.model.Uri
 
 trait FsClientCirceApi extends SttpCirceApi {
-  implicit val defaultConfig: Configuration = Configuration.default.withSnakeCaseMemberNames
+  private[circe] implicit val defaultConfig: Configuration = Configuration.default.withSnakeCaseMemberNames
 
   implicit def responseHandler[T](implicit decoder: Decoder[T]): ResponseHandler[circe.Error, T] =
     asJson[T]
@@ -30,7 +30,7 @@ trait FsClientCirceApi extends SttpCirceApi {
 
   implicit val sttpUriCodec: Codec[Uri] = Codec.from(
     Decoder.decodeString.emap(Uri.parse),
-    Encoder.encodeString.contramap(_.toString())
+    Encoder.encodeString.contramap(_.toString)
   )
 
   implicit val accessTokenCodec: Codec[AccessToken] = deriveUnwrappedCodec
