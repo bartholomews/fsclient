@@ -50,7 +50,7 @@ lazy val circe = (project in file("modules/circe"))
     name := "fsclient-circe",
     libraryDependencies ++= circeDependencies ++ testDependencies.map(_ % Test),
     excludeDependencies ++= exclusions,
-    coverageMinimum := 75, // FIXME
+    coverageMinimum := 65, // FIXME
     coverageFailOnMinimum := true
   )
 

@@ -33,6 +33,7 @@ trait FsClientCirceApi extends SttpCirceApi {
 
   def dropNullValues[A](encoder: Encoder[A]): Encoder[A] = encoder.mapJson(_.dropNullValues)
 
+  // https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
   def localDateTimeDecoder(dateTimeFormatter: DateTimeFormatter): Decoder[LocalDateTime] =
     Decoder.decodeString.emap(str => Try(LocalDateTime.parse(str, dateTimeFormatter)).toEither.left.map(_.getMessage))
 
