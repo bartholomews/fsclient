@@ -1,5 +1,8 @@
 package io.bartholomews.fsclient.circe
 
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 import io.bartholomews.fsclient.core.http.SttpResponses.ResponseHandler
 import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod, Token}
 import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
@@ -20,13 +23,30 @@ import io.circe.{Codec, Decoder, Encoder, HCursor}
 import sttp.client3.circe.SttpCirceApi
 import sttp.model.Uri
 
+import scala.util.Try
+
 trait FsClientCirceApi extends SttpCirceApi {
-  private[circe] implicit val defaultConfig: Configuration = Configuration.default.withSnakeCaseMemberNames
+  implicit private[circe] val defaultConfig: Configuration = Configuration.default.withSnakeCaseMemberNames
 
   implicit def responseHandler[T](implicit decoder: Decoder[T]): ResponseHandler[circe.Error, T] =
     asJson[T]
 
   def dropNullValues[A](encoder: Encoder[A]): Encoder[A] = encoder.mapJson(_.dropNullValues)
+
+  def localDateTimeDecoder(dateTimeFormatter: DateTimeFormatter): Decoder[LocalDateTime] =
+    Decoder.decodeString.emap(str => Try(LocalDateTime.parse(str, dateTimeFormatter)).toEither.left.map(_.getMessage))
+
+  def decodeNullableList[A](implicit decoder: Decoder[A]): Decoder[List[A]] =
+    Decoder.decodeOption[List[A]](Decoder.decodeList[A]).map(_.getOrElse(Nil))
+
+  def decodeEmptyStringAsOption[A](implicit decoder: Decoder[A]): Decoder[Option[A]] = { (c: HCursor) =>
+    c.focus match {
+      case None => Right(None)
+      case Some(jValue) =>
+        if (jValue.asString.contains("")) Right(None)
+        else decoder(c).map(Some(_))
+    }
+  }
 
   implicit val sttpUriCodec: Codec[Uri] = Codec.from(
     Decoder.decodeString.emap(Uri.parse),

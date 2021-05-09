@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 ### Changed
 - implicit codec snakeCase configs package private
+- circe codecs utils
 ### Fixed
 
 ## [0.1.2] - 2021-05-02
