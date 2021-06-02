@@ -14,7 +14,7 @@ object Versions {
   // https://github.com/scalatest/scalatest/releases
   val scalaTest = "3.2.9"
   // https://github.com/softwaremill/sttp/releases
-  val sttp = "3.3.5"
+  val sttp = "3.3.6"
   // https://github.com/tomakehurst/wiremock/releases
   val wiremock = "2.27.2"
 }
