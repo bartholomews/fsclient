@@ -1,5 +1,5 @@
 // https://scalacenter.github.io/scalafix
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.29")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.30")
 // https://github.com/scoverage/sbt-scoverage/releases
 addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.8.2")
 // https://github.com/scalameta/sbt-scalafmt/releases
