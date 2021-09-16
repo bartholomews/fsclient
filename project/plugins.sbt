@@ -1,7 +1,7 @@
 // https://scalacenter.github.io/scalafix
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.30")
 // https://github.com/scoverage/sbt-scoverage/releases
-addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.8.2")
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.9.0")
 // https://github.com/scalameta/sbt-scalafmt/releases
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.3")
 // https://github.com/olafurpg/sbt-ci-release/releases
