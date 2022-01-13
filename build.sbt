@@ -3,7 +3,7 @@ import sbt.Keys.{parallelExecution, scalacOptions}
 import scoverage.ScoverageKeys.coverageFailOnMinimum
 
 // https://github.com/scala/scala
-ThisBuild / scalaVersion := "2.13.5"
+ThisBuild / scalaVersion := "2.13.8"
 
 inThisBuild(
   List(
