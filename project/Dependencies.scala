@@ -2,7 +2,7 @@ import sbt._
 
 object Versions {
   // https://github.com/circe/circe-generic-extras/releases
-  val circe_generic_extras = "0.14.1"
+  val circe_generic_extras = "0.14.3"
   // https://github.com/softwaremill/diffx
   val diffx = "0.4.0"
   // https://github.com/lloydmeta/enumeratum/releases
