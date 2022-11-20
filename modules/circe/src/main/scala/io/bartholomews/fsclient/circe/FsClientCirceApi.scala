@@ -72,14 +72,14 @@ trait FsClientCirceApi extends SttpCirceApi {
       accessToken <- c.downField("access_token").as[AccessToken]
       tokenType <- c.downField("token_type").as[String]
       expiresIn <- c.downField("expires_in").as[Long]
-      refreshToken <- c.downField("refresh_token").as[RefreshToken]
+      refreshToken <- c.downField("refresh_token").as[Option[RefreshToken]]
       scope <- c.downField("scope").as[Scope]
     } yield AccessTokenSigner(
       generatedAt.getOrElse(System.currentTimeMillis()),
       accessToken,
       tokenType,
       expiresIn,
-      Some(refreshToken),
+      refreshToken,
       scope
     )
 
