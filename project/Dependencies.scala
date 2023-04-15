@@ -10,7 +10,7 @@ object Versions {
   // https://github.com/qos-ch/logback/releases
   val logback = "1.2.10"
   // https://github.com/pureconfig/pureconfig/releases
-  val pureConfig = "0.17.1"
+  val pureConfig = "0.17.3"
   // https://github.com/scalatest/scalatest/releases
   val scalaTest = "3.2.10"
   // https://github.com/softwaremill/sttp/releases
