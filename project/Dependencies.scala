@@ -6,7 +6,7 @@ object Versions {
   // https://github.com/softwaremill/diffx
   val diffx = "0.4.0"
   // https://github.com/lloydmeta/enumeratum/releases
-  val enumeratum = "1.7.0"
+  val enumeratum = "1.7.3"
   // https://github.com/qos-ch/logback/releases
   val logback = "1.2.10"
   // https://github.com/pureconfig/pureconfig/releases
