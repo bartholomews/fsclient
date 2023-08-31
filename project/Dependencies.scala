@@ -16,7 +16,7 @@ object Versions {
   // https://github.com/softwaremill/sttp/releases
   val sttp = "3.3.18"
   // https://github.com/tomakehurst/wiremock/releases
-  val wiremock = "2.27.2"
+  val wiremock = "3.0.0"
 }
 
 object Dependencies {
