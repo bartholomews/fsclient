@@ -8,7 +8,7 @@ object Versions {
   // https://github.com/lloydmeta/enumeratum/releases
   val enumeratum = "1.7.0"
   // https://github.com/qos-ch/logback/releases
-  val logback = "1.2.10"
+  val logback = "1.2.13"
   // https://github.com/pureconfig/pureconfig/releases
   val pureConfig = "0.17.1"
   // https://github.com/scalatest/scalatest/releases
