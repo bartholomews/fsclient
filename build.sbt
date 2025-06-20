@@ -90,5 +90,5 @@ resolvers += "Sonatype OSS Snapshots"
 addCommandAlias("test-coverage", ";clean ;coverage ;test ;coverageReport")
 addCommandAlias("test-fast", "testOnly * -- -l org.scalatest.tags.Slow")
 
-ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
-sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
+// ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
+// sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
