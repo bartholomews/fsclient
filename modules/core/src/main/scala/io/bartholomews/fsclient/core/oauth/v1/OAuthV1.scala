@@ -8,9 +8,6 @@ import pureconfig.ConfigReader
 import sttp.client3.{Identity, RequestT, ResponseException, emptyRequest}
 import sttp.model.Uri
 
-import java.io.ObjectInputFilter.Config
-import pureconfig._
-
 object OAuthV1 {
 
   sealed abstract class SignatureMethod(val value: String) extends StringEnumEntry
