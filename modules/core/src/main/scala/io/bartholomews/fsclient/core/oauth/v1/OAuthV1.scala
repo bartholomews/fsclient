@@ -35,8 +35,7 @@ object OAuthV1 {
   object Consumer {
     implicit val configReader: ConfigReader[Consumer] =
       ConfigReader
-        .forProduct2[Consumer, String, String]("key", "secret")
-        .apply({ case (key, secret) => Consumer(key, secret) })
+        .forProduct2[Consumer, String, String]("key", "secret")((key, secret) => Consumer(key, secret))
   }
 
   /** Representation of an OAuth Token and Token secret */

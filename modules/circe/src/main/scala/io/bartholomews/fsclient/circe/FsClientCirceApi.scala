@@ -1,7 +1,7 @@
 package io.bartholomews.fsclient.circe
 
 import io.bartholomews.fsclient.core.http.SttpResponses.ResponseHandler
-import io.bartholomews.fsclient.core.oauth.*
+import io.bartholomews.fsclient.core.oauth._
 import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod, Token}
 import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
 import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, RefreshToken}
@@ -69,9 +69,7 @@ trait FsClientCirceApi extends SttpCirceApi {
       .map(_.fold(Scope(List.empty))(str => Scope(str.split(" ").toList)))
 
   implicit val accessTokenSignerEncoder: Encoder[AccessTokenSigner] =
-    Encoder.forProduct6[AccessTokenSigner, Long, AccessToken, String, Long, Option[RefreshToken], Scope]("generated_at", "access_token", "token_type", "expires_in", "refresh_token", "scope")({ ats =>
-      (ats._1, ats._2, ats._3, ats._4, ats._5, ats._6)
-    })
+    Encoder.derived[AccessTokenSigner]
 
   implicit val accessTokenSignerDecoder: Decoder[AccessTokenSigner] = (c: HCursor) =>
     for {

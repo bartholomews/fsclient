@@ -3,9 +3,9 @@ import sbt.Keys.{parallelExecution, scalacOptions}
 // import scoverage.ScoverageKeys.coverageFailOnMinimum
 
 // https://github.com/scala/scala
-ThisBuild / scalaVersion := "3.7.1"
+ThisBuild / scalaVersion := "2.13.16"
 // https://github.com/scala/scala3
-ThisBuild / crossScalaVersions := Seq("2.13.16")
+ThisBuild / crossScalaVersions := Seq("3.7.1")
 
 inThisBuild(
   List(
