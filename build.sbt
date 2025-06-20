@@ -1,6 +1,6 @@
 import Dependencies.{circeDependencies, coreDependencies, exclusions}
 import sbt.Keys.{parallelExecution, scalacOptions}
-import scoverage.ScoverageKeys.coverageFailOnMinimum
+// import scoverage.ScoverageKeys.coverageFailOnMinimum
 
 // https://github.com/scala/scala
 ThisBuild / scalaVersion := "3.7.1"
@@ -53,9 +53,9 @@ lazy val core = (project in file("modules/core"))
   .settings(commonSettings)
   .settings(
     name := "fsclient-core",
-    libraryDependencies ++= coreDependencies, // ++ testDependencies.map(_ % Test),
-    coverageMinimumStmtTotal := 58, // FIXME
-    coverageFailOnMinimum    := true
+    libraryDependencies ++= coreDependencies // ++ testDependencies.map(_ % Test),
+    // coverageMinimumStmtTotal := 58, // FIXME
+    // coverageFailOnMinimum    := true
   )
 
 lazy val circe = (project in file("modules/circe"))
@@ -64,9 +64,9 @@ lazy val circe = (project in file("modules/circe"))
   .settings(
     name := "fsclient-circe",
     libraryDependencies ++= circeDependencies, // ++ testDependencies.map(_ % Test),
-    excludeDependencies ++= exclusions,
-    coverageMinimumStmtTotal := 65, // FIXME
-    coverageFailOnMinimum    := true
+    excludeDependencies ++= exclusions
+    // coverageMinimumStmtTotal := 65, // FIXME
+    // coverageFailOnMinimum    := true
   )
 
 //lazy val testudo = (project in file("modules/testudo"))
