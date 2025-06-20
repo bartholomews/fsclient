@@ -31,7 +31,7 @@ jobs:
 
       - run:
           name: Compile code
-          command: cat /dev/null | sbt clean compile
+          command: cat /dev/null | sbt clean +compile
 
       - save_cache:
           paths:
