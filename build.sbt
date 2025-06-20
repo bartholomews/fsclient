@@ -5,7 +5,7 @@ import scoverage.ScoverageKeys.coverageFailOnMinimum
 // https://github.com/scala/scala
 ThisBuild / scalaVersion := "3.7.1"
 // https://github.com/scala/scala3
-// ThisBuild / crossScalaVersions := Seq("2.13.16")
+ThisBuild / crossScalaVersions := Seq("2.13.16")
 
 inThisBuild(
   List(
@@ -89,3 +89,6 @@ resolvers += "Sonatype OSS Snapshots"
 
 addCommandAlias("test-coverage", ";clean ;coverage ;test ;coverageReport")
 addCommandAlias("test-fast", "testOnly * -- -l org.scalatest.tags.Slow")
+
+ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
+sonatypeRepository := "https://s01.oss.sonatype.org/service/local"
