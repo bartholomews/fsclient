@@ -38,9 +38,6 @@ object FsClient {
    * }
    */
   object v1 {
-
-    import pureconfig.generic.auto._
-
     def clientCredentials[F[_]](userAgent: UserAgent, consumer: Consumer)(
       backend: SttpBackend[F, Any]
     ): FsClient[F, SignerV1] = FsClient(userAgent, ClientCredentials(consumer), backend)

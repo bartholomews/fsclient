@@ -87,7 +87,7 @@ jobs:
 
       - run:
           name: Release
-          command: sbt ci-release
+          command: sbt +ci-release
 
 # https://circleci.com/docs/2.0/workflows/#executing-workflows-for-a-git-tag
 workflows:

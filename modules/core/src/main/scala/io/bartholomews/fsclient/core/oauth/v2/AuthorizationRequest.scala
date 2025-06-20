@@ -3,6 +3,8 @@ package io.bartholomews.fsclient.core.oauth.v2
 import io.bartholomews.fsclient.core.oauth.RedirectUri
 import sttp.model.Uri
 
+import scala.jdk.CollectionConverters.*
+
 sealed trait AuthorizationRequest {
   def responseType: String
   def clientId: ClientId
@@ -26,7 +28,7 @@ sealed trait AuthorizationRequest {
       requiredQueryParams ++ optionalQueryParams
     }
 
-    serverUri.addParams(queryParams: _*)
+    serverUri.addParams(queryParams*)
   }
 }
 

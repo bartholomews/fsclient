@@ -4,8 +4,12 @@ import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.bartholomews.fsclient.core.http.FsClientSttpExtensions.mapInto
 import io.bartholomews.fsclient.core.http.ResponseMapping
 import io.bartholomews.fsclient.core.oauth.AccessTokenCredentials
-import sttp.client3.{emptyRequest, Identity, RequestT, ResponseException}
+import pureconfig.ConfigReader
+import sttp.client3.{Identity, RequestT, ResponseException, emptyRequest}
 import sttp.model.Uri
+
+import java.io.ObjectInputFilter.Config
+import pureconfig._
 
 object OAuthV1 {
 
@@ -21,9 +25,9 @@ object OAuthV1 {
 
   // https://tools.ietf.org/html/rfc5849#section-2.2
   def accessTokenRequest[DE](
-    uri: Uri
+      uri: Uri
   )(implicit
-    responseMapping: ResponseMapping[String, DE, AccessTokenCredentials]
+      responseMapping: ResponseMapping[String, DE, AccessTokenCredentials]
   ): RequestT[Identity, Either[ResponseException[String, DE], AccessTokenCredentials], Nothing] =
     emptyRequest
       .post(uri)
@@ -31,6 +35,12 @@ object OAuthV1 {
 
   /** Representation of a Consumer key and secret */
   final case class Consumer(key: String, secret: String)
+  object Consumer {
+    implicit val configReader: ConfigReader[Consumer] =
+      ConfigReader
+        .forProduct2[Consumer, String, String]("key", "secret")
+        .apply({ case (key, secret) => Consumer(key, secret) })
+  }
 
   /** Representation of an OAuth Token and Token secret */
   final case class Token(value: String, secret: String)

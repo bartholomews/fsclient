@@ -1,35 +1,28 @@
 package io.bartholomews.fsclient.circe
 
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-
 import io.bartholomews.fsclient.core.http.SttpResponses.ResponseHandler
+import io.bartholomews.fsclient.core.oauth.*
 import io.bartholomews.fsclient.core.oauth.v1.OAuthV1.{Consumer, SignatureMethod, Token}
 import io.bartholomews.fsclient.core.oauth.v1.TemporaryCredentials
 import io.bartholomews.fsclient.core.oauth.v2.OAuthV2.{AccessToken, RefreshToken}
 import io.bartholomews.fsclient.core.oauth.v2.{ClientId, ClientPassword, ClientSecret}
-import io.bartholomews.fsclient.core.oauth.{
-  AccessTokenCredentials,
-  AccessTokenSigner,
-  ClientPasswordAuthentication,
-  NonRefreshableTokenSigner,
-  ResourceOwnerAuthorizationUri,
-  Scope
-}
 import io.circe
-import io.circe.generic.extras.Configuration
-import io.circe.generic.extras.semiauto.{deriveConfiguredCodec, deriveConfiguredEncoder, deriveUnwrappedCodec}
 import io.circe.{Codec, Decoder, Encoder, HCursor}
 import sttp.client3.circe.SttpCirceApi
 import sttp.model.Uri
 
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import scala.util.Try
 
 trait FsClientCirceApi extends SttpCirceApi {
-  implicit private[circe] val defaultConfig: Configuration = Configuration.default.withSnakeCaseMemberNames
-
   implicit def responseHandler[T](implicit decoder: Decoder[T]): ResponseHandler[circe.Error, T] =
     asJson[T]
+
+  private def valueClassStringCodec[A](f: String => A)(g: A => String) =
+    Codec
+      .from(Decoder.decodeString, Encoder.encodeString)
+      .iemap(str => Right(f(str)))(g)
 
   def dropNullValues[A](encoder: Encoder[A]): Encoder[A] = encoder.mapJson(_.dropNullValues)
 
@@ -37,12 +30,13 @@ trait FsClientCirceApi extends SttpCirceApi {
   def localDateTimeDecoder(dateTimeFormatter: DateTimeFormatter): Decoder[LocalDateTime] =
     Decoder.decodeString.emap(str => Try(LocalDateTime.parse(str, dateTimeFormatter)).toEither.left.map(_.getMessage))
 
-  def decodeNullableList[A](implicit decoder: Decoder[A]): Decoder[List[A]] =
-    Decoder.decodeOption[List[A]](Decoder.decodeList[A]).map(_.getOrElse(Nil))
+  def decodeNullableList[A](implicit decoder: Decoder[A]): Decoder[List[A]] = {
+    Decoder.decodeOption[List[A]](using Decoder.decodeList[A]).map(_.getOrElse(Nil))
+  }
 
   def decodeEmptyStringAsOption[A](implicit decoder: Decoder[A]): Decoder[Option[A]] = { (c: HCursor) =>
     c.focus match {
-      case None => Right(None)
+      case None         => Right(None)
       case Some(jValue) =>
         if (jValue.asString.contains("")) Right(None)
         else decoder(c).map(Some(_))
@@ -54,10 +48,19 @@ trait FsClientCirceApi extends SttpCirceApi {
     Encoder.encodeString.contramap(_.toString)
   )
 
-  implicit val accessTokenCodec: Codec[AccessToken] = deriveUnwrappedCodec
-  implicit val refreshTokenCodec: Codec[RefreshToken] = deriveUnwrappedCodec
-  implicit val clientIdCodec: Codec[ClientId] = deriveUnwrappedCodec
-  implicit val clientSecretCodec: Codec[ClientSecret] = deriveUnwrappedCodec
+  implicit val accessTokenCodec: Codec[AccessToken] =
+    Codec
+      .from(Decoder.decodeString, Encoder.encodeString)
+      .iemap(str => Right(AccessToken(str)))(_.value)
+
+  implicit val refreshTokenCodec: Codec[RefreshToken] =
+    valueClassStringCodec(RefreshToken.apply)(_.value)
+
+  implicit val clientIdCodec: Codec[ClientId] =
+    valueClassStringCodec(ClientId.apply)(_.value)
+
+  implicit val clientSecretCodec: Codec[ClientSecret] =
+    valueClassStringCodec(ClientSecret.apply)(_.value)
 
   implicit val scopeEncoder: Encoder[Scope] = Encoder[List[String]].contramap[Scope](_.values)
   implicit val scopeDecoder: Decoder[Scope] =
@@ -65,15 +68,19 @@ trait FsClientCirceApi extends SttpCirceApi {
       .decodeOption[String]
       .map(_.fold(Scope(List.empty))(str => Scope(str.split(" ").toList)))
 
-  implicit val accessTokenSignerEncoder: Encoder[AccessTokenSigner] = deriveConfiguredEncoder
+  implicit val accessTokenSignerEncoder: Encoder[AccessTokenSigner] =
+    Encoder.forProduct6[AccessTokenSigner, Long, AccessToken, String, Long, Option[RefreshToken], Scope]("generated_at", "access_token", "token_type", "expires_in", "refresh_token", "scope")({ ats =>
+      (ats._1, ats._2, ats._3, ats._4, ats._5, ats._6)
+    })
+
   implicit val accessTokenSignerDecoder: Decoder[AccessTokenSigner] = (c: HCursor) =>
     for {
-      generatedAt <- c.downField("generated_at").as[Option[Long]]
-      accessToken <- c.downField("access_token").as[AccessToken]
-      tokenType <- c.downField("token_type").as[String]
-      expiresIn <- c.downField("expires_in").as[Long]
+      generatedAt  <- c.downField("generated_at").as[Option[Long]]
+      accessToken  <- c.downField("access_token").as[AccessToken]
+      tokenType    <- c.downField("token_type").as[String]
+      expiresIn    <- c.downField("expires_in").as[Long]
       refreshToken <- c.downField("refresh_token").as[RefreshToken]
-      scope <- c.downField("scope").as[Scope]
+      scope        <- c.downField("scope").as[Scope]
     } yield AccessTokenSigner(
       generatedAt.getOrElse(System.currentTimeMillis()),
       accessToken,
@@ -83,14 +90,16 @@ trait FsClientCirceApi extends SttpCirceApi {
       scope
     )
 
-  implicit val nonRefreshableTokenSignerEncoder: Encoder[NonRefreshableTokenSigner] = deriveConfiguredEncoder
+  implicit val nonRefreshableTokenSignerEncoder: Encoder[NonRefreshableTokenSigner] =
+    Encoder.derived[NonRefreshableTokenSigner]
+
   implicit val nonRefreshableTokenSignerDecoder: Decoder[NonRefreshableTokenSigner] = (c: HCursor) =>
     for {
       generatedAt <- c.downField("generated_at").as[Option[Long]]
       accessToken <- c.downField("access_token").as[AccessToken]
-      tokenType <- c.downField("token_type").as[String]
-      expiresIn <- c.downField("expires_in").as[Long]
-      scope <- c.downField("scope").as[Scope]
+      tokenType   <- c.downField("token_type").as[String]
+      expiresIn   <- c.downField("expires_in").as[Long]
+      scope       <- c.downField("scope").as[Scope]
     } yield NonRefreshableTokenSigner(
       generatedAt.getOrElse(System.currentTimeMillis()),
       accessToken,
@@ -99,8 +108,15 @@ trait FsClientCirceApi extends SttpCirceApi {
       scope
     )
 
-  implicit val tokenCodec: Codec[Token] = deriveConfiguredCodec
-  implicit val consumerCodec: Codec[Consumer] = deriveConfiguredCodec
+  implicit val tokenCodec: Codec[Token] =
+    Codec.forProduct2[Token, String, String]("value", "secret")({ case (a, b) =>
+      Token(a, b)
+    })(t => (t._1, t._2))
+
+  implicit val consumerCodec: Codec[Consumer] =
+    Codec.forProduct2[Consumer, String, String]("key", "secret")({ case (a, b) =>
+      Consumer(a, b)
+    })(t => (t._1, t._2))
 
   implicit val signatureMethodEncoder: Encoder[SignatureMethod] =
     Encoder.encodeString.contramap(_.value)
@@ -112,13 +128,19 @@ trait FsClientCirceApi extends SttpCirceApi {
     )
 
   implicit val accessTokenCredentialsCodec: Codec[AccessTokenCredentials] =
-    deriveConfiguredCodec
+    Codec.derived[AccessTokenCredentials]
+
   implicit val clientPasswordCodec: Codec[ClientPassword] =
-    deriveConfiguredCodec
+    Codec.derived[ClientPassword]
+
   implicit val clientPasswordAuthenticationCodec: Codec[ClientPasswordAuthentication] =
-    deriveConfiguredCodec
+    Codec.derived[ClientPasswordAuthentication]
+
   implicit val resourceOwnerAuthorizationUriCodec: Codec[ResourceOwnerAuthorizationUri] =
-    deriveUnwrappedCodec
+    sttpUriCodec
+      .iemap(str => Right(ResourceOwnerAuthorizationUri(str)))(
+        _.value
+      )
 
   implicit val temporaryCredentialsEncoder: Encoder[TemporaryCredentials] = Encoder
     .forProduct4(
@@ -130,9 +152,9 @@ trait FsClientCirceApi extends SttpCirceApi {
 
   implicit val temporaryCredentialsCodec: Decoder[TemporaryCredentials] = (c: HCursor) =>
     for {
-      consumer <- c.downField("consumer").as[Consumer]
-      token <- c.downField("token").as[Token]
-      callbackConfirmed <- c.downField("callback_confirmed").as[Boolean]
+      consumer             <- c.downField("consumer").as[Consumer]
+      token                <- c.downField("token").as[Token]
+      callbackConfirmed    <- c.downField("callback_confirmed").as[Boolean]
       resourceOwnerAuthUri <- c.downField("resource_owner_authorization_uri").as[ResourceOwnerAuthorizationUri]
     } yield TemporaryCredentials(consumer, token, callbackConfirmed, resourceOwnerAuthUri)
 }
