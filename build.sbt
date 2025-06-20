@@ -2,10 +2,13 @@ import Dependencies.{circeDependencies, coreDependencies, exclusions}
 import sbt.Keys.{parallelExecution, scalacOptions}
 // import scoverage.ScoverageKeys.coverageFailOnMinimum
 
+val `scala-3` = "3.7.1"
+val `scala-2.13` = "2.13.16"
+
 // https://github.com/scala/scala
-ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / scalaVersion := `scala-2.13`
 // https://github.com/scala/scala3
-ThisBuild / crossScalaVersions := Seq("3.7.1")
+ThisBuild / crossScalaVersions := Seq(`scala-2.13`, `scala-3`)
 
 inThisBuild(
   List(

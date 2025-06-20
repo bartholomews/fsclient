@@ -75,15 +75,15 @@ jobs:
           name: Fetch tags
           command: git fetch --tags
 
-      - run:
-          name: Setup GPG
-          command: |
-            mkdir ~/.gnupg && touch ~/.gnupg/gpg.conf
-            echo use-agent >> ~/.gnupg/gpg.conf
-            echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
-            echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
-            echo RELOADAGENT | gpg-connect-agent
-            echo $PGP_SECRET | base64 --decode | gpg --import --no-tty --batch --yes
+#      - run:
+#          name: Setup GPG
+#          command: |
+#            mkdir ~/.gnupg && touch ~/.gnupg/gpg.conf
+#            echo use-agent >> ~/.gnupg/gpg.conf
+#            echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+#            echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+#            echo RELOADAGENT | gpg-connect-agent
+#            echo $PGP_SECRET | base64 --decode | gpg --import --no-tty --batch --yes
 
       - run:
           name: Release
